@@ -1,0 +1,282 @@
+{% extends "dashboard/admin/admin_base.html" %}
+{% load static %}
+
+{% block title %}Enrollments{% endblock %}
+{% block page_title %}Enrollments{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+    .stat-card { background: var(--bg-card); border-radius: var(--radius-md); padding: 18px 20px; text-align: center; border: 1px solid var(--border-color); cursor: pointer; transition: all 0.2s; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .stat-card .num { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
+    .stat-card .lbl { font-size: 0.72rem; color: var(--text-secondary); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.3px; }
+    .stat-card.blue { border-left: 3px solid var(--accent-blue); }
+    .stat-card.green { border-left: 3px solid var(--accent-green); }
+    .stat-card.purple { border-left: 3px solid var(--accent-purple); }
+    .stat-card.orange { border-left: 3px solid var(--accent-orange); }
+
+    .filter-row { display: flex; gap: 10px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+    .filter-row .form-control { padding: 8px 14px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 0.82rem; font-family: inherit; background: var(--bg-card); color: var(--text-primary); outline: none; }
+    .filter-row .form-control:focus { border-color: var(--accent-blue); }
+    .filter-row select.form-control { min-width: 150px; cursor: pointer; }
+    .filter-row input[type="text"] { min-width: 200px; flex: 1; }
+    .results-text { font-size: 0.8rem; color: var(--text-muted); margin-left: auto; }
+
+    .table-card { background: var(--bg-card); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); overflow: hidden; }
+    .table-responsive { overflow-x: auto; }
+    .data-table { width: 100%; border-collapse: collapse; min-width: 950px; }
+    .data-table th { text-align: left; padding: 12px 14px; font-size: 0.7rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.3px; border-bottom: 1px solid var(--border-color); background: #f8fafc; white-space: nowrap; }
+    .data-table td { padding: 10px 14px; font-size: 0.82rem; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+    .data-table tbody tr:hover { background: rgba(241,245,249,0.5); }
+
+    .student-cell { display: flex; align-items: center; gap: 10px; }
+    .student-avatar { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+    .student-avatar-df { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #10b981, #059669); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; }
+    .student-name { font-weight: 600; color: var(--text-primary); }
+    .student-email { font-size: 0.7rem; color: var(--text-muted); }
+
+    .status-badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .status-badge.active { background: rgba(16,185,129,0.1); color: #10b981; }
+    .status-badge.completed { background: rgba(59,130,246,0.1); color: #3b82f6; }
+    .status-badge.dropped { background: rgba(239,68,68,0.1); color: #ef4444; }
+    .status-badge.paused { background: rgba(245,158,11,0.1); color: #f59e0b; }
+    .status-badge:hover { filter: brightness(0.9); }
+
+    .progress-mini { display: flex; align-items: center; gap: 8px; }
+    .progress-mini-bar { width: 50px; height: 5px; background: #e5e7eb; border-radius: 3px; overflow: hidden; }
+    .progress-mini-fill { height: 100%; background: #10b981; border-radius: 3px; transition: width 0.3s; }
+    .progress-mini span { font-size: 0.75rem; font-weight: 600; color: var(--text-primary); }
+
+    .action-btns { display: flex; gap: 4px; }
+    .btn-action { width: 28px; height: 28px; border-radius: 6px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; transition: all 0.2s; }
+    .btn-action.view { color: var(--accent-blue); }
+    .btn-action.view:hover { background: rgba(59,130,246,0.1); }
+    .btn-action.edit { color: var(--accent-green); }
+    .btn-action.edit:hover { background: rgba(16,185,129,0.1); }
+
+    /* Status dropdown */
+    .status-dropdown { position: relative; display: inline-block; }
+    .status-menu { position: absolute; top: 100%; left: 0; background: var(--bg-card); border-radius: var(--radius-sm); box-shadow: var(--shadow-lg); padding: 4px; display: none; z-index: 50; min-width: 130px; border: 1px solid var(--border-color); }
+    .status-menu.show { display: block; }
+    .status-option { display: block; width: 100%; padding: 6px 12px; border: none; background: transparent; font-size: 0.78rem; font-family: inherit; cursor: pointer; text-align: left; border-radius: 4px; color: var(--text-primary); }
+    .status-option:hover { background: var(--bg-main); }
+
+    .pagination-wrapper { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 12px; }
+    .showing-text { font-size: 0.8rem; color: var(--text-secondary); }
+    .pagination { display: flex; gap: 4px; }
+    .page-btn { min-width: 32px; height: 32px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-secondary); font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .page-btn.active { background: var(--accent-blue); color: white; border-color: var(--accent-blue); }
+    .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    @media (max-width: 1200px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 768px) {
+        .stats-row { grid-template-columns: 1fr; }
+        .filter-row { flex-direction: column; }
+        .filter-row .form-control { width: 100%; }
+        .data-table { min-width: auto; }
+        .data-table thead { display: none; }
+        .data-table tbody td { display: flex; justify-content: space-between; padding: 8px 14px; border: none; }
+        .data-table tbody td::before { content: attr(data-label); font-weight: 600; color: var(--text-secondary); font-size: 0.65rem; text-transform: uppercase; }
+        .data-table tbody tr { display: block; padding: 8px 0; border-bottom: 1px solid var(--border-color); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% if messages %}
+    {% for message in messages %}<div class="alert alert-{{ message.tags }} alert-dismissible fade show" style="border-radius:var(--radius-md);margin-bottom:16px;">{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>{% endfor %}
+{% endif %}
+
+<!-- Stats Row -->
+<div class="stats-row">
+    <div class="stat-card blue" onclick="window.location='?status='">
+        <div class="num">{{ total_enrollments }}</div>
+        <div class="lbl">Total Enrollments</div>
+    </div>
+    <div class="stat-card green" onclick="window.location='?status=active'">
+        <div class="num">{{ active_enrollments }}</div>
+        <div class="lbl">Active</div>
+    </div>
+    <div class="stat-card purple" onclick="window.location='?status=completed'">
+        <div class="num">{{ completed_enrollments }}</div>
+        <div class="lbl">Completed</div>
+    </div>
+    <div class="stat-card orange" onclick="window.location='?status=dropped'">
+        <div class="num">{{ dropped_enrollments }}</div>
+        <div class="lbl">Dropped</div>
+    </div>
+</div>
+
+<!-- Filters -->
+<form method="GET" class="filter-row">
+    <select name="status" class="form-control" onchange="this.form.submit()">
+        <option value="">All Status</option>
+        <option value="active" {% if current_status == 'active' %}selected{% endif %}>Active</option>
+        <option value="completed" {% if current_status == 'completed' %}selected{% endif %}>Completed</option>
+        <option value="dropped" {% if current_status == 'dropped' %}selected{% endif %}>Dropped</option>
+        <option value="paused" {% if current_status == 'paused' %}selected{% endif %}>Paused</option>
+    </select>
+    <select name="course" class="form-control" onchange="this.form.submit()">
+        <option value="">All Courses</option>
+        {% for c in courses %}
+        <option value="{{ c.id }}" {% if current_course == c.id|stringformat:"s" %}selected{% endif %}>{{ c.title|truncatechars:40 }}</option>
+        {% endfor %}
+    </select>
+    <input type="text" name="search" class="form-control" placeholder="Search student or course..." value="{{ current_search }}">
+    <button type="submit" class="btn btn-primary" style="padding:8px 16px;font-size:0.82rem;border-radius:var(--radius-sm);">Search</button>
+    {% if current_status or current_course or current_search %}
+    <a href="{% url 'dashboard:admin_enrollments' %}" class="btn btn-outline-secondary" style="padding:8px 16px;font-size:0.82rem;border-radius:var(--radius-sm);text-decoration:none;">Clear</a>
+    {% endif %}
+    <span class="results-text">{{ page_obj.paginator.count }} results</span>
+</form>
+
+<!-- Enrollments Table -->
+<div class="table-card">
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Student</th>
+                    <th>Course</th>
+                    <th>Status</th>
+                    <th>Progress</th>
+                    <th>Enrolled Date</th>
+                    <th>Completed Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for enrollment in enrollments %}
+                <tr>
+                    <td data-label="Student">
+                        <div class="student-cell">
+                            {% if enrollment.student.profile_picture %}
+                            <img src="{{ enrollment.student.profile_picture.url }}" class="student-avatar">
+                            {% else %}
+                            <div class="student-avatar-df">{{ enrollment.student.first_name|slice:":1"|upper }}{{ enrollment.student.last_name|slice:":1"|upper }}</div>
+                            {% endif %}
+                            <div>
+                                <div class="student-name">{{ enrollment.student.get_full_name }}</div>
+                                <div class="student-email">{{ enrollment.student.email }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td data-label="Course">
+                        <a href="{% url 'dashboard:admin_course_view' enrollment.course.id %}" style="color:var(--text-primary);text-decoration:none;font-weight:500;">
+                            {{ enrollment.course.title|truncatechars:40 }}
+                        </a>
+                        <div style="font-size:0.7rem;color:var(--text-muted);">by {{ enrollment.course.instructor.get_full_name }}</div>
+                    </td>
+                    <td data-label="Status">
+                        <div class="status-dropdown">
+                            <span class="status-badge {{ enrollment.status }}" onclick="toggleStatusMenu(event, 'menu-{{ enrollment.id }}')">
+                                {{ enrollment.get_status_display }}
+                                <i class="fas fa-chevron-down" style="font-size:0.55rem;margin-left:4px;"></i>
+                            </span>
+                            <div class="status-menu" id="menu-{{ enrollment.id }}">
+                                <button class="status-option" onclick="updateStatus('{{ enrollment.id }}', 'active')">Active</button>
+                                <button class="status-option" onclick="updateStatus('{{ enrollment.id }}', 'completed')">Completed</button>
+                                <button class="status-option" onclick="updateStatus('{{ enrollment.id }}', 'paused')">Paused</button>
+                                <button class="status-option" onclick="updateStatus('{{ enrollment.id }}', 'dropped')">Dropped</button>
+                            </div>
+                        </div>
+                    </td>
+                    <td data-label="Progress">
+                        <div class="progress-mini">
+                            <span>{{ enrollment.progress_percentage }}%</span>
+                            <div class="progress-mini-bar">
+                                <div class="progress-mini-fill" style="width:{{ enrollment.progress_percentage }}%"></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td data-label="Enrolled">{{ enrollment.enrolled_at|date:"M d, Y" }}</td>
+                    <td data-label="Completed">{{ enrollment.completed_at|date:"M d, Y"|default:"—" }}</td>
+                    <td data-label="Actions">
+                        <div class="action-btns">
+                            <a href="{% url 'dashboard:student_detail' enrollment.student.id %}" class="btn-action view" title="View Student"><i class="fas fa-user"></i></a>
+                            <a href="{% url 'dashboard:admin_course_view' enrollment.course.id %}" class="btn-action edit" title="View Course"><i class="fas fa-eye"></i></a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align:center;padding:60px 20px;">
+                        <div style="font-size:3rem;color:#d1d5db;margin-bottom:12px;"><i class="fas fa-file-signature"></i></div>
+                        <p style="color:var(--text-muted);font-size:1rem;">No enrollments found.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="pagination-wrapper">
+        <div class="showing-text">
+            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} enrollments
+        </div>
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_course %}&course={{ current_course }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}" class="page-btn">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+                {% if num == page_obj.number %}
+                <span class="page-btn active">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <a href="?page={{ num }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_course %}&course={{ current_course }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}" class="page-btn">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_course %}&course={{ current_course }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}" class="page-btn">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Toggle status dropdown
+    function toggleStatusMenu(event, menuId) {
+        event.stopPropagation();
+        // Close all other menus
+        document.querySelectorAll('.status-menu.show').forEach(m => {
+            if (m.id !== menuId) m.classList.remove('show');
+        });
+        document.getElementById(menuId).classList.toggle('show');
+    }
+
+    // Close menus when clicking outside
+    document.addEventListener('click', function() {
+        document.querySelectorAll('.status-menu.show').forEach(m => m.classList.remove('show'));
+    });
+
+    // Update enrollment status
+    function updateStatus(enrollmentId, newStatus) {
+        fetch("{% url 'dashboard:update_enrollment_status' 0 %}".replace('0', enrollmentId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'status=' + newStatus
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                location.reload();
+            }
+        })
+        .catch(err => console.error('Error:', err));
+    }
+</script>
+{% endblock %}

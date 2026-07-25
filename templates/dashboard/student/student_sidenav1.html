@@ -1,0 +1,74 @@
+
+<aside class="dashboard-sidebar">
+    <div class="sidebar-card">
+        <h3>Navigation</h3>
+        <ul class="sidebar-nav">
+            <li><a class="{% if request.resolver_match.url_name == 'student_dashboard' %}active{% endif %}" href="{% url 'dashboard:student_dashboard' %}"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li><a class="{% if request.resolver_match.url_name == 'student_courses' %}active{% endif %}" href="{% url 'dashboard:student_courses' %}"><i class="fas fa-book-open"></i> My Courses</a></li>
+            <li><a class="{% if request.resolver_match.url_name == 'courses' %}active{% endif %}" href="{% url 'frontend:courses' %}"><i class="fas fa-search"></i> Browse Courses</a></li>
+            <li><a class="{% if request.resolver_match.url_name == 'payment_history' %}active{% endif %}" href="{% url 'payments:payment_history' %}"><i class="fas fa-credit-card"></i> Payment History</a></li>
+            <li><a href="#"><i class="fas fa-certificate"></i> Certificates</a></li>
+            <li><a class="{% if request.resolver_match.url_name == 'student_profile' %}active{% endif %}" href="{% url 'dashboard:student_profile' %}"><i class="fas fa-user-cog"></i> Profile Settings</a></li>
+        </ul>
+    </div>
+
+
+    <!-- Learning Progress -->
+    <div class="sidebar-card">
+        <h3>Learning Progress</h3>
+        <div class="progress-item">
+            <div class="progress-header">
+                <span class="name">SOC Analyst</span>
+                <span class="percent">85%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 85%"></div>
+            </div>
+        </div>
+        <div class="progress-item">
+            <div class="progress-header">
+                <span class="name">SEO Specialist</span>
+                <span class="percent">62%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 62%"></div>
+            </div>
+        </div>
+        <div class="progress-item">
+            <div class="progress-header">
+                <span class="name">SRE Fundamentals</span>
+                <span class="percent">40%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 40%"></div>
+            </div>
+        </div>
+        <div class="progress-item">
+            <div class="progress-header">
+                <span class="name">Digital Marketing</span>
+                <span class="percent">28%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 28%"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="sidebar-card">
+        <h3>Payment Summary</h3>
+        <ul class="info-list">
+            <li><i class="fas fa-check-circle" style="color: #10b981;"></i> <span>{{ completed_count }} Completed</span></li>
+            <li><i class="fas fa-clock" style="color: #f59e0b;"></i> <span>{{ pending_count }} Pending</span></li>
+            <li><i class="fas fa-times-circle" style="color: #ef4444;"></i> <span>{{ failed_count }} Failed</span></li>
+            <li><i class="fas fa-dollar-sign" style="color: var(--primary-accent);"></i> <span>${{ total_spent }} Total Spent</span></li>
+        </ul>
+    </div>
+
+    <div class="sidebar-card">
+        <h3>Account</h3>
+        <ul class="sidebar-nav">
+            <li><a href="{% url 'account_change_password' %}"><i class="fas fa-lock"></i> Change Password</a></li>
+            <li><a href="{% url 'accounts:logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+        </ul>
+    </div>
+</aside>

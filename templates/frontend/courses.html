@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Courses - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root { --navy: #0c1e2e; --navy-light: #142a3e; --gold: #ad7a49; --gold-dark: #b07d55; --gold-light: #d4a77d; --cream: #e8e4df; --text-light: #a0b0c0; --white: #ffffff; }
+
+    .course-search-section { background: linear-gradient(135deg, #f8f9fa 0%, #e8ecf1 100%); padding: 50px 0 60px 0; }
+    .course-category-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 15px; margin-bottom: 25px; font-size: 15px; }
+    .course-category-nav .label { font-weight: 700; color: #212529; display: flex; align-items: center; gap: 6px; }
+    .course-category-nav .label i { color: #c4c4c4; font-size: 13px; }
+    .course-category-nav .nav-item { color: #6b7280; text-decoration: none; position: relative; font-weight: 500; transition: all 0.3s ease; padding: 4px 0; }
+    .course-category-nav .nav-item:hover, .course-category-nav .nav-item.active { color: var(--gold); font-weight: 600; }
+    .course-category-nav .nav-item::after { content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 2px; background: var(--gold); transition: width 0.3s ease; }
+    .course-category-nav .nav-item:hover::after, .course-category-nav .nav-item.active::after { width: 100%; }
+    .course-category-nav .divider { color: #d1d5db; font-size: 12px; }
+    .course-header-title { font-size: 42px; font-weight: 700; color: #111827; margin-bottom: 10px; }
+    .course-header-subtitle { font-size: 20px; font-weight: 500; color: #374151; margin-bottom: 5px; margin-top: 10px; }
+    .course-header-desc { color: #6b7280; font-size: 16px; margin-bottom: 30px; max-width: 600px; line-height: 1.6; }
+    .course-filters-wrapper { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; justify-content: space-between; }
+
+    .license-filter { display: flex; gap: 0; background-color: #e2e8f0; border-radius: 6px; overflow: hidden; }
+    .license-filter a { padding: 10px 18px; font-size: 15px; font-weight: 500; color: #4a5568; text-decoration: none; transition: all 0.3s ease; white-space: nowrap; }
+    .license-filter a:hover { color: #1a202c; background-color: #cbd5e0; }
+    .license-filter a.active { background-color: #2d2d2d; color: #ffffff; }
+    .license-filter a:not(:last-child) { border-right: 1px solid rgba(0,0,0,0.08); }
+
+    .search-input-wrapper { flex-grow: 1; max-width: 450px; position: relative; }
+    .search-input-wrapper .form-control { background-color: #ffffff; border: 1.5px solid #e5e7eb; border-radius: 50px; padding: 11px 50px 11px 22px; font-size: 15px; color: #374151; transition: all 0.3s ease; }
+    .search-input-wrapper .form-control:focus { background-color: #ffffff; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(173,122,73,0.1); }
+    .search-input-wrapper .search-btn { position: absolute; right: 5px; top: 37%; transform: translateY(-50%); background: var(--gold); border: none; padding: 8px 14px; border-radius: 50px; color: white; cursor: pointer; transition: all 0.3s ease; }
+    .search-input-wrapper .search-btn:hover { background: var(--gold-dark); }
+
+    .dots-dropdown { position: relative; display: inline-block; }
+    .dots-dropdown-content { display: none; position: absolute; right: 0; top: 100%; background: white; min-width: 200px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); border-radius: 8px; z-index: 1000; padding: 8px 0; }
+    .dots-dropdown-content a { display: block; padding: 10px 20px; font-size: 14px; color: #374151; text-decoration: none; transition: all 0.2s ease; }
+    .dots-dropdown-content a:hover { background-color: #fef7f0; color: #ad7a49; }
+    .dots-dropdown:hover .dots-dropdown-content { display: block; }
+    .dots-menu { color: #a0aec0; cursor: pointer; font-size: 18px; padding: 4px 8px; border: none; background: none; text-decoration: none; }
+
+    /* Same as home page - only fix image height and equal cards */
+    .row { display: flex; flex-wrap: wrap; }
+    .row > [class*="col-"] { display: flex; }
+    .single-courses { display: flex; flex-direction: column; width: 100%; margin-bottom: 30px; }
+    .courses-content { flex: 1; display: flex; flex-direction: column; }
+    .courses-content .text-lead { flex: 1; }
+    .courses-images { height: 200px; overflow: hidden; }
+    .courses-images a { display: block; height: 100%; }
+    .courses-images img { width: 100%; height: 100%; object-fit: cover; }
+
+    .results-count { font-size: 14px; color: #6b7280; margin-bottom: 25px; }
+    .results-count strong { color: #111827; font-weight: 600; }
+    .empty-courses { text-align: center; padding: 80px 20px; }
+    .empty-courses i { font-size: 4rem; color: #d1d5db; margin-bottom: 16px; }
+    .empty-courses h3 { font-size: 1.3rem; font-weight: 600; color: #374151; margin-bottom: 8px; }
+
+    .pagination-wrapper { padding: 40px 0 20px; }
+    .pagination .page-link { border: 1.5px solid #e5e7eb; background-color: #ffffff; color: #374151; font-weight: 500; padding: 10px 18px; border-radius: 10px; margin: 0 3px; transition: all 0.3s ease; font-size: 14px; }
+    .pagination .page-link:hover { background-color: #fef7f0; border-color: var(--gold); color: var(--gold); }
+    .pagination .page-item.active .page-link { background-color: var(--gold); color: #ffffff; border-color: var(--gold); }
+    .pagination .page-item.disabled .page-link { color: #d1d5db; background-color: #f9fafb; border-color: #e5e7eb; cursor: not-allowed; }
+
+    @media (max-width: 767px) { .course-header-title { font-size: 28px; } .course-header-subtitle { font-size: 17px; } .course-filters-wrapper { flex-direction: column; align-items: stretch; } .search-input-wrapper { max-width: 100%; } .courses-images { height: 200px; } }
+    @media (max-width: 480px) { .courses-images { height: 180px; } .course-search-section { padding: 30px 0 40px 0; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="course-search-section">
+    <div class="container">
+        <div class="course-category-nav">
+            <span class="label">Course Category <i class="bi bi-chevron-right"></i></span>
+            <div class="d-flex align-items-center flex-wrap gap-2">
+                <a href="{% url 'frontend:courses' %}" class="nav-item {% if not current_category %}active{% endif %}">All Courses</a>
+                <span class="divider">|</span>
+                {% for category in categories %}
+                    {% if forloop.counter <= 4 %}
+                    <a href="{% url 'frontend:courses' %}?category={{ category.slug }}" class="nav-item {% if current_category == category.slug %}active{% endif %}">{{ category.name }}</a>
+                    <span class="divider">|</span>
+                    {% endif %}
+                {% endfor %}
+                {% if categories|length > 4 %}
+                <div class="dots-dropdown">
+                    <a href="#" class="dots-menu" onclick="return false;"><i class="bi bi-three-dots-vertical"></i></a>
+                    <div class="dots-dropdown-content">
+                        {% for category in categories %}
+                            {% if forloop.counter > 4 %}
+                            <a href="{% url 'frontend:courses' %}?category={{ category.slug }}">{{ category.name }}</a>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <h1 class="course-header-title">{% if current_category %}{% for category in categories %}{% if category.slug == current_category %}{{ category.name }}{% endif %}{% endfor %}{% else %}Explore Our Courses{% endif %}</h1>
+        <p class="course-header-subtitle">Courses to Launch Your Journey</p>
+        <p class="course-header-desc">Learn from experienced industry professionals with real-world expertise.</p>
+
+        <div class="course-filters-wrapper">
+            <div class="license-filter">
+                <a href="{% url 'frontend:courses' %}{% if current_category %}?category={{ current_category }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}" class="{% if not current_price %}active{% endif %}">All</a>
+                <a href="{% url 'frontend:courses' %}?price=free{% if current_category %}&category={{ current_category }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}" class="{% if current_price == 'free' %}active{% endif %}">Free</a>
+                <a href="{% url 'frontend:courses' %}?price=paid{% if current_category %}&category={{ current_category }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}" class="{% if current_price == 'paid' %}active{% endif %}">Paid</a>
+            </div>
+
+            <div class="search-input-wrapper">
+                <form method="GET" action="{% url 'frontend:courses' %}">
+                    {% if current_category %}<input type="hidden" name="category" value="{{ current_category }}">{% endif %}
+                    {% if current_price %}<input type="hidden" name="price" value="{{ current_price }}">{% endif %}
+                    <input type="text" name="search" class="form-control" placeholder="Search courses..." value="{{ current_search|default:'' }}">
+                    <button type="submit" class="search-btn"><i class="bi bi-search"></i></button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="section section-padding-02">
+    <div class="container">
+        {% if courses %}
+            <div class="results-count">Showing <strong>{{ courses|length }}</strong> of <strong>{{ total_courses }}</strong> courses{% if current_category %} in <strong>{% for cat in categories %}{% if cat.slug == current_category %}{{ cat.name }}{% endif %}{% endfor %}</strong>{% endif %}{% if current_search %} matching "<strong>{{ current_search }}</strong>"{% endif %}</div>
+
+            <div class="row">
+                {% for course in courses %}
+                <div class="col-lg-4 col-md-6">
+                    <div class="single-courses">
+                        <div class="courses-images">
+                            <a href="{% url 'frontend:course_detail' slug=course.slug %}">
+                                {% if course.featured_image %}<img src="{{ course.featured_image.url }}" alt="{{ course.title }}" loading="lazy">
+                                {% else %}<img src="{% static 'assets/images/courses/courses-01.jpg' %}" alt="{{ course.title }}" loading="lazy">{% endif %}
+                            </a>
+                        </div>
+                        <div class="courses-content">
+                            <h4 class="title"><a href="{% url 'frontend:course_detail' slug=course.slug %}">{{ course.title }}</a></h4>
+                            <p class="text-lead">{{ course.short_description|default:course.description|truncatechars:80 }}</p>
+                            <div class="courses-meta"><span><i class="icofont-clock-time"></i> {{ course.duration|default:"Self-paced" }}</span></div>
+                            <div class="courses-price-review">
+                                <div class="courses-price">
+                                    {% if course.is_free %}<span class="sale-parice" style="color: #10b981;">Free</span>
+                                    {% elif course.discount_price %}<span class="sale-parice">${{ course.discount_price }}</span><span class="old-parice">${{ course.price }}</span>
+                                    {% else %}<span class="sale-parice">${{ course.price }}</span>{% endif %}
+                                </div>
+                                <div class="courses-review">
+                                    <span class="rating-count">{{ course.average_rating|default:"4.5" }}</span>
+                                    <span class="rating-star"><span class="rating-bar" style="width: {% widthratio course.average_rating|default:4.5 5 100 %}%;"></span></span>
+                                    <span class="review-count">({{ course.review_count|default:"0" }})</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if is_paginated %}
+            <div class="pagination-wrapper text-center">
+                <nav><ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}{% if current_price %}&price={{ current_price }}{% endif %}"><i class="fas fa-chevron-left"></i></a></li>{% endif %}
+                    {% for num in page_obj.paginator.page_range %}{% if num == page_obj.number %}<li class="page-item active"><span class="page-link">{{ num }}</span></li>{% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}<li class="page-item"><a class="page-link" href="?page={{ num }}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}{% if current_price %}&price={{ current_price }}{% endif %}">{{ num }}</a></li>{% endif %}{% endfor %}
+                    {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_category %}&category={{ current_category }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}{% if current_price %}&price={{ current_price }}{% endif %}"><i class="fas fa-chevron-right"></i></a></li>{% endif %}
+                </ul></nav>
+            </div>
+            {% endif %}
+        {% else %}
+        <div class="empty-courses"><i class="fas fa-search"></i><h3>No Courses Found</h3><p>Try adjusting your search or filter criteria</p><a href="{% url 'frontend:courses' %}" style="display:inline-block;margin-top:16px;padding:10px 24px;background:#ad7a49;color:white;border-radius:6px;text-decoration:none;">View All Courses</a></div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

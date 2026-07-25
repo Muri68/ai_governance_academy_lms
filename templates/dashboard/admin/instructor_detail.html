@@ -1,0 +1,97 @@
+{% extends "dashboard/admin/admin_base.html" %}
+{% load static %}
+
+{% block title %}{{ instructor.get_full_name }} - Instructor Details{% endblock %}
+{% block page_title %}Instructor Details{% endblock %}
+
+{% block extra_css %}
+<style>
+    .breadcrumb-row { display:flex;align-items:center;gap:8px;font-size:0.85rem;margin-bottom:16px; }
+    .breadcrumb-row a { color:var(--text-secondary);text-decoration:none; }
+    .breadcrumb-row a:hover { color:var(--accent-blue); }
+
+    .profile-header { background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:var(--radius-lg);padding:28px;margin-bottom:20px;display:flex;align-items:center;gap:24px;flex-wrap:wrap; }
+    .profile-avatar { width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--accent-green); }
+    .profile-avatar-df { width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#10b981,#059669);color:white;display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:700;border:3px solid var(--accent-green); }
+    .profile-info { color:white;flex:1; }
+    .profile-info h2 { font-size:1.3rem;font-weight:700;margin-bottom:4px; }
+    .profile-info .role { color:#10b981;font-size:0.85rem; }
+    .profile-info .dept { color:rgba(255,255,255,0.6);font-size:0.8rem; }
+
+    .stats-row { display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px; }
+    .stat-card { background:var(--bg-card);border-radius:var(--radius-md);padding:16px;text-align:center;border:1px solid var(--border-color); }
+    .stat-card .num { font-size:1.5rem;font-weight:700;color:var(--text-primary); }
+    .stat-card .lbl { font-size:0.72rem;color:var(--text-secondary);margin-top:2px; }
+
+    .detail-grid { display:grid;grid-template-columns:2fr 1fr;gap:20px; }
+    .detail-card { background:var(--bg-card);border-radius:var(--radius-md);border:1px solid var(--border-color);padding:20px; }
+    .detail-card h3 { font-size:0.95rem;font-weight:600;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border-color); }
+
+    .course-list-item { display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(0,0,0,0.04);text-decoration:none;color:inherit; }
+    .course-list-item:hover { background:#f8fafc;margin:0 -12px;padding:12px;border-radius:8px; }
+    .course-list-item .course-img { width:60px;height:40px;border-radius:6px;object-fit:cover; }
+    .course-list-item .course-img-df { width:60px;height:40px;border-radius:6px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;color:white;font-size:0.8rem; }
+    .course-list-info { flex:1; }
+    .course-list-info h4 { font-size:0.85rem;font-weight:600; }
+    .course-list-info span { font-size:0.72rem;color:var(--text-muted); }
+    .course-list-meta { text-align:right; }
+    .course-list-meta .price { font-weight:600; }
+    .course-list-meta .students { font-size:0.7rem;color:var(--text-muted); }
+
+    @media (max-width:1024px) { .detail-grid { grid-template-columns:1fr; } }
+    @media (max-width:768px) { .stats-row { grid-template-columns:repeat(2,1fr); } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-row">
+    <a href="{% url 'dashboard:manage_instructors' %}"><i class="fas fa-arrow-left"></i> Instructors</a>
+    <span>/</span>
+    <span class="current">{{ instructor.get_full_name }}</span>
+</div>
+
+<div class="profile-header">
+    {% if instructor.profile_picture %}<img src="{{ instructor.profile_picture.url }}" class="profile-avatar">
+    {% else %}<div class="profile-avatar-df">{{ instructor.first_name|slice:":1"|upper }}{{ instructor.last_name|slice:":1"|upper }}</div>{% endif %}
+    <div class="profile-info">
+        <h2>{{ instructor.get_full_name }}</h2>
+        <div class="role"><i class="fas fa-chalkboard-teacher"></i> Instructor</div>
+        <div class="dept">{{ instructor.instructor_profile.department|default:"No department" }} | {{ instructor.email }}</div>
+    </div>
+</div>
+
+<div class="stats-row">
+    <div class="stat-card"><div class="num">{{ total_courses }}</div><div class="lbl">Total Courses</div></div>
+    <div class="stat-card"><div class="num">{{ paid_courses }}</div><div class="lbl">Paid Courses</div></div>
+    <div class="stat-card"><div class="num">{{ free_courses }}</div><div class="lbl">Free Courses</div></div>
+    <div class="stat-card"><div class="num">${{ total_earnings }}</div><div class="lbl">Total Earnings</div></div>
+    <div class="stat-card"><div class="num">{{ total_students }}</div><div class="lbl">Active Students</div></div>
+    <div class="stat-card"><div class="num">{{ total_reviews }}</div><div class="lbl">Reviews</div></div>
+    <div class="stat-card"><div class="num">{{ average_rating|floatformat:1 }} ⭐</div><div class="lbl">Avg Rating</div></div>
+    <div class="stat-card"><div class="num">{{ instructor.instructor_profile.years_of_experience|default:"0" }}</div><div class="lbl">Years Exp</div></div>
+</div>
+
+<div class="detail-grid">
+    <div class="detail-card">
+        <h3>All Courses ({{ total_courses }})</h3>
+        {% for course in courses %}
+        <a href="{% url 'dashboard:admin_course_view' course.id %}" class="course-list-item">
+            {% if course.featured_image %}<img src="{{ course.featured_image.url }}" class="course-img">
+            {% else %}<div class="course-img-df"><i class="fas fa-book"></i></div>{% endif %}
+            <div class="course-list-info"><h4>{{ course.title }}</h4><span>{{ course.get_status_display }} | {{ course.get_level_display }}</span></div>
+            <div class="course-list-meta"><div class="price">{% if course.is_free %}<span style="color:#10b981;">Free</span>{% else %}${{ course.price }}{% endif %}</div><div class="students">{{ course.student_count }} students</div></div>
+        </a>
+        {% empty %}<p style="color:var(--text-muted);text-align:center;padding:20px;">No courses yet.</p>{% endfor %}
+    </div>
+    <div class="detail-card">
+        <h3>Quick Info</h3>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.04);"><span style="color:var(--text-secondary);">Qualification</span><span style="font-weight:600;">{{ instructor.instructor_profile.qualification|default:"—" }}</span></div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.04);"><span style="color:var(--text-secondary);">Expertise</span><span style="font-weight:600;">{{ instructor.instructor_profile.expertise|default:"—"|truncatechars:50 }}</span></div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.04);"><span style="color:var(--text-secondary);">Joined</span><span style="font-weight:600;">{{ instructor.date_joined|date:"M d, Y" }}</span></div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.04);"><span style="color:var(--text-secondary);">Status</span><span style="font-weight:600;color:{% if instructor.is_active %}#10b981{% else %}#ef4444{% endif %};">{% if instructor.is_active %}Active{% else %}Inactive{% endif %}</span></div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;"><span style="color:var(--text-secondary);">Total Earnings</span><span style="font-weight:700;color:#10b981;">${{ total_earnings }}</span></div>
+        </div>
+    </div>
+</div>
+{% endblock %}

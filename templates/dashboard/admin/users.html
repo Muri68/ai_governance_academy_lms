@@ -1,0 +1,652 @@
+{% extends "dashboard/admin/admin_base.html" %}
+{% load static %}
+
+{% block title %}Users{% endblock %}
+{% block page_title %}Users{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ===== STATS ROW ===== */
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .stat-card {
+        background: var(--bg-card);
+        border-radius: var(--radius-md);
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        box-shadow: var(--shadow-sm);
+        border-bottom: 3px solid transparent;
+        border: 1px solid var(--border-color);
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+
+    .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .stat-card.blue { border-bottom-color: var(--accent-blue); }
+    .stat-card.green { border-bottom-color: var(--accent-green); }
+    .stat-card.purple { border-bottom-color: var(--accent-purple); }
+    .stat-card.orange { border-bottom-color: var(--accent-orange); }
+    .stat-card.active-card { background: #f8fafc; border: 2px solid var(--accent-blue); }
+
+    .stat-icon {
+        width: 48px; height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+
+    .stat-icon.blue { background: rgba(59, 130, 246, 0.1); color: var(--accent-blue); }
+    .stat-icon.green { background: rgba(16, 185, 129, 0.1); color: var(--accent-green); }
+    .stat-icon.purple { background: rgba(139, 92, 246, 0.1); color: var(--accent-purple); }
+    .stat-icon.orange { background: rgba(245, 158, 11, 0.1); color: var(--accent-orange); }
+
+    .stat-info h3 { font-size: 0.8rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 4px; }
+    .stat-info .value { font-size: 1.5rem; font-weight: 800; color: var(--text-primary); }
+
+    /* ===== ROLE TABS ===== */
+    .role-tabs {
+        display: flex;
+        gap: 4px;
+        background: var(--bg-card);
+        border-radius: var(--radius-md);
+        padding: 4px;
+        border: 1px solid var(--border-color);
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+    }
+
+    .role-tab {
+        padding: 8px 20px;
+        border-radius: var(--radius-sm);
+        border: none;
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+        font-weight: 500;
+        font-family: inherit;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+
+    .role-tab:hover { color: var(--text-primary); background: var(--bg-main); }
+    .role-tab.active { background: var(--accent-blue); color: white; font-weight: 600; }
+    .role-tab .count {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: var(--radius-pill);
+        background: rgba(255,255,255,0.2);
+        font-size: 0.7rem;
+        margin-left: 6px;
+    }
+    .role-tab:not(.active) .count { background: var(--bg-main); }
+
+    /* ===== FILTER & ADD ROW ===== */
+    .filter-add-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .filters-group { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+    .filter-dropdown {
+        padding: 8px 32px 8px 14px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        background: var(--bg-card);
+        color: var(--text-primary);
+        font-size: 0.85rem;
+        font-family: inherit;
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        outline: none;
+        transition: all 0.2s;
+    }
+
+    .filter-dropdown:focus { border-color: var(--accent-blue); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+
+    .results-text { font-size: 0.8rem; color: var(--text-muted); }
+
+    .btn-add-user {
+        padding: 9px 18px;
+        background: var(--accent-blue);
+        color: white;
+        border: none;
+        border-radius: var(--radius-sm);
+        font-size: 0.85rem;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .btn-add-user:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); color: white; }
+
+    /* ===== TABLE CARD ===== */
+    .table-card {
+        background: var(--bg-card);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+    }
+
+    .table-responsive { overflow-x: auto; }
+
+    .users-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 850px;
+    }
+
+    .users-table thead th {
+        text-align: left;
+        padding: 14px 16px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        border-bottom: 1px solid var(--border-color);
+        background: #f8fafc;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        white-space: nowrap;
+    }
+
+    .users-table tbody td {
+        padding: 12px 16px;
+        font-size: 0.85rem;
+        border-bottom: 1px solid var(--border-color);
+        vertical-align: middle;
+    }
+
+    .users-table tbody tr:last-child td { border-bottom: none; }
+    .users-table tbody tr { transition: background 0.15s; }
+    .users-table tbody tr:hover { background: rgba(241, 245, 249, 0.5); }
+
+    /* User cell */
+    .user-cell {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .user-avatar {
+        width: 40px; height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        flex-shrink: 0;
+    }
+
+    .user-avatar-default {
+        width: 40px; height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        font-weight: 700;
+        flex-shrink: 0;
+        color: white;
+    }
+
+    .user-avatar-default.student { background: linear-gradient(135deg, #10b981, #059669); }
+    .user-avatar-default.instructor { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+    .user-avatar-default.admin { background: linear-gradient(135deg, #f59e0b, #d97706); }
+
+    .user-name { font-weight: 600; color: var(--text-primary); }
+    .user-email-cell { color: var(--text-secondary); font-size: 0.8rem; }
+
+    /* Role badge */
+    .role-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 12px;
+        border-radius: var(--radius-pill);
+        font-size: 0.75rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .role-badge.student { background: rgba(16, 185, 129, 0.1); color: var(--accent-green); }
+    .role-badge.instructor { background: rgba(139, 92, 246, 0.1); color: var(--accent-purple); }
+    .role-badge.admin { background: rgba(245, 158, 11, 0.1); color: var(--accent-orange); }
+
+    /* Status badge */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 12px;
+        border-radius: var(--radius-pill);
+        font-size: 0.75rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .status-badge.active { background: rgba(16, 185, 129, 0.1); color: var(--accent-green); }
+    .status-badge.inactive { background: rgba(239, 68, 68, 0.1); color: var(--accent-red); }
+    .status-badge.pending { background: rgba(245, 158, 11, 0.1); color: var(--accent-orange); }
+
+    /* Action buttons */
+    .action-btns { display: flex; gap: 4px; }
+
+    .action-btn {
+        width: 32px; height: 32px;
+        border-radius: var(--radius-sm);
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+    }
+
+    .action-btn.view { color: var(--accent-blue); }
+    .action-btn.view:hover { background: rgba(59, 130, 246, 0.1); }
+    .action-btn.toggle { color: var(--accent-orange); }
+    .action-btn.toggle:hover { background: rgba(245, 158, 11, 0.1); }
+    .action-btn.delete { color: var(--accent-red); }
+    .action-btn.delete:hover { background: rgba(239, 68, 68, 0.1); }
+
+    /* ===== PAGINATION ===== */
+    .pagination-wrapper {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 16px;
+        border-top: 1px solid var(--border-color);
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .showing-text { font-size: 0.8rem; color: var(--text-secondary); }
+    .showing-text .highlight { color: var(--text-primary); font-weight: 600; }
+
+    .pagination { display: flex; align-items: center; gap: 4px; }
+
+    .pagination-btn {
+        min-width: 34px; height: 34px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-color);
+        background: var(--bg-card);
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+        font-family: inherit;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+
+    .pagination-btn:hover { background: var(--bg-main); color: var(--text-primary); border-color: var(--accent-blue); }
+    .pagination-btn.active { background: var(--accent-blue); color: white; border-color: var(--accent-blue); }
+    .pagination-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .pagination-btn.ellipsis { border: none; cursor: default; }
+    .pagination-btn.ellipsis:hover { background: transparent; border: none; }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 1200px) {
+        .stats-row { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 768px) {
+        .stats-row { grid-template-columns: 1fr; }
+        .role-tabs { overflow-x: auto; flex-wrap: nowrap; }
+        .filter-add-row { flex-direction: column; align-items: flex-start; }
+        .filters-group { width: 100%; }
+        .filter-dropdown { flex: 1; }
+        
+        .table-responsive { overflow-x: visible; }
+        .users-table { min-width: auto; }
+        .users-table thead { display: none; }
+        
+        .users-table tbody td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 16px;
+            border: none;
+            font-size: 0.8rem;
+        }
+
+        .users-table tbody td::before {
+            content: attr(data-label);
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            flex-shrink: 0;
+            margin-right: 12px;
+        }
+
+        .users-table tbody tr {
+            display: block;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .users-table tbody tr:last-child { border-bottom: none; }
+        .pagination-wrapper { flex-direction: column; text-align: center; }
+        .pagination { justify-content: center; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Stats Row - Clickable to filter by role -->
+<div class="stats-row">
+    <div class="stat-card blue active-card" data-role="all" id="statAll">
+        <div class="stat-icon blue"><i class="fas fa-users"></i></div>
+        <div class="stat-info">
+            <h3>Total Users</h3>
+            <div class="value">{{ total_users|default:"1,200" }}</div>
+        </div>
+    </div>
+    <div class="stat-card green" data-role="STUDENT" id="statStudent">
+        <div class="stat-icon green"><i class="fas fa-user-graduate"></i></div>
+        <div class="stat-info">
+            <h3>Students</h3>
+            <div class="value">{{ total_students|default:"1,100" }}</div>
+        </div>
+    </div>
+    <div class="stat-card purple" data-role="INSTRUCTOR" id="statInstructor">
+        <div class="stat-icon purple"><i class="fas fa-chalkboard-user"></i></div>
+        <div class="stat-info">
+            <h3>Instructors</h3>
+            <div class="value">{{ total_instructors|default:"80" }}</div>
+        </div>
+    </div>
+    <div class="stat-card orange" data-role="ADMIN" id="statAdmin">
+        <div class="stat-icon orange"><i class="fas fa-user-shield"></i></div>
+        <div class="stat-info">
+            <h3>Admins</h3>
+            <div class="value">{{ total_admins|default:"20" }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Role Tabs -->
+<div class="role-tabs" id="roleTabs">
+    <button class="role-tab" data-role="all">All Users <span class="count">{{ total_users|default:"1200" }}</span></button>
+    <button class="role-tab active" data-role="STUDENT">Students <span class="count">{{ total_students|default:"1100" }}</span></button>
+    <button class="role-tab" data-role="INSTRUCTOR">Instructors <span class="count">{{ total_instructors|default:"80" }}</span></button>
+    <button class="role-tab" data-role="ADMIN">Admins <span class="count">{{ total_admins|default:"20" }}</span></button>
+</div>
+
+<!-- Filter & Add Row -->
+<div class="filter-add-row">
+    <div class="filters-group">
+        <select class="filter-dropdown" id="statusFilter">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            <option value="pending">Pending</option>
+        </select>
+        <span class="results-text" id="resultsCount">Showing all students</span>
+    </div>
+    <a href="{% url 'dashboard:add_user' %}" class="btn-add-user">
+        <i class="fas fa-plus"></i> Add Student
+    </a>
+</div>
+
+<!-- Users Table -->
+<div class="table-card">
+    <div class="table-responsive">
+        <table class="users-table">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Joined On</th>
+                    <th>Last Active</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="usersTableBody">
+                {% if users %}
+                    {% for u in users %}
+                    <tr data-role="{{ u.user_type }}" data-status="{% if u.is_active %}active{% else %}inactive{% endif %}">
+                        <td data-label="User">
+                            <div class="user-cell">
+                                {% if u.profile_picture %}
+                                <img src="{{ u.profile_picture.url }}" alt="{{ u.get_full_name }}" class="user-avatar">
+                                {% else %}
+                                <div class="user-avatar-default {{ u.user_type|lower }}">{{ u.first_name|slice:":1"|upper }}{{ u.last_name|slice:":1"|upper }}</div>
+                                {% endif %}
+                                <span class="user-name">{{ u.get_full_name }}</span>
+                            </div>
+                        </td>
+                        <td data-label="Email"><span class="user-email-cell">{{ u.email }}</span></td>
+                        <td data-label="Role">
+                            <span class="role-badge {{ u.user_type|lower }}">{{ u.get_user_type_display }}</span>
+                        </td>
+                        <td data-label="Status">
+                            {% if u.is_active %}
+                            <span class="status-badge active">Active</span>
+                            {% else %}
+                            <span class="status-badge inactive">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Joined On">{{ u.date_joined|date:"M d, Y" }}</td>
+                        <td data-label="Last Active">{% if u.last_login %}{{ u.last_login|date:"M d, Y" }}{% else %}Never{% endif %}</td>
+                        <td data-label="Actions">
+                            <div class="action-btns">
+                                {% if u.user_type == 'STUDENT' %}
+                                <a class="action-btn view text-decoration-none" style="text-decoration: none;" href="{% url 'dashboard:student_detail' u.id %}" title="View Profile">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% elif u.user_type == 'INSTRUCTOR' %}
+                                <a class="action-btn view text-decoration-none" style="text-decoration: none;" href="{% url 'dashboard:instructor_detail' u.id %}" title="View Profile">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% elif u.user_type == 'ADMIN' %}
+                                <button class="action-btn view text-decoration-none" title="View Profile" disabled style="opacity:0.3;">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                {% endif %}
+                                <form method="POST" action="{% url 'dashboard:toggle_user_status' u.id %}" style="display: inline;" onsubmit="return confirm('{% if u.is_active %}Deactivate{% else %}Activate{% endif %} this user?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="action-btn toggle" title="{% if u.is_active %}Deactivate{% else %}Activate{% endif %}">
+                                        <i class="fas {% if u.is_active %}fa-user-slash{% else %}fa-user-check{% endif %}"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <!-- Sample data -->
+                    <tr data-role="STUDENT" data-status="active">
+                        <td data-label="User"><div class="user-cell"><div class="user-avatar-default student">CW</div><span class="user-name">Cameron Williamson</span></div></td>
+                        <td data-label="Email"><span class="user-email-cell">cameron.w@example.com</span></td>
+                        <td data-label="Role"><span class="role-badge student">Student</span></td>
+                        <td data-label="Status"><span class="status-badge active">Active</span></td>
+                        <td data-label="Joined On">Jul 02, 2025</td>
+                        <td data-label="Last Active">Today</td>
+                        <td data-label="Actions"><div class="action-btns"><button class="action-btn view"><i class="fas fa-eye"></i></button><button class="action-btn toggle"><i class="fas fa-user-slash"></i></button></div></td>
+                    </tr>
+                    <tr data-role="STUDENT" data-status="active">
+                        <td data-label="User"><div class="user-cell"><div class="user-avatar-default student">AS</div><span class="user-name">Alice Smith</span></div></td>
+                        <td data-label="Email"><span class="user-email-cell">alice.s@example.com</span></td>
+                        <td data-label="Role"><span class="role-badge student">Student</span></td>
+                        <td data-label="Status"><span class="status-badge active">Active</span></td>
+                        <td data-label="Joined On">Jun 15, 2025</td>
+                        <td data-label="Last Active">Today</td>
+                        <td data-label="Actions"><div class="action-btns"><button class="action-btn view"><i class="fas fa-eye"></i></button><button class="action-btn toggle"><i class="fas fa-user-slash"></i></button></div></td>
+                    </tr>
+                    <tr data-role="STUDENT" data-status="inactive">
+                        <td data-label="User"><div class="user-cell"><div class="user-avatar-default student">BJ</div><span class="user-name">Bob Johnson</span></div></td>
+                        <td data-label="Email"><span class="user-email-cell">bob.j@example.com</span></td>
+                        <td data-label="Role"><span class="role-badge student">Student</span></td>
+                        <td data-label="Status"><span class="status-badge inactive">Inactive</span></td>
+                        <td data-label="Joined On">May 20, 2025</td>
+                        <td data-label="Last Active">Jul 01, 2025</td>
+                        <td data-label="Actions"><div class="action-btns"><button class="action-btn view"><i class="fas fa-eye"></i></button><button class="action-btn toggle"><i class="fas fa-user-check"></i></button></div></td>
+                    </tr>
+                    <tr data-role="STUDENT" data-status="active">
+                        <td data-label="User"><div class="user-cell"><div class="user-avatar-default student">DP</div><span class="user-name">Diana Prince</span></div></td>
+                        <td data-label="Email"><span class="user-email-cell">diana.p@example.com</span></td>
+                        <td data-label="Role"><span class="role-badge student">Student</span></td>
+                        <td data-label="Status"><span class="status-badge active">Active</span></td>
+                        <td data-label="Joined On">Apr 10, 2025</td>
+                        <td data-label="Last Active">Today</td>
+                        <td data-label="Actions"><div class="action-btns"><button class="action-btn view"><i class="fas fa-eye"></i></button><button class="action-btn toggle"><i class="fas fa-user-slash"></i></button></div></td>
+                    </tr>
+                    <tr data-role="STUDENT" data-status="active">
+                        <td data-label="User"><div class="user-cell"><div class="user-avatar-default student">ET</div><span class="user-name">Ethan Thomas</span></div></td>
+                        <td data-label="Email"><span class="user-email-cell">ethan.t@example.com</span></td>
+                        <td data-label="Role"><span class="role-badge student">Student</span></td>
+                        <td data-label="Status"><span class="status-badge active">Active</span></td>
+                        <td data-label="Joined On">Mar 25, 2025</td>
+                        <td data-label="Last Active">Today</td>
+                        <td data-label="Actions"><div class="action-btns"><button class="action-btn view"><i class="fas fa-eye"></i></button><button class="action-btn toggle"><i class="fas fa-user-slash"></i></button></div></td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-wrapper">
+        <div class="showing-text">
+            Showing <span class="highlight" id="showingStart">1</span> to <span class="highlight" id="showingEnd">5</span> of <span class="highlight" id="showingTotal">1,200</span> users
+        </div>
+        <div class="pagination">
+            <button class="pagination-btn" disabled><i class="fas fa-chevron-left"></i></button>
+            <button class="pagination-btn active">1</button>
+            <button class="pagination-btn">2</button>
+            <button class="pagination-btn">3</button>
+            <button class="pagination-btn ellipsis">...</button>
+            <button class="pagination-btn">67</button>
+            <button class="pagination-btn"><i class="fas fa-chevron-right"></i></button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const roleTabs = document.querySelectorAll('.role-tab');
+        const statCards = document.querySelectorAll('.stat-card[data-role]');
+        const statusFilter = document.getElementById('statusFilter');
+        const resultsCount = document.getElementById('resultsCount');
+        const tableRows = document.querySelectorAll('#usersTableBody tr');
+        const addUserBtn = document.querySelector('.btn-add-user');
+        
+        let currentRole = 'STUDENT'; // Default to students
+
+        function updateAddButton(role) {
+            if (role === 'STUDENT' || role === 'all') {
+                addUserBtn.innerHTML = '<i class="fas fa-plus"></i> Add Student';
+                addUserBtn.href = "{% url 'dashboard:add_user' %}";
+            } else if (role === 'INSTRUCTOR') {
+                addUserBtn.innerHTML = '<i class="fas fa-plus"></i> Add Instructor';
+                addUserBtn.href = "{% url 'dashboard:add_user' %}";
+            } else if (role === 'ADMIN') {
+                addUserBtn.innerHTML = '<i class="fas fa-plus"></i> Add Admin';
+                addUserBtn.href = "{% url 'dashboard:add_user' %}";
+            }
+        }
+
+        function filterTable() {
+            const statusVal = statusFilter.value.toLowerCase();
+            let visibleCount = 0;
+
+            tableRows.forEach(row => {
+                const role = row.getAttribute('data-role');
+                const status = row.getAttribute('data-status');
+                
+                let show = true;
+                if (currentRole !== 'all' && role !== currentRole) show = false;
+                if (statusVal && status !== statusVal) show = false;
+                
+                row.style.display = show ? '' : 'none';
+                if (show) visibleCount++;
+            });
+
+            const roleLabel = currentRole === 'all' ? 'all' : currentRole.toLowerCase() + 's';
+            const statusLabel = statusVal || 'all';
+            resultsCount.textContent = `Showing ${visibleCount} ${statusVal ? statusVal + ' ' : ''}${roleLabel}`;
+            
+            document.getElementById('showingStart').textContent = visibleCount > 0 ? '1' : '0';
+            document.getElementById('showingEnd').textContent = visibleCount;
+            document.getElementById('showingTotal').textContent = visibleCount;
+        }
+
+        // Role tabs click
+        roleTabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                roleTabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                currentRole = this.getAttribute('data-role');
+                updateAddButton(currentRole);
+                filterTable();
+            });
+        });
+
+        // Stat cards click
+        statCards.forEach(card => {
+            card.addEventListener('click', function() {
+                const role = this.getAttribute('data-role');
+                statCards.forEach(c => c.classList.remove('active-card'));
+                this.classList.add('active-card');
+                currentRole = role;
+                
+                // Update tabs
+                roleTabs.forEach(t => t.classList.remove('active'));
+                const matchingTab = document.querySelector(`.role-tab[data-role="${role}"]`);
+                if (matchingTab) matchingTab.classList.add('active');
+                
+                updateAddButton(role);
+                filterTable();
+            });
+        });
+
+        // Status filter
+        statusFilter.addEventListener('change', filterTable);
+
+        // Initial filter
+        updateAddButton('STUDENT');
+        filterTable();
+
+        // Pagination
+        const paginationBtns = document.querySelectorAll('.pagination-btn:not(.ellipsis):not([disabled])');
+        paginationBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (this.querySelector('i')) return;
+                document.querySelectorAll('.pagination-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    });
+</script>
+{% endblock %}

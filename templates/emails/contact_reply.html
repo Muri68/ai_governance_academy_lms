@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #1e293b; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .header h1 { color: white; margin: 0; font-size: 24px; }
+        .content { padding: 30px; background: white; border: 1px solid #e2e8f0; }
+        .footer { background: #f8fafc; padding: 20px; text-align: center; border-radius: 0 0 10px 10px; font-size: 12px; color: #94a3b8; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>{{ site_name }}</h1>
+        </div>
+        <div class="content">
+            <p>Dear {{ name }},</p>
+            {{ reply_message|safe }}
+        </div>
+        <div class="footer">
+            <p>This is a reply to your message sent to {{ site_name }}.</p>
+            <p>© {% now "Y" %} {{ site_name }}. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

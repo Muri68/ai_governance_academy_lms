@@ -1,0 +1,175 @@
+{% extends "dashboard/instructor/instructor_base.html" %}
+{% load static %}
+
+{% block title %}My Profile{% endblock %}
+{% block page_title %}My Profile{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .card { background: var(--card-bg); border-radius: 16px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); border: 1px solid var(--border-color); }
+    .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border-color); }
+    .card-header .icon-circle { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.9rem; }
+    .icon-circle.blue { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+    .icon-circle.purple { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+    .icon-circle.orange { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .card-header h3 { font-size: 0.95rem; font-weight: 600; color: var(--text-dark); }
+
+    .form-group { margin-bottom: 18px; }
+    .form-group label { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 600; color: var(--text-dark); margin-bottom: 6px; }
+    .form-control { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border-color); border-radius: 10px; font-size: 0.85rem; font-family: 'Poppins', sans-serif; color: var(--text-dark); background: #f8fafc; outline: none; transition: all 0.2s; }
+    .form-control:focus { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08); background: white; }
+    .form-control:disabled { background: #f1f5f9; cursor: not-allowed; }
+    textarea.form-control { resize: vertical; min-height: 80px; }
+
+    .profile-avatar-section { text-align: center; margin-bottom: 20px; }
+    .profile-avatar-large { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid #10b981; margin-bottom: 12px; }
+    .profile-avatar-default { width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, #10b981, #059669); color: white; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700; margin: 0 auto 12px; }
+    .btn-upload { padding: 8px 16px; background: #f0fdf4; color: #10b981; border: 1px solid #10b981; border-radius: 8px; font-size: 0.78rem; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; transition: all 0.2s; }
+    .btn-upload:hover { background: #10b981; color: white; }
+
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .info-item { padding: 14px; background: #f8fafc; border-radius: 10px; }
+    .info-item .info-label { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 4px; }
+    .info-item .info-value { font-size: 0.85rem; font-weight: 600; color: var(--text-dark); }
+
+    .btn { padding: 11px 24px; border-radius: 10px; font-size: 0.88rem; font-weight: 600; cursor: pointer; border: none; font-family: 'Poppins', sans-serif; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
+    .btn-primary { background: linear-gradient(135deg, #10b981, #059669); color: white; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4); }
+    .btn-outline { background: white; color: var(--text-dark); border: 1px solid var(--border-color); }
+    .btn-outline:hover { background: #f8fafc; }
+
+    @media (max-width: 768px) { .profile-grid { grid-template-columns: 1fr; } .info-grid { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+{% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" style="border-radius:12px;margin-bottom:16px;font-size:0.85rem;">
+        {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+{% endif %}
+
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    
+    <div class="profile-grid">
+        <div class="card">
+            <div class="card-header">
+                <div class="icon-circle blue"><i class="fas fa-user"></i></div>
+                <h3>Personal Information</h3>
+            </div>
+            
+            <div class="profile-avatar-section">
+                {% if user.profile_picture %}
+                <img src="{{ user.profile_picture.url }}" alt="Profile" class="profile-avatar-large" id="avatarPreview">
+                {% else %}
+                <div class="profile-avatar-default" id="avatarDefault">{{ user.first_name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}</div>
+                {% endif %}
+                <br>
+                <label class="btn-upload" for="profilePictureInput">
+                    <i class="fas fa-camera"></i> Change Photo
+                </label>
+                <input type="file" name="profile_picture" id="profilePictureInput" accept="image/*" style="display:none;" onchange="previewAvatar(this)">
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>First Name</label>
+                    <input type="text" name="first_name" class="form-control" value="{{ user.first_name }}">
+                </div>
+                <div class="form-group">
+                    <label>Last Name</label>
+                    <input type="text" name="last_name" class="form-control" value="{{ user.last_name }}">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" class="form-control" value="{{ user.email }}" disabled>
+                <div class="hint"><i class="fas fa-info-circle"></i> Email cannot be changed</div>
+            </div>
+            
+            <div class="form-group">
+                <label>Bio</label>
+                <textarea name="bio" class="form-control" rows="3" placeholder="Tell us about yourself...">{{ user.bio|default:'' }}</textarea>
+            </div>
+        </div>
+
+        <div>
+            <div class="card" style="margin-bottom:20px;">
+                <div class="card-header">
+                    <div class="icon-circle purple"><i class="fas fa-graduation-cap"></i></div>
+                    <h3>Professional Details</h3>
+                </div>
+                
+                <div class="form-group">
+                    <label>Expertise</label>
+                    <input type="text" name="expertise" class="form-control" value="{{ profile.expertise|default:'' }}" placeholder="e.g., Network Security, SOC Operations">
+                </div>
+                <div class="form-group">
+                    <label>Qualification/Certification</label>
+                    <input type="text" name="qualification" class="form-control" value="{{ profile.qualification|default:'' }}" placeholder="e.g., CISSP, CEH, PhD">
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="icon-circle orange"><i class="fas fa-shield-alt"></i></div>
+                    <h3>Account Security</h3>
+                </div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">Member Since</div>
+                        <div class="info-value">{{ user.date_joined|date:"M d, Y" }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Last Login</div>
+                        <div class="info-value">{{ user.last_login|date:"M d, Y"|default:"N/A" }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Password</div>
+                        <div class="info-value">
+                            <a href="{% url 'dashboard:instructor_change_password' %}" style="color:#f59e0b;text-decoration:none;font-size:0.8rem;">
+                                <i class="fas fa-key"></i> Change Password
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:24px;">
+        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Changes</button>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function previewAvatar(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const avatarDefault = document.getElementById('avatarDefault');
+                if (avatarDefault) avatarDefault.style.display = 'none';
+                
+                let preview = document.getElementById('avatarPreview');
+                if (!preview) {
+                    preview = document.createElement('img');
+                    preview.id = 'avatarPreview';
+                    preview.className = 'profile-avatar-large';
+                    const parent = document.querySelector('.profile-avatar-section');
+                    parent.insertBefore(preview, parent.firstChild);
+                }
+                preview.src = e.target.result;
+                preview.style.display = 'inline-block';
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+</script>
+{% endblock %}

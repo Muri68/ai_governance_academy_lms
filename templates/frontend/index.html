@@ -1,0 +1,682 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Home - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Fix: Equal height cards */
+    .row {
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .row > [class*="col-"] {
+        display: flex;
+    }
+
+    .single-courses {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        margin-bottom: 30px;
+    }
+
+    .courses-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .courses-content .text-lead {
+        flex: 1;
+    }
+
+    /* Fix: Equal image height */
+    .courses-images {
+        height: 200px;
+        overflow: hidden;
+    }
+
+    .courses-images a {
+        display: block;
+        height: 100%;
+    }
+
+    .courses-images img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+
+    .courses-category-nav .swiper-slide button {
+    white-space: nowrap;
+    padding: 10px 20px;
+    width: auto;
+    min-width: max-content;
+    display: inline-block;
+}
+
+/* Or if the button needs to fill the slide */
+.courses-category-nav .swiper-slide {
+    width: auto !important;
+}
+
+.courses-category-nav .swiper-slide button {
+    white-space: nowrap;
+    padding: 10px 24px;
+    width: 100%;
+    display: block;
+}
+</style>
+
+
+<style>
+    /* Fix: Equal height cards */
+    .row { display: flex; flex-wrap: wrap; }
+    .row > [class*="col-"] { display: flex; }
+    .single-courses { display: flex; flex-direction: column; width: 100%; margin-bottom: 30px; }
+    .courses-content { flex: 1; display: flex; flex-direction: column; }
+    .courses-content .text-lead { flex: 1; }
+    .courses-images { height: 200px; overflow: hidden; }
+    .courses-images a { display: block; height: 100%; }
+    .courses-images img { width: 100%; height: 100%; object-fit: cover; }
+
+    /* Rating Stars */
+    .rating-stars-input { display: inline-flex; gap: 8px; justify-content: center; margin-bottom: 4px; }
+    .rating-stars-input .star { font-size: 32px; color: #d1d5db; cursor: pointer; transition: all 0.2s ease; }
+    .rating-stars-input .star:hover { transform: scale(1.2); color: #fbbf24; }
+    .rating-stars-input .star.active { color: #f59e0b; }
+
+    /* Success Alert */
+    .review-alert {
+        position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 400px;
+        border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        padding: 16px 20px; animation: slideInRight 0.3s ease;
+    }
+    @keyframes slideInRight {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- ===================== HERO SECTION ===================== -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <!-- Left Content -->
+            <div class="col-lg-6">
+                <div class="hero-content">
+                    <p class="hero-subtitle fade-in-up" data-delay="0">Start your favorite course and</p>
+                    <h3 class="hero-title fade-in-up" data-delay="200">
+                        UNLOCK YOUR<br>
+                        POTENTIAL THROUGH<br>
+                        <span class="highlight">LEARNING</span>
+                    </h3>
+                    <p class="hero-description fade-in-up" data-delay="400">
+                        High-quality courses taught by industry experts to help you achieve more in your career
+                        and
+                        life.
+                    </p>
+                    <a href="{% url 'frontend:courses' %}" class="btn-cta fade-in-up" data-delay="600">
+                        <i class="fas fa-play-circle"></i>
+                        Start a Course
+                    </a>
+                </div>
+            </div>
+
+            <!-- Right Image Area -->
+            <div class="col-lg-6">
+                <div class="hero-image-area">
+                    <!-- Gold Ellipse Background -->
+                    <div class="gold-ellipse-bg fade-in-right" data-delay="300">
+                        <img src="{% static 'images/ellipse.png' %}" alt="">
+                    </div>
+
+                    <!-- Badge Circle -->
+                    <div class="badge-circle scale-in" data-delay="500">
+                        <div class="curve-top">
+                            <img src="{% static 'images/top-curve.png' %}" alt="">
+                        </div>
+                        <div class="badge-inner">
+                            <div class="badge-book-icon">
+                                <svg viewBox="0 0 60 50" xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M5 8 C5 8 15 4 30 8 C45 4 55 8 55 8 L55 42 C55 42 45 38 30 42 C15 38 5 42 5 42 Z"
+                                        fill="#fff" opacity="0.95" />
+                                    <path d="M30 8 L30 42" stroke="#c8956d" stroke-width="1.5" fill="none" />
+                                    <path d="M5 8 C5 8 15 4 30 8" stroke="#fff" stroke-width="1" fill="none"
+                                        opacity="0.5" />
+                                    <path d="M30 8 C45 4 55 8 55 8" stroke="#fff" stroke-width="1" fill="none"
+                                        opacity="0.5" />
+                                </svg>
+                            </div>
+                            <span class="badge-count">1,200+</span>
+                            <span class="badge-label">Courses</span>
+                        </div>
+                        <div class="curve-bottom">
+                            <img src="{% static 'images/bottom-curve.png' %}" alt="">
+                        </div>
+                    </div>
+
+                    <!-- Woman Image -->
+                    <img src="{% static 'images/woman.png' %}" alt="Professional woman learning"
+                        class="woman-image fade-in-right" data-delay="400">
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- All Courses Start -->
+<div class="section section-padding-02">
+    <div class="container">
+
+        <!-- All Courses Top Start -->
+        <div class="courses-top">
+            <div class="section-title shape-01">
+                <h2 class="main-title" style="color: #000000;">All <span style="color: #000000;">Courses</span></h2>
+            </div>
+            <div class="courses-search-wrapper">
+                <button class="filter-btn" id="filterBtn">
+                    <i class="bi bi-sliders"></i>
+                </button>
+                <div class="courses-search">
+                    <form action="{% url 'frontend:courses' %}" method="GET">
+                        <input type="text" name="search" placeholder="Search your Course">
+                        <button type="submit">
+                            <i class="flaticon-magnifying-glass"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!-- All Courses Top End -->
+
+        {% if categories %}
+        <!-- All Courses Tabs Menu Start -->
+        <div class="filter-wrapper" id="filterWrapper">
+            <div class="courses-tabs-menu courses-active">
+                <div class="courses-tabs-menu courses-active">
+                    <div class="swiper-container">
+                        <ul class="swiper-wrapper nav">
+                            <li class="swiper-slide">
+                                <button class="active" data-bs-toggle="tab" data-bs-target="#tabs-all">All Courses</button>
+                            </li>
+                            {% for category in categories %}
+                            <li class="swiper-slide">
+                                <button data-bs-toggle="tab" data-bs-target="#tabs-{{ category.slug }}">{{ category.name }}</button>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="swiper-button-next"><i class="icofont-rounded-right"></i></div>
+                    <div class="swiper-button-prev"><i class="icofont-rounded-left"></i></div>
+                </div>
+            </div>
+        </div>
+        <!-- All Courses Tabs Menu End -->
+
+        <!-- All Courses tab content Start -->
+        <div class="tab-content courses-tab-content">
+            
+            <!-- All Courses Tab -->
+            <div class="tab-pane fade show active" id="tabs-all">
+                <div class="courses-wrapper">
+                    <div class="row">
+                        {% for course in all_courses %}
+                        <div class="col-lg-4 col-md-6">
+                            <div class="single-courses">
+                                <div class="courses-images">
+                                    <a href="{% url 'frontend:course_detail' slug=course.slug %}">
+                                        {% if course.featured_image %}
+                                        <img src="{{ course.featured_image.url }}" alt="{{ course.title }}" loading="lazy">
+                                        {% else %}
+                                        <img src="{% static 'assets/images/courses/courses-01.jpg' %}" alt="{{ course.title }}" loading="lazy">
+                                        {% endif %}
+                                    </a>
+                                </div>
+                                <div class="courses-content">
+                                    <h4 class="title">
+                                        <a href="{% url 'frontend:course_detail' slug=course.slug %}">{{ course.title }}</a>
+                                    </h4>
+                                    <p class="text-lead">{{ course.short_description|default:course.description|truncatechars:80 }}</p>
+                                    <div class="courses-meta">
+                                        <span><i class="icofont-clock-time"></i> {{ course.duration|default:"Self-paced" }}</span>
+                                    </div>
+                                    <div class="courses-price-review">
+                                        <div class="courses-price">
+                                            {% if course.is_free %}
+                                            <span class="sale-parice" style="color: #10b981;">Free</span>
+                                            {% elif course.discount_price %}
+                                            <span class="sale-parice">${{ course.discount_price }}</span>
+                                            <span class="old-parice">${{ course.price }}</span>
+                                            {% else %}
+                                            <span class="sale-parice">${{ course.price }}</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="courses-review">
+                                            <span class="rating-count">{{ course.average_rating|default:"4.5" }}</span>
+                                            <span class="rating-star">
+                                                <span class="rating-bar" style="width: {% widthratio course.average_rating|default:4.5 5 100 %}%;"></span>
+                                                ({{ course.review_count|default:"0" }})
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-12 text-center py-5">
+                            <p style="color: var(--text-muted);">No courses available yet. Check back soon!</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Tabs -->
+            {% for category in categories %}
+            <div class="tab-pane fade" id="tabs-{{ category.slug }}">
+                <div class="courses-wrapper">
+                    <div class="row">
+                        {% for course in category.courses.all %}
+                        {% if course.status == 'published' %}
+                        <div class="col-lg-4 col-md-6">
+                            <div class="single-courses">
+                                <div class="courses-images">
+                                    <a href="{% url 'frontend:course_detail' slug=course.slug %}">
+                                        {% if course.featured_image %}
+                                        <img src="{{ course.featured_image.url }}" alt="{{ course.title }}" loading="lazy">
+                                        {% else %}
+                                        <img src="{% static 'assets/images/courses/courses-01.jpg' %}" alt="{{ course.title }}" loading="lazy">
+                                        {% endif %}
+                                    </a>
+                                </div>
+                                <div class="courses-content">
+                                    <h4 class="title">
+                                        <a href="{% url 'frontend:course_detail' slug=course.slug %}">{{ course.title }}</a>
+                                    </h4>
+                                    <p class="text-lead">{{ course.short_description|default:course.description|truncatechars:80 }}</p>
+                                    <div class="courses-meta">
+                                        <span><i class="icofont-clock-time"></i> {{ course.duration|default:"Self-paced" }}</span>
+                                    </div>
+                                    <div class="courses-price-review">
+                                        <div class="courses-price">
+                                            {% if course.is_free %}
+                                            <span class="sale-parice" style="color: #10b981;">Free</span>
+                                            {% elif course.discount_price %}
+                                            <span class="sale-parice">${{ course.discount_price }}</span>
+                                            <span class="old-parice">${{ course.price }}</span>
+                                            {% else %}
+                                            <span class="sale-parice">${{ course.price }}</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="courses-review">
+                                            <span class="rating-count">{{ course.average_rating|default:"4.5" }}</span>
+                                            <span class="rating-star">
+                                                <span class="rating-bar" style="width: {% widthratio course.average_rating|default:4.5 5 100 %}%;"></span>
+                                                ({{ course.review_count|default:"0" }})
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% empty %}
+                        <div class="col-12 text-center py-5">
+                            <p style="color: var(--text-muted);">No courses in this category yet.</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+        </div>
+        <!-- All Courses tab content End -->
+        
+        {% else %}
+        <!-- Fallback: Show static courses if no categories exist -->
+        <div class="courses-wrapper">
+            <div class="row">
+                {% for i in "123456" %}
+                <div class="col-lg-4 col-md-6">
+                    <div class="single-courses">
+                        <div class="courses-images">
+                            <a href="#"><img src="{% static 'assets/images/courses/courses-01.jpg' %}" alt="Courses"></a>
+                        </div>
+                        <div class="courses-content">
+                            <h4 class="title"><a href="#">Sample Course Title</a></h4>
+                            <p class="text-lead">Lorem ipsum dolor sit amet consectetur adipisicing elit.</p>
+                            <div class="courses-meta">
+                                <span><i class="icofont-clock-time"></i> 08 hr 15 mins</span>
+                            </div>
+                            <div class="courses-price-review">
+                                <div class="courses-price">
+                                    <span class="sale-parice">$100.00</span>
+                                </div>
+                                <div class="courses-review">
+                                    <span class="rating-count">4.9</span>
+                                    <span class="rating-star">
+                                        <span class="rating-bar" style="width: 80%;"></span>
+                                        (3K)
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- All Courses Button Start -->
+        <div class="courses-btn text-center">
+            <a href="{% url 'frontend:courses' %}" class="btn btn-hover-dark">View More</a>
+        </div>
+        <!-- All Courses Button End -->
+
+    </div>
+</div>
+<!-- All Courses End -->
+
+
+
+<!-- Call to Action Start -->
+<div class="section section-padding-02">
+    <div class="container">
+
+        <!-- Call to Action Wrapper Start -->
+        <div class="call-to-action-wrapper">
+
+            <div class="row align-items-center">
+                <div class="col-md-8">
+
+                    <!-- Section Title Start -->
+                    <div class="section-title shape-02">
+                        <h5 class="sub-title" style="margin-bottom: 50px;">Become an <span>Instructor.</span>
+                        </h5>
+                        <h2 class="main-title">Reach thousands of students with your <span>expertise.</span>
+                        </h2>
+                    </div>
+                    <!-- Section Title End -->
+
+                </div>
+                <div class="col-md-4">
+                    <div class="call-to-action-btn">
+                        <a style="background-color: #ad7a49; color:#ffffff;border: 1px solid #ad7a49;"
+                            class="btn btn-hover-dark" href="{% url 'frontend:contact' %}">Contact Us</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Call to Action Wrapper End -->
+
+    </div>
+</div>
+<!-- Call to Action End -->
+
+<!-- Testimonial Start -->
+<div class="section section-padding-02 mt-n1" style="padding-bottom: 60px">
+    <div class="container">
+
+        <div class="section-title reviews-section-title shape-03 text-center">
+            <h5 class="sub-title" style="color: #000000;">Student Testimonial</h5>
+            <h2 class="main-title" style="color: #000000;">Feedback From <span style="color: #000000;">Students</span></h2>
+        </div>
+
+        <div class="testimonial-wrapper testimonial-active">
+            <div class="swiper-container">
+                <div class="swiper-wrapper">
+                    
+                    {% if site_reviews %}
+                        {% for review in site_reviews %}
+                        <div class="single-testimonial swiper-slide">
+                            <div class="testimonial-author">
+                                <div class="author-thumb">
+                                    {% if review.user.profile_picture %}
+                                    <img src="{{ review.user.profile_picture.url }}" alt="{{ review.user.get_full_name }}">
+                                    {% else %}
+                                    <div style="width:70px;height:70px;border-radius:50%;background:linear-gradient(135deg, #ad7a49, #8b6239);display:flex;align-items:center;justify-content:center;color:white;font-size:24px;font-weight:700;">
+                                        {{ review.user.get_full_name|slice:":1"|upper }}
+                                    </div>
+                                    {% endif %}
+                                    <i class="icofont-quote-left"></i>
+                                </div>
+                                <span class="rating-star">
+                                    <span class="rating-bar" style="width: {% widthratio review.rating 5 100 %}%;"></span>
+                                </span>
+                            </div>
+                            <div class="testimonial-content">
+                                <p>{{ review.review_text }}</p>
+                                <h4 class="name">{{ review.user.get_full_name }}</h4>
+                                <span class="designation">{{ review.designation|default:"Student" }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        {% for i in "12345" %}
+                        <div class="single-testimonial swiper-slide">
+                            <div class="testimonial-author">
+                                <div class="author-thumb">
+                                    <img src="{% static 'assets/images/author/author-06.jpg' %}" alt="Author">
+                                    <i class="icofont-quote-left"></i>
+                                </div>
+                                <span class="rating-star"><span class="rating-bar" style="width: 80%;"></span></span>
+                            </div>
+                            <div class="testimonial-content">
+                                <p>This platform has transformed how I learn. The courses are well-structured and the instructors are incredibly knowledgeable.</p>
+                                <h4 class="name">Sara Alexander</h4>
+                                <span class="designation">Product Designer, USA</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                </div>
+                <div class="swiper-pagination"></div>
+            </div>
+        </div>
+
+        <div class="text-center mt-5">
+            {% if user.is_authenticated %}
+            <button type="button" class="btn btn-hover-dark" data-bs-toggle="modal" data-bs-target="#siteReviewModal" style="background-color: #ad7a49; color:#ffffff; border: 1px solid #ad7a49; padding: 12px 30px; border-radius: 6px; font-weight: 500; font-size: 16px; cursor: pointer; font-family: 'Poppins', sans-serif;">
+                <i class="fas fa-star me-2"></i> Write a Review
+            </button>
+            {% else %}
+            <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="btn btn-hover-dark" style="background-color: #ad7a49; color:#ffffff; border: 1px solid #ad7a49; text-decoration: none; padding: 12px 30px; border-radius: 6px; display: inline-block; font-weight: 500; font-size: 16px;">
+                <i class="fas fa-star me-2"></i> Login to Write a Review
+            </a>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+<!-- Testimonial End -->
+
+<!-- Site Review Modal -->
+<div class="modal fade" id="siteReviewModal" tabindex="-1" aria-labelledby="siteReviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 20px 60px rgba(0,0,0,0.2);">
+            
+            <div class="modal-header" style="border-bottom: 1px solid #e5e7eb; padding: 20px 24px; background: linear-gradient(135deg, #f8f9fa, #ffffff); border-radius: 16px 16px 0 0;">
+                <h5 class="modal-title" id="siteReviewModalLabel" style="font-size: 18px; font-weight: 600; color: #111827;">
+                    <i class="fas fa-star" style="color: #f59e0b; margin-right: 8px;"></i> Share Your Experience
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <div class="modal-body" style="padding: 24px;">
+                <form id="siteReviewForm" method="POST" action="{% url 'frontend:submit_site_review' %}">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4 text-center">
+                        <label style="font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 10px; display: block;">Your Rating</label>
+                        <div class="rating-stars-input" id="siteRatingStars">
+                            <span class="star" data-value="1" title="Poor"><i class="fas fa-star"></i></span>
+                            <span class="star" data-value="2" title="Fair"><i class="fas fa-star"></i></span>
+                            <span class="star" data-value="3" title="Good"><i class="fas fa-star"></i></span>
+                            <span class="star" data-value="4" title="Very Good"><i class="fas fa-star"></i></span>
+                            <span class="star active" data-value="5" title="Excellent"><i class="fas fa-star"></i></span>
+                        </div>
+                        <input type="hidden" name="rating" id="siteRatingValue" value="5">
+                        <span id="ratingLabel" style="font-size: 13px; color: #f59e0b; font-weight: 500;">Excellent!</span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="siteReviewText" style="font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 6px; display: block;">
+                            Your Review <span style="color: #ef4444;">*</span>
+                        </label>
+                        <textarea name="review_text" id="siteReviewText" rows="4" class="form-control" 
+                            placeholder="Tell us about your experience with our platform..." required
+                            style="width: 100%; padding: 12px 14px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 14px; font-family: 'Poppins', sans-serif; resize: vertical; min-height: 120px; transition: all 0.3s ease;"
+                            onfocus="this.style.borderColor='#ad7a49'; this.style.boxShadow='0 0 0 3px rgba(173,122,73,0.1)';"
+                            onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none';"
+                        ></textarea>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="siteReviewDesignation" style="font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 6px; display: block;">
+                            Your Title / Designation <span style="color: #9ca3af; font-weight: 400;">(optional)</span>
+                        </label>
+                        <input type="text" name="designation" id="siteReviewDesignation" class="form-control" 
+                            placeholder="e.g., Product Designer, USA"
+                            style="width: 100%; padding: 12px 14px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 14px; font-family: 'Poppins', sans-serif; transition: all 0.3s ease;"
+                            onfocus="this.style.borderColor='#ad7a49'; this.style.boxShadow='0 0 0 3px rgba(173,122,73,0.1)';"
+                            onblur="this.style.borderColor='#e5e7eb'; this.style.boxShadow='none';"
+                        >
+                    </div>
+                    
+                    {% if user_has_review %}
+                    <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 10px 14px; border-radius: 0 8px 8px 0; margin-bottom: 16px;">
+                        <p style="font-size: 12px; color: #1e40af; margin: 0;">
+                            <i class="fas fa-info-circle me-1"></i> 
+                            You've already submitted a review. Submitting again will update your existing review.
+                        </p>
+                    </div>
+                    {% endif %}
+                    
+                    <div style="background: #fef7f0; border-left: 4px solid #ad7a49; padding: 10px 14px; border-radius: 0 8px 8px 0; margin-bottom: 16px;">
+                        <p style="font-size: 12px; color: #92400e; margin: 0;">
+                            <i class="fas fa-info-circle me-1"></i> 
+                            Your review will be reviewed by our team before being published.
+                        </p>
+                    </div>
+                    
+                    <button type="submit" id="submitReviewBtn" class="btn w-100" style="background-color: #ad7a49; color: #ffffff; border: none; padding: 12px; border-radius: 10px; font-weight: 600; font-size: 16px; font-family: 'Poppins', sans-serif; transition: all 0.3s ease;">
+                        <i class="fas fa-paper-plane me-2"></i> Submit Review
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const siteStars = document.querySelectorAll('#siteRatingStars .star');
+        const siteRatingValue = document.getElementById('siteRatingValue');
+        const ratingLabel = document.getElementById('ratingLabel');
+        
+        const ratingLabels = { 1: 'Poor', 2: 'Fair', 3: 'Good', 4: 'Very Good', 5: 'Excellent!' };
+        
+        if (siteStars.length && siteRatingValue) {
+            siteStars.forEach(star => {
+                star.addEventListener('click', function() {
+                    const val = parseInt(this.dataset.value);
+                    siteRatingValue.value = val;
+                    updateSiteStars(val);
+                    if (ratingLabel) ratingLabel.textContent = ratingLabels[val] || '';
+                });
+                star.addEventListener('mouseenter', function() {
+                    const val = parseInt(this.dataset.value);
+                    updateSiteStars(val);
+                    if (ratingLabel) ratingLabel.textContent = ratingLabels[val] || '';
+                });
+            });
+            
+            document.getElementById('siteRatingStars').addEventListener('mouseleave', function() {
+                updateSiteStars(parseInt(siteRatingValue.value));
+                if (ratingLabel) ratingLabel.textContent = ratingLabels[siteRatingValue.value] || '';
+            });
+            
+            function updateSiteStars(val) {
+                siteStars.forEach((s, i) => { s.classList.toggle('active', i < val); });
+            }
+        }
+
+        const siteReviewForm = document.getElementById('siteReviewForm');
+        if (siteReviewForm) {
+            siteReviewForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                const submitBtn = document.getElementById('submitReviewBtn');
+                const originalText = submitBtn.innerHTML;
+                const reviewText = document.getElementById('siteReviewText').value.trim();
+                
+                if (!reviewText) { alert('Please write your review.'); return; }
+                
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Submitting...';
+                submitBtn.disabled = true;
+                
+                fetch(this.action, {
+                    method: 'POST', body: formData,
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const modalEl = document.getElementById('siteReviewModal');
+                        const modal = bootstrap.Modal.getInstance(modalEl);
+                        if (modal) modal.hide();
+                        document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+                        document.body.classList.remove('modal-open');
+                        document.body.style.overflow = '';
+                        document.body.style.paddingRight = '';
+                        
+                        siteReviewForm.reset();
+                        updateSiteStars(5);
+                        siteRatingValue.value = 5;
+                        if (ratingLabel) ratingLabel.textContent = 'Excellent!';
+                        
+                        showAlert(data.updated ? '✅ Your review has been updated! It will be displayed after approval.' : '✅ Thank you for your review! It will be displayed after approval.', 'success');
+                    } else {
+                        showAlert(data.message || 'An error occurred.', 'danger');
+                    }
+                })
+                .catch(error => { showAlert('An error occurred. Please try again.', 'danger'); })
+                .finally(() => { submitBtn.innerHTML = originalText; submitBtn.disabled = false; });
+            });
+        }
+        
+        const siteReviewModal = document.getElementById('siteReviewModal');
+        if (siteReviewModal) {
+            siteReviewModal.addEventListener('hidden.bs.modal', function() {
+                document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+                document.body.classList.remove('modal-open');
+                document.body.style.overflow = '';
+                document.body.style.paddingRight = '';
+            });
+        }
+        
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.style.cssText = `position:fixed;top:20px;right:20px;z-index:9999;max-width:400px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.15);padding:16px 20px;background:${type==='success'?'#d1fae5':'#fee2e2'};color:${type==='success'?'#065f46':'#991b1b'};border:1px solid ${type==='success'?'#10b981':'#ef4444'};`;
+            alertDiv.innerHTML = `<div style="display:flex;align-items:center;gap:10px;"><i class="fas fa-${type==='success'?'check-circle':'exclamation-circle'}" style="font-size:20px;"></i><span style="font-size:14px;font-weight:500;">${message}</span></div>`;
+            document.body.appendChild(alertDiv);
+            setTimeout(() => { alertDiv.style.opacity = '0'; alertDiv.style.transition = 'opacity 0.3s ease'; setTimeout(() => alertDiv.remove(), 300); }, 4000);
+        }
+    });
+</script>
+{% endblock %}

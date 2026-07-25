@@ -1,0 +1,476 @@
+{% extends "dashboard/admin/admin_base.html" %}
+{% load static %}
+
+{% block title %}Manage Reviews{% endblock %}
+{% block page_title %}Manage Reviews{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --star-color: #f59e0b;
+        --star-empty: #d1d5db;
+    }
+    
+    .reviews-container {
+        background: var(--bg-card);
+        border-radius: 14px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+    }
+    
+    .reviews-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    
+    .reviews-header h2 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .reviews-stats {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+    }
+    
+    .avg-rating {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .avg-rating-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-dark);
+    }
+    
+    .avg-rating-stars {
+        color: var(--star-color);
+        font-size: 0.9rem;
+    }
+    
+    .avg-rating-count {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+    
+    .status-filters {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    
+    .filter-btn {
+        padding: 8px 16px;
+        border-radius: 8px;
+        border: 1.5px solid var(--border-color);
+        background: white;
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .filter-btn:hover,
+    .filter-btn.active {
+        background: #3b82f6;
+        color: white;
+        border-color: #3b82f6;
+    }
+    
+    .filter-btn .count {
+        background: rgba(255,255,255,0.3);
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    
+    .filter-btn.active .count {
+        background: rgba(255,255,255,0.3);
+    }
+    
+    .reviews-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+        gap: 20px;
+        padding: 24px;
+    }
+    
+    .review-card {
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 20px;
+        transition: all 0.2s;
+        position: relative;
+    }
+    
+    .review-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        border-color: #cbd5e1;
+    }
+    
+    .review-card.pending {
+        border-left: 4px solid #f59e0b;
+    }
+    
+    .review-card.approved {
+        border-left: 4px solid #10b981;
+    }
+    
+    .review-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+    
+    .review-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+    
+    .review-user-info {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .review-user-name {
+        font-weight: 600;
+        color: var(--text-dark);
+        font-size: 0.9rem;
+    }
+    
+    .review-user-designation {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: 2px;
+    }
+    
+    .review-date {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+    }
+    
+    .review-stars {
+        display: flex;
+        gap: 2px;
+        margin-bottom: 12px;
+    }
+    
+    .review-stars .star {
+        color: var(--star-empty);
+        font-size: 1rem;
+    }
+    
+    .review-stars .star.filled {
+        color: var(--star-color);
+    }
+    
+    .review-text {
+        color: #475569;
+        font-size: 0.85rem;
+        line-height: 1.7;
+        margin-bottom: 16px;
+    }
+    
+    .review-status {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        margin-bottom: 12px;
+    }
+    
+    .status-pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .status-approved {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .review-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    
+    .btn-approve {
+        padding: 8px 16px;
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .btn-approve:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(16,185,129,0.3);
+    }
+    
+    .btn-reject {
+        padding: 8px 16px;
+        background: #f3f4f6;
+        color: #374151;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 0.78rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .btn-reject:hover {
+        background: #e5e7eb;
+    }
+    
+    .btn-delete {
+        padding: 8px 12px;
+        background: #fee2e2;
+        color: #991b1b;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.78rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .btn-delete:hover {
+        background: #fecaca;
+    }
+    
+    .empty-state {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--text-muted);
+    }
+    
+    .empty-state i {
+        font-size: 3.5rem;
+        opacity: 0.2;
+        margin-bottom: 15px;
+        display: block;
+    }
+    
+    .empty-state h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 8px;
+    }
+    
+    .empty-state p {
+        font-size: 0.85rem;
+    }
+    
+    @media (max-width: 768px) {
+        .reviews-grid {
+            grid-template-columns: 1fr;
+            padding: 16px;
+            gap: 15px;
+        }
+    }
+    
+    @media (max-width: 575px) {
+        .review-actions {
+            flex-direction: column;
+        }
+        
+        .btn-approve,
+        .btn-reject,
+        .btn-delete {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="reviews-container">
+    <!-- Header -->
+    <div class="reviews-header">
+        <h2>
+            <i class="fas fa-star" style="color: #f59e0b;"></i> 
+            Site Reviews
+        </h2>
+        <div class="reviews-stats">
+            <div class="avg-rating">
+                <span class="avg-rating-value">{{ avg_rating }}</span>
+                <div>
+                    <div class="avg-rating-stars">
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= avg_rating|floatformat:0 %}
+                                <i class="fas fa-star"></i>
+                            {% elif forloop.counter <= avg_rating|add:0.5 %}
+                                <i class="fas fa-star-half-alt"></i>
+                            {% else %}
+                                <i class="far fa-star"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <span class="avg-rating-count">{{ approved_count }} approved reviews</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filters -->
+    <div style="padding: 16px 24px; border-bottom: 1px solid var(--border-color);">
+        <div class="status-filters">
+            <a href="?status=pending" class="filter-btn {% if status_filter == 'pending' %}active{% endif %}">
+                <i class="fas fa-clock"></i> Pending
+                <span class="count">{{ pending_count }}</span>
+            </a>
+            <a href="?status=approved" class="filter-btn {% if status_filter == 'approved' %}active{% endif %}">
+                <i class="fas fa-check-circle"></i> Approved
+                <span class="count">{{ approved_count }}</span>
+            </a>
+            <a href="?status=all" class="filter-btn {% if status_filter == 'all' %}active{% endif %}">
+                <i class="fas fa-list"></i> All
+                <span class="count">{{ total_count }}</span>
+            </a>
+        </div>
+    </div>
+    
+    <!-- Reviews Grid -->
+    {% if reviews %}
+    <div class="reviews-grid">
+        {% for review in reviews %}
+        <div class="review-card {% if review.is_approved %}approved{% else %}pending{% endif %}">
+            <!-- Review Header -->
+            <div class="review-header">
+                <div class="review-avatar">
+                    {{ review.user.get_full_name|default:review.user.email|slice:":1"|upper }}
+                </div>
+                <div class="review-user-info">
+                    <div class="review-user-name">
+                        {{ review.user.get_full_name|default:review.user.email }}
+                    </div>
+                    {% if review.designation %}
+                    <div class="review-user-designation">{{ review.designation }}</div>
+                    {% endif %}
+                    <div class="review-date">{{ review.created_at|date:"M d, Y" }}</div>
+                </div>
+            </div>
+            
+            <!-- Stars -->
+            <div class="review-stars">
+                {% for i in "12345" %}
+                <span class="star {% if forloop.counter <= review.rating %}filled{% endif %}">
+                    <i class="fas fa-star"></i>
+                </span>
+                {% endfor %}
+            </div>
+            
+            <!-- Review Text -->
+            <div class="review-text">
+                {{ review.review_text|truncatewords:80 }}
+            </div>
+            
+            <!-- Status Badge -->
+            <span class="review-status {% if review.is_approved %}status-approved{% else %}status-pending{% endif %}">
+                {% if review.is_approved %}
+                    <i class="fas fa-check-circle"></i> Approved
+                {% else %}
+                    <i class="fas fa-clock"></i> Pending Approval
+                {% endif %}
+            </span>
+            
+            <!-- Actions -->
+            <div class="review-actions">
+                {% if not review.is_approved %}
+                <form method="POST" action="{% url 'dashboard:manage_reviews' %}?status={{ status_filter }}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="approve">
+                    <input type="hidden" name="review_id" value="{{ review.id }}">
+                    <button type="submit" class="btn-approve">
+                        <i class="fas fa-check"></i> Approve
+                    </button>
+                </form>
+                {% else %}
+                <form method="POST" action="{% url 'dashboard:manage_reviews' %}?status={{ status_filter }}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="unapprove">
+                    <input type="hidden" name="review_id" value="{{ review.id }}">
+                    <button type="submit" class="btn-reject">
+                        <i class="fas fa-undo"></i> Unapprove
+                    </button>
+                </form>
+                {% endif %}
+                
+                <form method="POST" action="{% url 'dashboard:manage_reviews' %}?status={{ status_filter }}" 
+                      onsubmit="return confirm('Delete this review permanently?');">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="review_id" value="{{ review.id }}">
+                    <button type="submit" class="btn-delete">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-star"></i>
+        <h3>No Reviews Found</h3>
+        <p>
+            {% if status_filter == 'pending' %}
+                All reviews have been processed. Great job!
+            {% elif status_filter == 'approved' %}
+                No approved reviews yet. Approve some reviews to display them.
+            {% else %}
+                No reviews have been submitted yet.
+            {% endif %}
+        </p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

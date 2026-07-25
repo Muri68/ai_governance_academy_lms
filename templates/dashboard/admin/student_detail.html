@@ -1,0 +1,93 @@
+{% extends "dashboard/admin/admin_base.html" %}
+{% load static %}
+
+{% block title %}{{ student.get_full_name }} - Student Details{% endblock %}
+{% block page_title %}Student Details{% endblock %}
+
+{% block extra_css %}
+<style>
+    .breadcrumb-row { display:flex;align-items:center;gap:8px;font-size:0.85rem;margin-bottom:16px; }
+    .breadcrumb-row a { color:var(--text-secondary);text-decoration:none; }
+    .breadcrumb-row a:hover { color:var(--accent-blue); }
+
+    .profile-header { background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:var(--radius-lg);padding:28px;margin-bottom:20px;display:flex;align-items:center;gap:24px;flex-wrap:wrap; }
+    .profile-avatar { width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--accent-blue); }
+    .profile-avatar-df { width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#2563eb);color:white;display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:700;border:3px solid var(--accent-blue); }
+    .profile-info { color:white;flex:1; }
+    .profile-info h2 { font-size:1.3rem;font-weight:700;margin-bottom:4px; }
+    .profile-info .role { color:#3b82f6;font-size:0.85rem; }
+    .profile-info .id { color:rgba(255,255,255,0.6);font-size:0.8rem; }
+
+    .stats-row { display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px; }
+    .stat-card { background:var(--bg-card);border-radius:var(--radius-md);padding:16px;text-align:center;border:1px solid var(--border-color); }
+    .stat-card .num { font-size:1.5rem;font-weight:700;color:var(--text-primary); }
+    .stat-card .lbl { font-size:0.72rem;color:var(--text-secondary);margin-top:2px; }
+
+    .detail-card { background:var(--bg-card);border-radius:var(--radius-md);border:1px solid var(--border-color);padding:20px;margin-bottom:20px; }
+    .detail-card h3 { font-size:0.95rem;font-weight:600;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border-color); }
+
+    .enrollment-item { display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(0,0,0,0.04);text-decoration:none;color:inherit; }
+    .enrollment-item:hover { background:#f8fafc;margin:0 -12px;padding:12px;border-radius:8px; }
+    .enrollment-item .course-img { width:60px;height:40px;border-radius:6px;object-fit:cover; }
+    .enrollment-item .course-img-df { width:60px;height:40px;border-radius:6px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;color:white;font-size:0.8rem; }
+    .enrollment-info { flex:1; }
+    .enrollment-info h4 { font-size:0.85rem;font-weight:600; }
+    .enrollment-info span { font-size:0.72rem;color:var(--text-muted); }
+    .enrollment-meta { text-align:right; }
+    .enrollment-meta .price { font-weight:600; }
+    .enrollment-meta .status { font-size:0.7rem; }
+    .status-badge-sm { display:inline-block;padding:2px 8px;border-radius:10px;font-size:0.65rem;font-weight:600; }
+    .status-badge-sm.active { background:rgba(16,185,129,0.1);color:#10b981; }
+    .status-badge-sm.completed { background:rgba(59,130,246,0.1);color:#3b82f6; }
+
+    @media (max-width:768px) { .stats-row { grid-template-columns:repeat(2,1fr); } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-row">
+    <a href="{% url 'dashboard:manage_users' %}"><i class="fas fa-arrow-left"></i> Users</a>
+    <span>/</span>
+    <span class="current">{{ student.get_full_name }}</span>
+</div>
+
+<div class="profile-header">
+    {% if student.profile_picture %}<img src="{{ student.profile_picture.url }}" class="profile-avatar">
+    {% else %}<div class="profile-avatar-df">{{ student.first_name|slice:":1"|upper }}{{ student.last_name|slice:":1"|upper }}</div>{% endif %}
+    <div class="profile-info">
+        <h2>{{ student.get_full_name }}</h2>
+        <div class="role"><i class="fas fa-user-graduate"></i> Student</div>
+        <div class="id">Student ID: {{ student.student_profile.student_id }} | {{ student.email }}</div>
+    </div>
+</div>
+
+<div class="stats-row">
+    <div class="stat-card"><div class="num">{{ total_enrolled }}</div><div class="lbl">Enrolled Courses</div></div>
+    <div class="stat-card"><div class="num">{{ active_enrollments }}</div><div class="lbl">Active</div></div>
+    <div class="stat-card"><div class="num">{{ completed_courses }}</div><div class="lbl">Completed</div></div>
+    <div class="stat-card"><div class="num">{{ paid_enrollments }}</div><div class="lbl">Paid Courses</div></div>
+    <div class="stat-card"><div class="num">{{ free_enrollments }}</div><div class="lbl">Free Courses</div></div>
+    <div class="stat-card"><div class="num">${{ total_spent }}</div><div class="lbl">Total Spent</div></div>
+    <div class="stat-card"><div class="num">{{ student.date_joined|date:"M Y" }}</div><div class="lbl">Joined</div></div>
+    <div class="stat-card"><div class="num">{% if student.email_verified %}✓{% else %}✗{% endif %}</div><div class="lbl">Verified</div></div>
+</div>
+
+<div class="detail-card">
+    <h3>Enrolled Courses ({{ total_enrolled }})</h3>
+    {% for enrollment in enrollments %}
+    <div class="enrollment-item">
+        {% if enrollment.course.featured_image %}<img src="{{ enrollment.course.featured_image.url }}" class="course-img">
+        {% else %}<div class="course-img-df"><i class="fas fa-book"></i></div>{% endif %}
+        <div class="enrollment-info">
+            <h4>{{ enrollment.course.title }}</h4>
+            <span>Instructor: {{ enrollment.course.instructor.get_full_name }}</span>
+        </div>
+        <div class="enrollment-meta">
+            <div class="price">{% if enrollment.course.is_free %}<span style="color:#10b981;">Free</span>{% else %}${{ enrollment.course.price }}{% endif %}</div>
+            <div class="status"><span class="status-badge-sm {{ enrollment.status }}">{{ enrollment.get_status_display }}</span></div>
+            <div style="font-size:0.65rem;color:var(--text-muted);margin-top:2px;">{{ enrollment.enrolled_at|date:"M d, Y" }}</div>
+        </div>
+    </div>
+    {% empty %}<p style="color:var(--text-muted);text-align:center;padding:20px;">No enrollments yet.</p>{% endfor %}
+</div>
+{% endblock %}

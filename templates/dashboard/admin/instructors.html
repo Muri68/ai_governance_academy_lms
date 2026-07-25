@@ -1,0 +1,290 @@
+{% extends "dashboard/admin/admin_base.html" %}
+{% load static %}
+
+{% block title %}Instructors{% endblock %}
+{% block page_title %}Instructors{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 24px; }
+    .stat-card { background: var(--bg-card); border-radius: var(--radius-md); padding: 20px; display: flex; align-items: center; gap: 16px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); transition: all 0.2s; cursor: pointer; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .stat-card.blue { border-left: 3px solid var(--accent-blue); }
+    .stat-card.green { border-left: 3px solid var(--accent-green); }
+    .stat-card.purple { border-left: 3px solid var(--accent-purple); }
+    .stat-card.orange { border-left: 3px solid var(--accent-orange); }
+    .stat-icon { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+    .stat-icon.blue { background: rgba(59,130,246,0.1); color: var(--accent-blue); }
+    .stat-icon.green { background: rgba(16,185,129,0.1); color: var(--accent-green); }
+    .stat-icon.purple { background: rgba(139,92,246,0.1); color: var(--accent-purple); }
+    .stat-icon.orange { background: rgba(245,158,11,0.1); color: var(--accent-orange); }
+    .stat-info h3 { font-size: 0.8rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 4px; }
+    .stat-info .value { font-size: 1.5rem; font-weight: 800; color: var(--text-primary); }
+
+    .filter-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
+    .filter-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .filter-dropdown { padding: 8px 32px 8px 14px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: var(--bg-card); color: var(--text-primary); font-size: 0.85rem; font-family: inherit; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; outline: none; }
+    .filter-dropdown:focus { border-color: var(--accent-blue); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+    .btn-add { padding: 8px 18px; background: var(--accent-blue); color: white; border: none; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 6px; transition: all 0.2s; text-decoration: none; }
+    .btn-add:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,0.3); color: white; }
+    .results-text { font-size: 0.8rem; color: var(--text-muted); }
+
+    .table-card { background: var(--bg-card); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); overflow: hidden; }
+    .table-responsive { overflow-x: auto; }
+    .instructors-table { width: 100%; border-collapse: collapse; min-width: 800px; }
+    .instructors-table thead th { text-align: left; padding: 14px 16px; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); border-bottom: 1px solid var(--border-color); background: #f8fafc; text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap; }
+    .instructors-table tbody td { padding: 12px 16px; font-size: 0.85rem; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+    .instructors-table tbody tr:last-child td { border-bottom: none; }
+    .instructors-table tbody tr { transition: background 0.15s; }
+    .instructors-table tbody tr:hover { background: rgba(241,245,249,0.5); }
+    .instructor-cell { display: flex; align-items: center; gap: 12px; }
+    .instructor-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+    .instructor-avatar-default { width: 40px; height: 40px; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; flex-shrink: 0; }
+    .instructor-avatar-default.c1 { background: linear-gradient(135deg,#3b82f6,#2563eb); }
+    .instructor-avatar-default.c2 { background: linear-gradient(135deg,#8b5cf6,#7c3aed); }
+    .instructor-avatar-default.c3 { background: linear-gradient(135deg,#10b981,#059669); }
+    .instructor-avatar-default.c4 { background: linear-gradient(135deg,#f59e0b,#d97706); }
+    .instructor-name { font-weight: 600; color: var(--text-primary); }
+    .instructor-email { font-size: 0.75rem; color: var(--text-muted); }
+    .status-badge { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: var(--radius-pill); font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
+    .status-badge.active { background: rgba(16,185,129,0.1); color: var(--accent-green); }
+    .status-badge.inactive { background: rgba(239,68,68,0.1); color: var(--accent-red); }
+    .action-btns { display: flex; gap: 6px; }
+    .action-btn { width: 32px; height: 32px; border-radius: var(--radius-sm); border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; transition: all 0.2s; text-decoration: none; }
+    .action-btn.view { color: var(--accent-blue); }
+    .action-btn.view:hover { background: rgba(59,130,246,0.1); }
+    .action-btn.toggle { color: var(--accent-orange); }
+    .action-btn.toggle:hover { background: rgba(245,158,11,0.1); }
+
+    /* Modal */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: none; align-items: center; justify-content: center; }
+    .modal-overlay.active { display: flex; }
+    .modal-dialog-custom { background: var(--bg-card); border-radius: var(--radius-lg); width: 90%; max-width: 460px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); overflow: hidden; animation: modalIn 0.3s ease; }
+    @keyframes modalIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+    .modal-header-custom { padding: 24px 24px 0; text-align: center; }
+    .modal-icon { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 1.8rem; }
+    .modal-icon.warning { background: rgba(245,158,11,0.1); color: #f59e0b; }
+    .modal-icon.danger { background: rgba(239,68,68,0.1); color: #ef4444; }
+    .modal-icon.success { background: rgba(16,185,129,0.1); color: #10b981; }
+    .modal-title-custom { font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+    .modal-body-custom { padding: 16px 24px; text-align: center; }
+    .modal-body-custom p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; }
+    .modal-body-custom .highlight-name { font-weight: 600; color: var(--text-primary); }
+    .modal-body-custom .warning-text { display: flex; align-items: flex-start; gap: 8px; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: var(--radius-sm); padding: 12px; margin-top: 12px; font-size: 0.8rem; color: #b45309; text-align: left; }
+    .modal-body-custom .warning-text i { margin-top: 2px; flex-shrink: 0; }
+    .modal-footer-custom { padding: 16px 24px 24px; display: flex; gap: 10px; justify-content: center; }
+    .btn-modal { padding: 10px 24px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; font-family: inherit; cursor: pointer; border: none; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
+    .btn-modal.danger { background: #ef4444; color: white; }
+    .btn-modal.danger:hover { background: #dc2626; }
+    .btn-modal.success { background: #10b981; color: white; }
+    .btn-modal.success:hover { background: #059669; }
+    .btn-modal.cancel { background: var(--bg-main); color: var(--text-secondary); border: 1px solid var(--border-color); }
+    .btn-modal.cancel:hover { background: #e5e7eb; }
+
+    .pagination-wrapper { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 12px; }
+    .showing-text { font-size: 0.8rem; color: var(--text-secondary); }
+    .showing-text .highlight { color: var(--text-primary); font-weight: 600; }
+
+    @media (max-width:1200px) { .stats-row { grid-template-columns: repeat(2,1fr); } }
+    @media (max-width:768px) {
+        .stats-row { grid-template-columns: 1fr; }
+        .filter-row { flex-direction: column; align-items: flex-start; }
+        .instructors-table { min-width: auto; }
+        .instructors-table thead { display: none; }
+        .instructors-table tbody td { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; border: none; font-size: 0.8rem; }
+        .instructors-table tbody td::before { content: attr(data-label); font-weight: 600; color: var(--text-secondary); font-size: 0.7rem; text-transform: uppercase; flex-shrink: 0; margin-right: 12px; }
+        .instructors-table tbody tr { display: block; padding: 8px 0; border-bottom: 1px solid var(--border-color); }
+        .pagination-wrapper { flex-direction: column; text-align: center; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Messages -->
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" style="border-radius: var(--radius-md); margin-bottom: 16px;">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="stats-row">
+    <div class="stat-card blue" onclick="filterByStatus('')">
+        <div class="stat-icon blue"><i class="fas fa-chalkboard-user"></i></div>
+        <div class="stat-info"><h3>Total Instructors</h3><div class="value">{{ total_instructors }}</div></div>
+    </div>
+    <div class="stat-card green" onclick="filterByStatus('active')">
+        <div class="stat-icon green"><i class="fas fa-user-check"></i></div>
+        <div class="stat-info"><h3>Active</h3><div class="value">{{ active_instructors }}</div></div>
+    </div>
+    <div class="stat-card purple" onclick="filterByStatus('inactive')">
+        <div class="stat-icon purple"><i class="fas fa-user-xmark"></i></div>
+        <div class="stat-info"><h3>Inactive</h3><div class="value">{{ inactive_instructors }}</div></div>
+    </div>
+    <div class="stat-card orange">
+        <div class="stat-icon orange"><i class="fas fa-star"></i></div>
+        <div class="stat-info"><h3>Top Rated</h3><div class="value">{{ top_rated }} ⭐</div></div>
+    </div>
+</div>
+
+<div class="filter-row">
+    <div class="filter-left">
+        <select class="filter-dropdown" id="statusFilter">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+        </select>
+        <span class="results-text" id="resultsCount">Showing all instructors</span>
+    </div>
+    <a href="{% url 'dashboard:add_user' %}" class="btn-add"><i class="fas fa-plus"></i> Add Instructor</a>
+</div>
+
+<div class="table-card">
+    <div class="table-responsive">
+        <table class="instructors-table">
+            <thead><tr><th>Instructor</th><th>Department</th><th>Courses</th><th>Students</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="instructorsTableBody">
+                {% for instructor in instructors %}
+                <tr id="instructor-row-{{ instructor.id }}">
+                    <td data-label="Instructor">
+                        <a href="{% url 'dashboard:instructor_detail' instructor.id %}" style="color:inherit;text-decoration:none;">
+                            <div class="instructor-cell">
+                                {% if instructor.profile_picture %}
+                                <img src="{{ instructor.profile_picture.url }}" alt="" class="instructor-avatar">
+                                {% else %}
+                                <div class="instructor-avatar-default c{{ forloop.counter|add:'0'|slice:':1' }}">
+                                    {{ instructor.first_name|slice:":1"|upper }}{{ instructor.last_name|slice:":1"|upper }}
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <div class="instructor-name">{{ instructor.get_full_name }}</div>
+                                    <div class="instructor-email">{{ instructor.email }}</div>
+                                </div>
+                            </div>
+                        </a>
+                    </td>
+                    <td data-label="Department">{{ instructor.instructor_profile.department|default:"—" }}</td>
+                    <td data-label="Courses"><span style="font-weight:600;">{{ instructor.course_count|default:"0" }}</span></td>
+                    <td data-label="Students"><span style="font-weight:600;">{{ instructor.total_students|default:"0" }}</span></td>
+                    <td data-label="Status">
+                        <span class="status-badge {% if instructor.is_active %}active{% else %}inactive{% endif %}">
+                            {% if instructor.is_active %}Active{% else %}Inactive{% endif %}
+                        </span>
+                    </td>
+                    <td data-label="Actions">
+                        <div class="action-btns">
+                            <a href="{% url 'dashboard:manage_courses' %}?instructor={{ instructor.id }}" class="action-btn view" title="View Courses"><i class="fas fa-book-open"></i></a>
+                            <button class="action-btn toggle" title="{% if instructor.is_active %}Deactivate{% else %}Activate{% endif %}" onclick="openToggleModal('{{ instructor.id }}', '{{ instructor.get_full_name|escapejs }}', {{ instructor.is_active|lower }})"><i class="fas {% if instructor.is_active %}fa-user-slash{% else %}fa-user-check{% endif %}"></i></button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" style="text-align:center;padding:60px 20px;"><div style="font-size:3rem;color:#d1d5db;margin-bottom:12px;"><i class="fas fa-chalkboard-teacher"></i></div><p style="color:var(--text-muted);">No instructors found.</p></td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="pagination-wrapper">
+        <div class="showing-text">Showing <span class="highlight">1 to {{ instructors|length }}</span> of <span class="highlight">{{ total_instructors }}</span> Instructors</div>
+    </div>
+</div>
+
+<!-- Toggle Status Modal -->
+<div class="modal-overlay" id="toggleModal">
+    <div class="modal-dialog-custom">
+        <div class="modal-header-custom">
+            <div class="modal-icon" id="modalIcon"></div>
+            <h3 class="modal-title-custom" id="modalTitle"></h3>
+        </div>
+        <div class="modal-body-custom">
+            <p id="modalMessage"></p>
+            <div class="warning-text" id="modalWarning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span id="modalWarningText"></span>
+            </div>
+        </div>
+        <div class="modal-footer-custom">
+            <button class="btn-modal cancel" onclick="closeModal()"><i class="fas fa-times"></i> Cancel</button>
+            <form method="POST" id="toggleForm" action="">
+                {% csrf_token %}
+                <button type="submit" class="btn-modal" id="modalConfirmBtn"><i class="fas fa-check"></i> Confirm</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const statusFilter = document.getElementById('statusFilter');
+    const resultsCount = document.getElementById('resultsCount');
+    const tableRows = document.querySelectorAll('#instructorsTableBody tr');
+
+    statusFilter.addEventListener('change', function() {
+        const filter = this.value.toLowerCase();
+        let count = 0;
+        tableRows.forEach(row => {
+            const statusCell = row.querySelector('[data-label="Status"]');
+            if (!statusCell) return;
+            const show = !filter || statusCell.textContent.trim().toLowerCase().includes(filter);
+            row.style.display = show ? '' : 'none';
+            if (show) count++;
+        });
+        resultsCount.textContent = filter ? 'Showing ' + count + ' ' + filter + ' instructor' + (count !== 1 ? 's' : '') : 'Showing all instructors';
+    });
+
+    function filterByStatus(status) {
+        statusFilter.value = status;
+        statusFilter.dispatchEvent(new Event('change'));
+    }
+
+    function openToggleModal(userId, userName, isActive) {
+        var modal = document.getElementById('toggleModal');
+        var icon = document.getElementById('modalIcon');
+        var title = document.getElementById('modalTitle');
+        var message = document.getElementById('modalMessage');
+        var warning = document.getElementById('modalWarning');
+        var warningText = document.getElementById('modalWarningText');
+        var form = document.getElementById('toggleForm');
+        var confirmBtn = document.getElementById('modalConfirmBtn');
+
+        form.action = '/accounts/admin/toggle-user/' + userId + '/';
+
+        if (isActive) {
+            icon.className = 'modal-icon danger';
+            icon.innerHTML = '<i class="fas fa-user-slash"></i>';
+            title.textContent = 'Deactivate Instructor?';
+            message.innerHTML = 'You are about to <strong style="color:#ef4444;">deactivate</strong> <span class="highlight-name">' + userName + '</span>.';
+            warningText.textContent = 'This instructor will no longer be able to log in or access their courses. Students enrolled in their courses will still have access. You can reactivate this account at any time.';
+            warning.style.display = 'flex';
+            confirmBtn.className = 'btn-modal danger';
+            confirmBtn.innerHTML = '<i class="fas fa-user-slash"></i> Deactivate Instructor';
+        } else {
+            icon.className = 'modal-icon success';
+            icon.innerHTML = '<i class="fas fa-user-check"></i>';
+            title.textContent = 'Activate Instructor?';
+            message.innerHTML = 'You are about to <strong style="color:#10b981;">activate</strong> <span class="highlight-name">' + userName + '</span>.';
+            warningText.textContent = 'This will restore the instructor\'s access to their account and courses. They will be able to log in and manage their content again.';
+            warning.style.display = 'flex';
+            confirmBtn.className = 'btn-modal success';
+            confirmBtn.innerHTML = '<i class="fas fa-user-check"></i> Activate Instructor';
+        }
+
+        modal.classList.add('active');
+    }
+
+    function closeModal() {
+        document.getElementById('toggleModal').classList.remove('active');
+    }
+
+    document.getElementById('toggleModal').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeModal();
+    });
+</script>
+{% endblock %}

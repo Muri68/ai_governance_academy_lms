@@ -1,0 +1,325 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Checkout - {{ course.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --navy: #0c1e2e; --navy-light: #142a3e; --gold: #c8956d; --gold-dark: #b07d55;
+        --text-dark: #1a1a2e; --text-muted: #6c757d; --white: #ffffff;
+        --light-bg: #f8f9fa; --card-bg: #ffffff; --input-bg: #f1f5f9;
+    }
+    .checkout-section { padding: 40px 0 60px; background: var(--light-bg); min-height: 100vh; }
+    .cancel-link { display: inline-block; color: var(--text-muted); font-size: 14px; text-decoration: none; margin-bottom: 20px; }
+    .cancel-link:hover { color: var(--text-dark); }
+    .page-title { font-size: 24px; font-weight: 600; color: var(--text-dark); margin-bottom: 6px; }
+    .page-subtitle { font-size: 14px; color: var(--text-muted); margin-bottom: 30px; }
+
+    .payment-section { margin-bottom: 30px; }
+    .section-label { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+    .section-dot { width: 10px; height: 10px; border-radius: 50%; background-color: var(--gold); }
+    .section-label-text { font-size: 13px; font-weight: 600; color: var(--text-dark); letter-spacing: 1px; text-transform: uppercase; }
+
+    .payment-option { background-color: var(--input-bg); border: 2px solid transparent; border-radius: 12px; padding: 18px 22px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: all 0.3s ease; margin-bottom: 16px; }
+    .payment-option:hover { border-color: var(--gold); }
+    .payment-option.selected { border-color: var(--gold); background-color: #fef9f4; }
+    .payment-radio { width: 20px; height: 20px; border: 2px solid var(--text-muted); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.3s ease; }
+    .payment-option.selected .payment-radio { border-color: var(--gold); background-color: var(--gold); }
+    .payment-radio i { font-size: 9px; color: var(--white); opacity: 0; }
+    .payment-option.selected .payment-radio i { opacity: 1; }
+    .payment-info { display: flex; flex-direction: column; }
+    .payment-name { font-size: 15px; font-weight: 600; color: var(--text-dark); }
+    .payment-desc { font-size: 12px; color: var(--text-muted); }
+
+    .info-box { background-color: var(--card-bg); border-radius: 12px; padding: 18px 22px; margin-bottom: 24px; border: 1px solid rgba(0,0,0,0.06); }
+    .info-box p { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin: 0; }
+
+    .terms-row { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 24px; }
+    .terms-checkbox { width: 20px; height: 20px; border: 2px solid var(--text-muted); border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; margin-top: 1px; transition: all 0.3s ease; background: transparent; }
+    .terms-checkbox.checked { background-color: var(--gold); border-color: var(--gold); }
+    .terms-checkbox i { font-size: 10px; color: var(--white); opacity: 0; }
+    .terms-checkbox.checked i { opacity: 1; }
+    .terms-text { font-size: 14px; color: var(--text-dark); }
+    .terms-text a { color: var(--gold); text-decoration: none; font-weight: 500; cursor: pointer; }
+    .terms-text a:hover { text-decoration: underline; }
+
+    .btn-place-order { width: 100%; max-width: 300px; padding: 14px; background-color: var(--gold); color: var(--white); border: none; border-radius: 10px; font-size: 15px; font-weight: 600; font-family: 'Poppins', sans-serif; cursor: pointer; transition: all 0.3s ease; }
+    .btn-place-order:hover { background-color: var(--gold-dark); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(200,149,109,0.3); }
+    .btn-place-order:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .order-summary-card { background-color: var(--card-bg); border-radius: 16px; padding: 28px; border: 1px solid rgba(0,0,0,0.06); position: sticky; top: 20px; }
+    .order-summary-title { font-size: 18px; font-weight: 600; color: var(--text-dark); margin-bottom: 20px; }
+    .course-item { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid rgba(0,0,0,0.08); }
+    .course-thumb { width: 64px; height: 64px; border-radius: 10px; overflow: hidden; flex-shrink: 0; }
+    .course-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .course-thumb-placeholder { width: 64px; height: 64px; border-radius: 10px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; }
+    .course-name { font-size: 14px; font-weight: 500; color: var(--text-dark); line-height: 1.4; }
+
+    .price-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .price-label { font-size: 14px; color: var(--text-muted); }
+    .price-value { font-size: 14px; color: var(--text-dark); font-weight: 500; }
+    .price-row.total { margin-top: 18px; padding-top: 18px; border-top: 1px solid rgba(0,0,0,0.08); }
+    .price-row.total .price-label { font-size: 15px; font-weight: 600; color: var(--text-dark); }
+    .price-row.total .price-value { font-size: 18px; font-weight: 700; color: var(--text-dark); }
+    .discount-badge { color: #10b981; font-size: 12px; }
+    .info-note { background-color: rgba(0,0,0,0.03); border-radius: 10px; padding: 14px 18px; margin-top: 20px; }
+    .info-note p { font-size: 12px; color: var(--text-muted); line-height: 1.6; margin: 0; }
+
+    /* Coupon */
+    .coupon-row { display: flex; gap: 8px; margin-bottom: 16px; }
+    .coupon-input { flex: 1; padding: 10px 14px; border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; font-size: 13px; font-family: 'Poppins', sans-serif; outline: none; }
+    .coupon-input:focus { border-color: var(--gold); }
+    .coupon-btn { padding: 10px 16px; background: var(--navy); color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: 'Poppins', sans-serif; white-space: nowrap; }
+    .coupon-btn:hover { background: var(--navy-light); }
+    .coupon-message { font-size: 12px; margin-top: 4px; }
+    .coupon-message.success { color: #10b981; }
+    .coupon-message.error { color: #ef4444; }
+
+    /* Modal */
+    .modal-content { border-radius: 16px; border: none; }
+    .modal-header { padding: 20px 24px; border-bottom: 1px solid rgba(0,0,0,0.06); }
+    .modal-title { font-size: 18px; font-weight: 600; }
+    .modal-body { padding: 24px; max-height: 60vh; overflow-y: auto; font-size: 14px; line-height: 1.7; color: #4a5568; }
+    .modal-body h5 { font-size: 15px; font-weight: 600; color: var(--text-dark); margin-top: 20px; margin-bottom: 8px; }
+    .modal-body h5:first-child { margin-top: 0; }
+
+    @media (max-width: 991px) { .order-summary-card { margin-top: 30px; position: static; } }
+    @media (max-width: 767px) { .page-title { font-size: 20px; } .order-summary-card { padding: 20px; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="checkout-section">
+    <div class="container">
+        <div class="row">
+            <!-- Left Column -->
+            <div class="col-lg-7">
+                <a href="{% url 'frontend:course_detail' course.slug %}" class="cancel-link"><i class="fas fa-arrow-left"></i> Back to Course</a>
+                <h1 class="page-title">Secure Checkout</h1>
+                <p class="page-subtitle">Complete your enrollment for {{ course.title }}</p>
+
+                <!-- Payment Method -->
+                <div class="payment-section">
+                    <div class="section-label"><span class="section-dot"></span><span class="section-label-text">Payment Method</span></div>
+                    <div class="payment-option selected" id="stripeOption">
+                        <div class="payment-radio"><i class="fas fa-check"></i></div>
+                        <div class="payment-info"><span class="payment-name">Credit/Debit Card (Stripe)</span><span class="payment-desc">Secure encrypted payment via Stripe</span></div>
+                    </div>
+                </div>
+
+                <!-- Info Box -->
+                <div class="info-box">
+                    <p><i class="fas fa-lock" style="color:var(--gold);margin-right:6px;"></i> You will be redirected to Stripe's secure portal to complete your transaction. We do not store your card details.</p>
+                </div>
+
+                <!-- Terms -->
+                <div class="terms-row">
+                    <div class="terms-checkbox" id="termsCheckbox" onclick="toggleTerms()">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <span class="terms-text">
+                        I agree to the 
+                        <a data-bs-toggle="modal" data-bs-target="#termsModal">Terms of Service</a> 
+                        and 
+                        <a data-bs-toggle="modal" data-bs-target="#privacyModal">Privacy Policy</a>
+                    </span>
+                </div>
+
+                <!-- Place Order Button -->
+                <form method="POST" action="{% url 'payments:process_checkout' course.slug %}" id="checkoutForm">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-place-order" id="placeOrderBtn" disabled>
+                        <i class="fas fa-lock"></i> Proceed to Payment - ${{ final_price|floatformat:2 }}
+                    </button>
+                </form>
+            </div>
+
+            <!-- Right Column: Order Summary -->
+            <div class="col-lg-5">
+                <div class="order-summary-card">
+                    <h2 class="order-summary-title">Order Summary</h2>
+
+                    <!-- Course Item -->
+                    <div class="course-item">
+                        {% if course.featured_image %}
+                        <div class="course-thumb"><img src="{{ course.featured_image.url }}" alt="{{ course.title }}"></div>
+                        {% else %}
+                        <div class="course-thumb-placeholder"><i class="fas fa-book"></i></div>
+                        {% endif %}
+                        <span class="course-name">{{ course.title }}</span>
+                    </div>
+
+                    <!-- Coupon Code -->
+                    <div class="coupon-row">
+                        <input type="text" class="coupon-input" id="couponCode" placeholder="Coupon code">
+                        <button type="button" class="coupon-btn" onclick="applyCoupon()">Apply</button>
+                    </div>
+                    <div class="coupon-message" id="couponMessage"></div>
+
+                    <!-- Price Breakdown -->
+                    <div class="price-row">
+                        <span class="price-label">Original Price</span>
+                        <span class="price-value">${{ course.price }}</span>
+                    </div>
+                    {% if course.discount_price %}
+                    <div class="price-row">
+                        <span class="price-label">Discount</span>
+                        <span class="price-value discount-badge">-${{ discount_amount|floatformat:2 }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="price-row" id="couponDiscountRow" style="display:none;">
+                        <span class="price-label">Coupon Discount</span>
+                        <span class="price-value discount-badge" id="couponDiscountAmount">-$0.00</span>
+                    </div>
+                    <div class="price-row total">
+                        <span class="price-label">Total</span>
+                        <span class="price-value" id="finalPrice">${{ final_price|floatformat:2 }}</span>
+                    </div>
+
+                    <div class="info-note">
+                        <p><i class="fas fa-infinity"></i> Includes lifetime access to course materials{% if course.has_certificate %} and digital certification upon completion{% endif %}.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Terms of Service Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Terms of Service</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h5>1. Acceptance of Terms</h5>
+                <p>By accessing and using this platform, you agree to be bound by these Terms of Service. If you do not agree with any part of these terms, you may not access our services.</p>
+                
+                <h5>2. Course Enrollment</h5>
+                <p>Upon successful payment, you will be granted access to the purchased course(s). Access is non-transferable and is for your personal use only.</p>
+                
+                <h5>3. Payment Terms</h5>
+                <p>All prices are listed in USD. Payment is processed securely through Stripe. We do not store your credit card information on our servers.</p>
+                
+                <h5>4. Refund Policy</h5>
+                <p>We offer a 30-day money-back guarantee. If you are not satisfied with your purchase, you may request a full refund within 30 days of enrollment.</p>
+                
+                <h5>5. Intellectual Property</h5>
+                <p>All course content, including videos, documents, and materials, are the intellectual property of AI Governance Authority and its instructors. Redistribution without permission is prohibited.</p>
+                
+                <h5>6. Code of Conduct</h5>
+                <p>Students are expected to behave professionally and respectfully in all course-related communications and activities.</p>
+                
+                <h5>7. Limitation of Liability</h5>
+                <p>AI Governance Authority shall not be liable for any indirect, incidental, or consequential damages arising from the use of our platform.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Privacy Policy Modal -->
+<div class="modal fade" id="privacyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Privacy Policy</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h5>1. Information We Collect</h5>
+                <p>We collect information you provide when creating an account, enrolling in courses, or contacting support. This includes your name, email address, and payment information.</p>
+                
+                <h5>2. How We Use Your Information</h5>
+                <p>Your information is used to provide and improve our services, process payments, communicate with you about your courses, and send relevant updates.</p>
+                
+                <h5>3. Payment Information</h5>
+                <p>Payment processing is handled by Stripe. We do not store your full credit card details on our servers. Stripe's privacy policy governs their handling of your payment data.</p>
+                
+                <h5>4. Data Security</h5>
+                <p>We implement appropriate technical and organizational measures to protect your personal data against unauthorized access, alteration, or destruction.</p>
+                
+                <h5>5. Data Sharing</h5>
+                <p>We do not sell your personal information. We may share data with instructors for course management purposes and with service providers who assist in platform operations.</p>
+                
+                <h5>6. Cookies</h5>
+                <p>We use cookies to improve your browsing experience and analyze platform usage. You can control cookie settings through your browser.</p>
+                
+                <h5>7. Your Rights</h5>
+                <p>You have the right to access, correct, or delete your personal data. Contact us at privacy@aigovernance.com for data-related requests.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let termsAccepted = false;
+    let couponApplied = false;
+    let couponDiscount = 0;
+    const originalPrice = {{ final_price }};
+
+    function toggleTerms() {
+        termsAccepted = !termsAccepted;
+        const cb = document.getElementById('termsCheckbox');
+        const btn = document.getElementById('placeOrderBtn');
+        cb.classList.toggle('checked', termsAccepted);
+        btn.disabled = !termsAccepted;
+        if (!termsAccepted) {
+            cb.style.borderColor = '#ef4444';
+            setTimeout(() => { cb.style.borderColor = ''; }, 1500);
+        }
+    }
+
+    function applyCoupon() {
+        const code = document.getElementById('couponCode').value.trim();
+        const msg = document.getElementById('couponMessage');
+        
+        if (!code) {
+            msg.textContent = 'Please enter a coupon code.';
+            msg.className = 'coupon-message error';
+            return;
+        }
+
+        fetch("{% url 'payments:validate_coupon' %}", {
+            method: 'POST',
+            headers: {'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json'},
+            body: JSON.stringify({code: code, course_id: '{{ course.id }}'})
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.valid) {
+                couponApplied = true;
+                couponDiscount = data.discount;
+                msg.textContent = `Coupon applied! You save $${data.discount.toFixed(2)}`;
+                msg.className = 'coupon-message success';
+                document.getElementById('couponDiscountAmount').textContent = '-$' + data.discount.toFixed(2);
+                document.getElementById('couponDiscountRow').style.display = 'flex';
+                document.getElementById('finalPrice').textContent = '$' + data.final_price.toFixed(2);
+                document.getElementById('placeOrderBtn').innerHTML = '<i class="fas fa-lock"></i> Proceed to Payment - $' + data.final_price.toFixed(2);
+            } else {
+                msg.textContent = data.message || 'Invalid coupon.';
+                msg.className = 'coupon-message error';
+            }
+        })
+        .catch(() => {
+            msg.textContent = 'Error validating coupon.';
+            msg.className = 'coupon-message error';
+        });
+    }
+
+    // Enable button on Enter in coupon input
+    document.getElementById('couponCode').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); applyCoupon(); }
+    });
+</script>
+{% endblock %}

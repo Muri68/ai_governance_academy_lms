@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Terms & Conditions - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --navy: #0c1e2e;
+        --gold: #ad7a49;
+        --gold-dark: #b07d55;
+        --text-muted: #6c757d;
+        --text-dark: #1a1a2e;
+        --border-color: #e5e7eb;
+    }
+
+    .page-header-section {
+        background: linear-gradient(135deg, var(--navy) 0%, #142a3e 100%);
+        padding: 60px 0;
+        text-align: center;
+        color: white;
+    }
+
+    .page-header-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .page-header-subtitle {
+        font-size: 1rem;
+        color: rgba(255,255,255,0.7);
+    }
+
+    .content-section {
+        padding: 60px 0;
+    }
+
+    .content-wrapper {
+        max-width: 850px;
+        margin: 0 auto;
+    }
+
+    /* Dynamic content styling */
+    .content-wrapper h1 { font-size: 1.8rem; font-weight: 700; color: var(--navy); margin: 36px 0 16px; padding-bottom: 10px; border-bottom: 2px solid var(--gold); }
+    .content-wrapper h1:first-child { margin-top: 0; }
+    .content-wrapper h2 { font-size: 1.5rem; font-weight: 700; color: var(--navy); margin: 32px 0 14px; padding-bottom: 8px; border-bottom: 2px solid var(--gold); }
+    .content-wrapper h3 { font-size: 1.2rem; font-weight: 600; color: var(--text-dark); margin: 24px 0 10px; }
+    .content-wrapper h4 { font-size: 1.05rem; font-weight: 600; color: var(--text-dark); margin: 20px 0 8px; }
+    .content-wrapper p { font-size: 0.95rem; color: var(--text-muted); line-height: 1.8; margin-bottom: 16px; }
+    .content-wrapper ul, .content-wrapper ol { padding-left: 24px; margin-bottom: 16px; }
+    .content-wrapper ul li, .content-wrapper ol li { font-size: 0.95rem; color: var(--text-muted); line-height: 1.8; margin-bottom: 8px; }
+    .content-wrapper a { color: var(--gold); text-decoration: none; }
+    .content-wrapper a:hover { text-decoration: underline; }
+    .content-wrapper strong { color: var(--text-dark); }
+    .content-wrapper pre { background: #1e293b; color: #e2e8f0; padding: 16px; border-radius: 8px; overflow-x: auto; margin: 16px 0; font-size: 13px; }
+    .content-wrapper code { background: #f1f5f9; color: #e11d48; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+    .content-wrapper pre code { background: transparent; color: #e2e8f0; padding: 0; }
+    .content-wrapper blockquote { border-left: 4px solid var(--gold); padding: 8px 16px; margin: 16px 0; background: #fef7f0; border-radius: 0 8px 8px 0; }
+    .content-wrapper table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    .content-wrapper table th, .content-wrapper table td { border: 1px solid var(--border-color); padding: 10px 14px; text-align: left; font-size: 0.9rem; }
+    .content-wrapper table th { background: #f8fafc; font-weight: 600; color: var(--text-dark); }
+    .content-wrapper img { max-width: 100%; border-radius: 8px; margin: 12px 0; }
+    .content-wrapper hr { border: none; border-top: 1px solid var(--border-color); margin: 24px 0; }
+
+    .highlight-box {
+        background: #fef7f0;
+        border-left: 4px solid var(--gold);
+        padding: 16px 20px;
+        border-radius: 0 8px 8px 0;
+        margin: 20px 0;
+    }
+
+    .highlight-box p {
+        margin: 0;
+        font-weight: 500;
+        color: var(--text-dark);
+    }
+
+    .last-updated {
+        text-align: center;
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border-color);
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+
+    .default-content {
+        text-align: center;
+        padding: 40px;
+        color: var(--text-muted);
+    }
+    .default-content i { font-size: 3rem; display: block; margin-bottom: 12px; opacity: 0.3; }
+
+    @media (max-width: 768px) {
+        .page-header-title { font-size: 1.8rem; }
+        .content-section { padding: 40px 0; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="page-header-section">
+    <div class="container">
+        <h1 class="page-header-title">Terms & Conditions</h1>
+        <p class="page-header-subtitle">Please read these terms carefully before using our platform</p>
+    </div>
+</section>
+
+<section class="content-section">
+    <div class="container">
+        <div class="content-wrapper">
+            <div class="highlight-box">
+                <p>By accessing and using the AI Governance Academy platform, you agree to be bound by these Terms and Conditions. If you do not agree with any part of these terms, please do not use our services.</p>
+            </div>
+            
+            {% if terms_content %}
+                {{ terms_content|safe }}
+            {% else %}
+                <div class="default-content">
+                    <i class="fas fa-file-contract"></i>
+                    <h3>Terms & Conditions Coming Soon</h3>
+                    <p>We are currently updating our terms and conditions. Please check back later.</p>
+                </div>
+            {% endif %}
+            
+            {% if last_updated %}
+            <div class="last-updated">
+                <p>Last updated: {{ last_updated.updated_at|date:"F d, Y" }}</p>
+                <p>© {% now "Y" %} AI Governance Academy. All rights reserved.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}

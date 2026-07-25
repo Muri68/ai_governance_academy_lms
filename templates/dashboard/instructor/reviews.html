@@ -1,0 +1,151 @@
+{% extends "dashboard/instructor/instructor_base.html" %}
+{% load static %}
+
+{% block title %}Reviews{% endblock %}
+{% block page_title %}Reviews{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: var(--card-bg); border-radius: 16px; padding: 18px 20px; display: flex; align-items: center; gap: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); border: 1px solid var(--border-color); transition: all 0.2s; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+    .stat-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; color: white; }
+    .stat-icon.blue { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+    .stat-icon.green { background: linear-gradient(135deg, #10b981, #059669); }
+    .stat-icon.purple { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+    .stat-icon.orange { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .stat-info h3 { font-size: 0.72rem; font-weight: 500; color: var(--text-muted); margin-bottom: 2px; }
+    .stat-info .value { font-size: 1.25rem; font-weight: 700; color: var(--text-dark); }
+
+    .content-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+    .card { background: var(--card-bg); border-radius: 16px; padding: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); border: 1px solid var(--border-color); }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .card-title { font-size: 0.95rem; font-weight: 600; color: var(--text-dark); }
+    .filter-select { padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.8rem; font-family: 'Poppins', sans-serif; background: var(--card-bg); color: var(--text-dark); cursor: pointer; }
+    .filter-select:focus { outline: none; border-color: var(--green); }
+
+    .reviews-list { display: flex; flex-direction: column; gap: 16px; }
+    .review-item { padding: 16px; border-radius: 12px; background: #f8fafc; border: 1px solid #f1f5f9; transition: all 0.2s; }
+    .review-item:hover { background: #f1f5f9; }
+    .review-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .review-avatar { width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; flex-shrink: 0; }
+    .review-name { font-weight: 600; font-size: 0.85rem; color: var(--text-dark); }
+    .review-course { font-size: 0.72rem; color: var(--text-muted); }
+    .review-stars { color: #f59e0b; font-size: 0.75rem; margin-left: auto; }
+    .review-text { font-size: 0.82rem; color: var(--text-dark); line-height: 1.6; margin-bottom: 8px; }
+    .review-date { font-size: 0.7rem; color: var(--text-muted); }
+
+    .rating-breakdown { display: flex; flex-direction: column; gap: 10px; }
+    .rating-row { display: flex; align-items: center; gap: 10px; }
+    .rating-label { font-size: 0.75rem; color: var(--text-dark); font-weight: 500; width: 60px; }
+    .rating-bar { flex: 1; height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden; }
+    .rating-fill { height: 100%; background: #f59e0b; border-radius: 4px; transition: width 0.3s; }
+    .rating-count { font-size: 0.72rem; color: var(--text-muted); width: 30px; text-align: right; }
+
+    .overall-rating { text-align: center; padding: 20px; }
+    .overall-rating .big-number { font-size: 3rem; font-weight: 700; color: #f59e0b; }
+    .overall-rating .stars { font-size: 1.2rem; color: #f59e0b; margin: 8px 0; }
+    .overall-rating .total { font-size: 0.8rem; color: var(--text-muted); }
+
+    .empty-state { text-align: center; padding: 40px; color: var(--text-muted); }
+    .empty-state i { font-size: 3rem; margin-bottom: 12px; opacity: 0.3; }
+
+    @media (max-width: 1024px) { .content-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 768px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 480px) { .stats-row { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+{% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" style="border-radius:12px;margin-bottom:16px;font-size:0.85rem;">
+        {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+{% endif %}
+
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="stat-icon orange"><i class="fas fa-star"></i></div>
+        <div class="stat-info"><h3>Average Rating</h3><div class="value">{{ avg_rating|floatformat:1 }} ⭐</div></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon blue"><i class="fas fa-comments"></i></div>
+        <div class="stat-info"><h3>Total Reviews</h3><div class="value">{{ total_reviews }}</div></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon green"><i class="fas fa-smile"></i></div>
+        <div class="stat-info"><h3>5 Star Reviews</h3><div class="value">{{ rating_5 }}</div></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon purple"><i class="fas fa-chart-bar"></i></div>
+        <div class="stat-info"><h3>Review Rate</h3><div class="value">{% if total_reviews > 0 %}{{ rating_5|floatformat:0 }}{% else %}0{% endif %}%</div></div>
+    </div>
+</div>
+
+<div class="content-grid">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Student Reviews</h3>
+            <select class="filter-select" onchange="window.location='?course='+this.value">
+                <option value="">All Courses</option>
+                {% for c in courses %}
+                <option value="{{ c.id }}" {% if selected_course == c.id|stringformat:"s" %}selected{% endif %}>{{ c.title|truncatechars:30 }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="reviews-list">
+            {% for review in reviews %}
+            <div class="review-item">
+                <div class="review-header">
+                    <div class="review-avatar">{{ review.student.get_full_name|slice:":1"|upper }}</div>
+                    <div>
+                        <div class="review-name">{{ review.student.get_full_name }}</div>
+                        <div class="review-course">{{ review.course.title|truncatechars:40 }}</div>
+                    </div>
+                    <div class="review-stars">
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= review.rating %}<i class="fas fa-star"></i>{% else %}<i class="far fa-star"></i>{% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% if review.review %}
+                <div class="review-text">{{ review.review }}</div>
+                {% endif %}
+                <div class="review-date">{{ review.created_at|date:"M d, Y" }} • {{ review.created_at|timesince }} ago</div>
+            </div>
+            {% empty %}
+            <div class="empty-state">
+                <i class="fas fa-star"></i>
+                <p>No reviews yet.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Rating Breakdown</h3></div>
+        <div class="overall-rating">
+            <div class="big-number">{{ avg_rating|floatformat:1 }}</div>
+            <div class="stars">
+                {% for i in "12345" %}
+                    {% if forloop.counter <= avg_rating|floatformat:0|add:"0" %}<i class="fas fa-star"></i>{% else %}<i class="far fa-star"></i>{% endif %}
+                {% endfor %}
+            </div>
+            <div class="total">Based on {{ total_reviews }} reviews</div>
+        </div>
+        <div class="rating-breakdown">
+            {% for rating, count in rating_data %}
+            <div class="rating-row">
+                <span class="rating-label">{{ rating }} ★</span>
+                <div class="rating-bar">
+                    <div class="rating-fill" style="width: {% if total_reviews > 0 %}{{ count|floatformat:0 }}{% else %}0{% endif %}%"></div>
+                </div>
+                <span class="rating-count">{{ count }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

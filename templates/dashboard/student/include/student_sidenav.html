@@ -1,0 +1,51 @@
+<aside class="content-sidebar">
+    <div class="sidebar-card">
+        <h3>Navigation</h3>
+        <ul class="sidebar-nav">
+            <li><a href="{% url 'dashboard:student_dashboard' %}" class="{% if request.resolver_match.url_name == 'student_dashboard' %}active{% endif %}"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li><a href="{% url 'dashboard:student_courses' %}" class="{% if request.resolver_match.url_name == 'student_courses' %}active{% endif %}"><i class="fas fa-book-open"></i> My Courses</a></li>
+            <li><a href="{% url 'payments:payment_history' %}" class="{% if request.resolver_match.url_name == 'payment_history' %}active{% endif %}"><i class="fas fa-credit-card"></i> Payment History</a></li>
+            <li><a href="{% url 'dashboard:student_certificates' %}" class="{% if request.resolver_match.url_name == 'student_certificates' %}active{% endif %}"><i class="fas fa-certificate"></i> Certificates</a></li>
+            <li><a href="{% url 'dashboard:student_reviews' %}" class="{% if request.resolver_match.url_name == 'student_reviews' %}active{% endif %}"><i class="fas fa-star"></i> My Reviews</a></li>
+            <li><a href="{% url 'dashboard:student_profile' %}" class="{% if request.resolver_match.url_name == 'student_profile' %}active{% endif %}"><i class="fas fa-user-cog"></i> Profile Settings</a></li>
+        </ul>
+    </div>
+    {% if request.resolver_match.url_name == 'student_courses' %}
+        <div class="sidebar-card">
+            <h3>Learning Progress</h3>
+            {% if enrolled_courses %}
+                {% for course in enrolled_courses|slice:":4" %}
+                <div class="progress-item">
+                    <div class="progress-header">
+                        <span class="name">{{ course.title|truncatechars:18 }}</span>
+                        <span class="percent">{{ course.progress }}%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width:{{ course.progress }}%"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="font-size:0.8rem;color:#6b7280;text-align:center;">No courses yet.</p>
+            {% endif %}
+        </div>
+    {% endif %}
+    {% if request.resolver_match.url_name == 'payment_history' %}
+        <div class="sidebar-card">
+            <h3>Payment Summary</h3>
+            <ul class="info-list">
+                <li><i class="fas fa-check-circle" style="color: #10b981;"></i> <span>{{ completed_count }} Completed</span></li>
+                <li><i class="fas fa-clock" style="color: #f59e0b;"></i> <span>{{ pending_count }} Pending</span></li>
+                <li><i class="fas fa-times-circle" style="color: #ef4444;"></i> <span>{{ failed_count }} Failed</span></li>
+                <li><i class="fas fa-dollar-sign" style="color: var(--primary-accent);"></i> <span>${{ total_spent }} Total Spent</span></li>
+            </ul>
+        </div>
+    {% endif %}
+    <div class="sidebar-card">
+        <h3>Account</h3>
+        <ul class="sidebar-nav">
+            <li><a href="{% url 'account_change_password' %}" class="{% if request.resolver_match.url_name == 'account_change_password' %}active{% endif %}"><i class="fas fa-lock"></i> Change Password</a></li>
+            <li><a href="{% url 'accounts:logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+        </ul>
+    </div>
+</aside>

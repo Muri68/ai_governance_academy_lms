@@ -1,0 +1,770 @@
+{% load static %}
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="robots" content="noindex, follow">
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- In your HTML <head> or HTTP header -->
+    {% comment %} <meta http-equiv="Content-Security-Policy" content="frame-src https://www.youtube.com https://player.vimeo.com; child-src https://www.youtube.com https://player.vimeo.com;">    <!-- Favicon --> {% endcomment %}
+    {% if favicon_url %}
+    <link rel="shortcut icon" type="image/x-icon" href="{{ favicon_url }}">
+    {% else %}
+    <link rel="shortcut icon" type="image/x-icon" href="{% static 'assets/images/favicon.ico' %}">
+    {% endif %}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %} - {{ site_name|default:'AI Governance Academy' }}</title>
+    <meta name="description" content="{{ meta_description|default:'Learn AI governance, cybersecurity, and ethical technology.' }}">
+    <meta name="keywords" content="{{ meta_keywords|default:'ai governance, cybersecurity, online courses' }}">
+
+    {% if google_analytics %}
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ google_analytics }}"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', '{{ google_analytics }}');
+    </script>
+    {% endif %}  
+
+    <!-- ======================== CSS ==================== -->
+
+    <!-- Google Fonts CSS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="../../css2-1?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap Icons CDN Link -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+        integrity="sha384-tViUnnbYAV00FLIhhi3v/dWt3Jxw4gZQcNoSCxCIFNJVCx7/D55/wXsrNIRANwdD" crossorigin="anonymous">
+
+    <!--====== Use the minified version files listed below for better performance and remove the files listed above ======-->
+    <link rel="stylesheet" href="{% static 'assets/css/vendor/plugins.min.css' %}">
+    <link rel="stylesheet" href="{% static 'assets/css/style.min.css' %}">
+
+    <style>
+        :root {
+            --navy: #0c1e2e;
+            --navy-light: #142a3e;
+            --gold: #ad7a49;
+            --gold-dark: #b07d55;
+            --gold-light: #d4a77d;
+            --cream: #e8e4df;
+            --text-light: #a0b0c0;
+            --white: #ffffff;
+        }
+
+        /* ===================== TOP BAR ===================== */
+
+
+        /* ===================== NAVBAR ===================== */
+        .main-navbar {
+            background-color: var(--cream) !important;
+            padding: 12px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .main-navbar .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--white);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            flex-shrink: 0;
+        }
+
+        .logo-icon svg {
+            width: 34px;
+            height: 34px;
+        }
+
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+
+        .logo-text .main-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--navy);
+            letter-spacing: 0.3px;
+        }
+
+        .logo-text .sub-title {
+            font-size: 8.5px;
+            color: #888;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+
+        .main-navbar .nav-link {
+            color: var(--navy) !important;
+            font-size: 15px;
+            font-weight: 500;
+            padding: 8px 20px !important;
+            transition: color 0.3s ease;
+            position: relative;
+        }
+
+        .main-navbar .nav-link:hover,
+        .main-navbar .nav-link.active {
+            color: var(--gold) !important;
+        }
+
+        .main-navbar .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 20px;
+            right: 20px;
+            height: 2px;
+            background-color: var(--gold);
+            border-radius: 1px;
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn-sign-in {
+            color: var(--navy) !important;
+            font-size: 15px;
+            font-weight: 500;
+            padding: 8px 20px;
+            text-decoration: none;
+            transition: color 0.3s ease;
+            background: none;
+            border: none;
+        }
+
+        .btn-sign-in:hover {
+            color: var(--gold) !important;
+        }
+
+        .btn-sign-up {
+            background-color: var(--gold);
+            color: var(--white) !important;
+            font-size: 15px;
+            font-weight: 500;
+            padding: 10px 26px;
+            border-radius: 6px;
+            text-decoration: none;
+            border: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn-sign-up:hover {
+            background-color: var(--gold-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(200, 149, 109, 0.3);
+        }
+
+        .navbar-toggler {
+            border: none;
+            padding: 8px;
+        }
+
+        .navbar-toggler:focus {
+            box-shadow: none;
+        }
+
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%2812, 30, 46, 1%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+        }
+
+        /* ===================== HERO SECTION ===================== */
+        .hero-section {
+            background-color: var(--navy);
+            min-height: calc(100vh - 130px);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+        }
+
+        .hero-content {
+            padding: 60px 0;
+            position: relative;
+            z-index: 10;
+        }
+
+        .hero-subtitle {
+            color: var(--gold);
+            font-size: 16px;
+            font-weight: 400;
+            margin-bottom: 15px;
+            letter-spacing: 0.5px;
+        }
+
+        .hero-title {
+            color: var(--white);
+            font-size: 45px;
+            font-weight: 600;
+            line-height: 1.15;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .hero-title .highlight {
+            color: var(--gold);
+        }
+
+        .hero-description {
+            color: var(--text-light);
+            font-size: 17px;
+            line-height: 1.7;
+            max-width: 480px;
+            margin-bottom: 40px;
+            font-weight: 300;
+        }
+
+        .btn-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background-color: var(--gold);
+            color: var(--white) !important;
+            text-decoration: none;
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-cta:hover {
+            background-color: var(--gold-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(200, 149, 109, 0.3);
+            color: var(--white) !important;
+        }
+
+        .btn-cta i {
+            font-size: 14px;
+        }
+
+        /* ===================== HERO IMAGE AREA ===================== */
+        .hero-image-area {
+            position: relative;
+            height: 100%;
+            min-height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Gold ellipse background using uploaded image */
+        .gold-ellipse-bg {
+            position: absolute;
+            right: -44%;
+            top: 0%;
+            transform: translateY(-50%);
+            width: 110%;
+            /* height: 135%; */
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .gold-ellipse-bg img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            object-position: right center;
+        }
+
+        /* Woman image */
+        .woman-image {
+            position: relative;
+            z-index: 3;
+            max-height: 620px;
+            width: auto;
+            right: -225px;
+            object-fit: contain;
+            filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.2));
+        }
+
+        /* Badge Circle */
+        .badge-circle {
+            position: absolute;
+            left: -5%;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 5;
+            width: 170px;
+            height: 170px;
+        }
+
+        .badge-inner {
+            width: 100%;
+            height: 100%;
+            background-color: var(--gold);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            /* box-shadow: 0 8px 30px rgba(200, 149, 109, 0.4); */
+        }
+
+        .badge-book-icon {
+            width: 100%;
+            height: 50%;
+            margin-bottom: 6px;
+        }
+
+        .badge-book-icon svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .badge-count {
+            color: var(--white);
+            font-size: 26px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .badge-label {
+            color: var(--white);
+            font-size: 15px;
+            font-weight: 500;
+            margin-top: 2px;
+        }
+
+        /* Curve decorations using uploaded images */
+        .curve-top {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 130px;
+            z-index: 6;
+        }
+
+        .curve-top img {
+            width: 100%;
+            height: auto;
+        }
+
+        .curve-bottom {
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 130px;
+            z-index: 6;
+        }
+
+        .curve-bottom img {
+            width: 100%;
+            height: auto;
+        }
+
+        /* Floating animation for badge */
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(-50%) translateY(0);
+            }
+
+            50% {
+                transform: translateY(-50%) translateY(-10px);
+            }
+        }
+
+        .badge-circle {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        /* ===================== ANIMATIONS ===================== */
+        .fade-in-up {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease;
+        }
+
+        .fade-in-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .fade-in-left {
+            opacity: 0;
+            transform: translateX(-30px);
+            transition: all 0.8s ease;
+        }
+
+        .fade-in-left.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .fade-in-right {
+            opacity: 0;
+            transform: translateX(30px);
+            transition: all 0.8s ease;
+        }
+
+        .fade-in-right.visible {
+            opacity: 1;
+            /* transform: translateX(0); */
+        }
+
+        .scale-in {
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 0.8s ease;
+        }
+
+        .scale-in.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* ===================== RESPONSIVE ===================== */
+        @media (max-width: 1199px) {
+            .hero-title {
+                font-size: 42px;
+            }
+
+            .badge-circle {
+                width: 150px;
+                height: 150px;
+                left: 0;
+            }
+
+            .badge-count {
+                font-size: 22px;
+            }
+        }
+
+        @media (max-width: 991px) {
+            .hero-section {
+                flex-direction: column;
+                padding: 40px 0;
+                he
+            }
+
+            .hero-content {
+                text-align: center;
+                padding: 40px 20px;
+            }
+
+            .hero-description {
+                max-width: 100%;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .hero-image-area {
+                min-height: 200px;
+                width: 100%;
+            }
+
+            .gold-ellipse-bg {
+                display: none;
+            }
+
+            .woman-image {
+                display: none;
+            }
+
+            .badge-circle {
+                left: 33%;
+                top: 30%;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .top-bar .contact-info {
+                justify-content: center;
+                margin-bottom: 10px;
+            }
+
+            .top-bar .social-icons {
+                justify-content: center;
+            }
+
+            .hero-title {
+                font-size: 32px;
+            }
+
+            .hero-subtitle {
+                font-size: 14px;
+            }
+
+            .hero-description {
+                font-size: 15px;
+            }
+
+            .badge-circle {
+                width: 120px;
+                height: 120px;
+                left: 33%;
+            }
+
+            .badge-count {
+                font-size: 18px;
+            }
+
+            .badge-label {
+                font-size: 12px;
+            }
+
+            .badge-book-icon {
+                width: 35px;
+                height: 30px;
+            }
+
+            .curve-top,
+            .curve-bottom {
+                width: 100px;
+            }
+        }
+
+        @media (max-width: 575px) {
+            .hero-title {
+                font-size: 26px;
+            }
+
+            .btn-cta {
+                padding: 12px 24px;
+                font-size: 14px;
+            }
+
+            .woman-image {
+                max-height: 320px;
+            }
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+
+    <div class="main-wrapper">
+
+        <!-- ===================== NAVBAR ===================== -->
+        {% include 'includes/navbar.html' %}
+
+        {% if messages %}
+            <div style="position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 400px;">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const alerts = document.querySelectorAll('.alert-dismissible');
+                    alerts.forEach(function(alert) {
+                        // Longer display for error messages, shorter for success
+                        let duration = 10000; // default 10 seconds
+                        if (alert.classList.contains('alert-danger')) duration = 15000;
+                        if (alert.classList.contains('alert-success')) duration = 10000;
+                        if (alert.classList.contains('alert-warning')) duration = 12000;
+                        
+                        setTimeout(function() {
+                            const bsAlert = new bootstrap.Alert(alert);
+                            bsAlert.close();
+                        }, duration);
+                    });
+                });
+            </script>
+        {% endif %}
+
+        {% block content %}{% endblock  %}
+
+        <!-- Footer Start -->
+        {% include 'includes/footer.html' %}
+
+        <!--Back To Start-->
+        <a href="#" class="back-to-top">
+            <i class="icofont-simple-up"></i>
+        </a>
+        <!--Back To End-->
+    </div>
+
+    <!-- JS
+    ============================================ -->
+
+    <!-- Modernizer & jQuery JS -->
+    <script src="{% static 'assets/js/vendor/modernizr-3.11.2.min.js' %}"></script>
+    <script src="{% static 'assets/js/vendor/jquery-3.5.1.min.js' %}"></script>
+
+    <!-- Bootstrap JS -->
+    <!-- <script src="assets/js/plugins/popper.min.js"></script>
+    <script src="assets/js/plugins/bootstrap.min.js"></script> -->
+
+    <!-- Plugins JS -->
+    <!-- <script src="assets/js/plugins/swiper-bundle.min.js"></script>
+    <script src="assets/js/plugins/jquery.magnific-popup.min.js"></script>
+    <script src="assets/js/plugins/video-playlist.js"></script>
+    <script src="assets/js/plugins/jquery.nice-select.min.js"></script>
+    <script src="assets/js/plugins/ajax-contact.js"></script> -->
+
+    <!--====== Use the minified version files listed below for better performance and remove the files listed above ======-->
+    <script src="{% static 'assets/js/plugins.min.js' %}"></script>
+
+
+    <!-- Main JS -->
+    <script src="{% static 'assets/js/main.js' %}"></script>
+
+
+   
+{% block extra_js %}{% endblock %}
+
+    <!-- Custom JS -->
+    <script>
+        // Animation on scroll
+        document.addEventListener('DOMContentLoaded', function () {
+            const animatedElements = document.querySelectorAll('.fade-in-up, .fade-in-left, .fade-in-right, .scale-in');
+
+            function checkVisibility() {
+                animatedElements.forEach(el => {
+                    const rect = el.getBoundingClientRect();
+                    const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+
+                    if (rect.top <= windowHeight * 0.85) {
+                        const delay = el.getAttribute('data-delay') || 0;
+                        setTimeout(() => {
+                            el.classList.add('visible');
+                        }, delay);
+                    }
+                });
+            }
+
+            // Initial check
+            checkVisibility();
+
+            // Check on scroll
+            window.addEventListener('scroll', checkVisibility);
+
+            // Smooth scroll for nav links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+
+            // Navbar background change on scroll
+            const navbar = document.querySelector('.main-navbar');
+            window.addEventListener('scroll', function () {
+                if (window.scrollY > 50) {
+                    navbar.style.boxShadow = '0 4px 20px rgba(0,0,0,0.1)';
+                } else {
+                    navbar.style.boxShadow = '0 2px 10px rgba(0,0,0,0.05)';
+                }
+            });
+
+            // Button click feedback
+            document.querySelectorAll('.btn-cta, .btn-sign-up').forEach(btn => {
+                btn.addEventListener('click', function (e) {
+                    // Create ripple effect
+                    const ripple = document.createElement('span');
+                    ripple.style.cssText = `
+                        position: absolute;
+                        background: rgba(255,255,255,0.3);
+                        border-radius: 50%;
+                        transform: scale(0);
+                        animation: ripple 0.6s linear;
+                        pointer-events: none;
+                    `;
+
+                    const rect = this.getBoundingClientRect();
+                    const size = Math.max(rect.width, rect.height);
+                    ripple.style.width = ripple.style.height = size + 'px';
+                    ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+                    ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+
+                    this.style.position = 'relative';
+                    this.style.overflow = 'hidden';
+                    this.appendChild(ripple);
+
+                    setTimeout(() => ripple.remove(), 600);
+                });
+            });
+
+            // Add ripple keyframes
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes ripple {
+                    to {
+                        transform: scale(4);
+                        opacity: 0;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        });
+    </script>
+
+    <script>
+        const filterBtn = document.getElementById("filterBtn");
+        const filterWrapper = document.getElementById("filterWrapper");
+
+        filterBtn.addEventListener("click", function () {
+
+            filterWrapper.classList.toggle("show");
+
+        });
+
+        document.addEventListener("click", function (e) {
+
+            if (
+                !filterWrapper.contains(e.target) &&
+                !filterBtn.contains(e.target)
+            ) {
+
+                filterWrapper.classList.remove("show");
+
+            }
+
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

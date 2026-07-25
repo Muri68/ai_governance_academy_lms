@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Frequently Asked Questions - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --navy: #0c1e2e;
+        --gold: #ad7a49;
+        --gold-dark: #b07d55;
+        --text-muted: #6c757d;
+        --text-dark: #1a1a2e;
+        --border-color: #e5e7eb;
+        --light-bg: #f8f9fa;
+    }
+
+    .page-header-section {
+        background: linear-gradient(135deg, var(--navy) 0%, #142a3e 100%);
+        padding: 60px 0;
+        text-align: center;
+        color: white;
+    }
+
+    .page-header-title { font-size: 2.5rem; font-weight: 700; margin-bottom: 10px; }
+    .page-header-subtitle { font-size: 1rem; color: rgba(255,255,255,0.7); max-width: 600px; margin: 0 auto; }
+
+    .faq-section { padding: 60px 0; }
+
+    .faq-categories {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: center;
+        margin-bottom: 40px;
+    }
+
+    .faq-category-btn {
+        padding: 10px 20px;
+        border-radius: 50px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        border: 1.5px solid var(--border-color);
+        background: white;
+        color: var(--text-muted);
+        transition: all 0.3s ease;
+        font-family: 'Poppins', sans-serif;
+    }
+
+    .faq-category-btn:hover,
+    .faq-category-btn.active {
+        background: var(--gold);
+        color: white;
+        border-color: var(--gold);
+    }
+
+    .faq-wrapper { max-width: 800px; margin: 0 auto; }
+
+    .faq-category-section { margin-bottom: 40px; }
+
+    .faq-category-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--navy);
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid var(--gold);
+    }
+
+    .faq-item {
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        margin-bottom: 12px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .faq-item:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+
+    .faq-question {
+        padding: 18px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .faq-question:hover { background: var(--light-bg); }
+
+    .faq-question h3 {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin: 0;
+        flex: 1;
+        padding-right: 16px;
+    }
+
+    .faq-icon {
+        width: 28px; height: 28px;
+        border-radius: 50%;
+        background: var(--light-bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        color: var(--text-muted);
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+    }
+
+    .faq-item.active .faq-icon {
+        background: var(--gold);
+        color: white;
+        transform: rotate(45deg);
+    }
+
+    .faq-answer { display: none; padding: 0 24px 20px; }
+    .faq-item.active .faq-answer { display: block; }
+
+    .faq-answer p {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        line-height: 1.8;
+        margin: 0;
+    }
+
+    .faq-answer ul { padding-left: 20px; margin: 8px 0 0; }
+    .faq-answer ul li { font-size: 0.9rem; color: var(--text-muted); line-height: 1.8; }
+
+    .still-have-questions {
+        text-align: center;
+        margin-top: 60px;
+        padding: 40px;
+        background: var(--light-bg);
+        border-radius: 16px;
+    }
+
+    .still-have-questions h3 { font-size: 1.3rem; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+    .still-have-questions p { color: var(--text-muted); margin-bottom: 20px; }
+
+    .btn-contact {
+        display: inline-block;
+        padding: 12px 30px;
+        background: var(--gold);
+        color: white;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-contact:hover {
+        background: var(--gold-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(173, 122, 73, 0.3);
+        color: white;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: var(--text-muted);
+    }
+    .empty-state i { font-size: 3rem; display: block; margin-bottom: 12px; opacity: 0.3; }
+
+    @media (max-width: 768px) {
+        .page-header-title { font-size: 1.8rem; }
+        .faq-section { padding: 40px 0; }
+        .faq-question h3 { font-size: 0.85rem; }
+        .faq-category-btn { padding: 8px 16px; font-size: 12px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="page-header-section">
+    <div class="container">
+        <h1 class="page-header-title">Frequently Asked Questions</h1>
+        <p class="page-header-subtitle">Find answers to common questions about our courses, platform, and policies</p>
+    </div>
+</section>
+
+<section class="faq-section">
+    <div class="container">
+        
+        {% if faqs %}
+        <!-- Category Filter Buttons -->
+        <div class="faq-categories">
+            <button class="faq-category-btn active" onclick="filterFAQ('all')">All Questions</button>
+            {% for cat in faq_categories %}
+            <button class="faq-category-btn" onclick="filterFAQ('{{ cat.0 }}')">{{ cat.1 }}</button>
+            {% endfor %}
+        </div>
+
+        <div class="faq-wrapper">
+            {% for cat in faq_categories %}
+            <div class="faq-category-section" data-category="{{ cat.0 }}">
+                <h2 class="faq-category-title">
+                    {% if cat.0 == 'general' %}📋
+                    {% elif cat.0 == 'courses' %}📚
+                    {% elif cat.0 == 'payment' %}💳
+                    {% elif cat.0 == 'technical' %}🔧
+                    {% elif cat.0 == 'certificates' %}📜
+                    {% endif %}
+                    {{ cat.1 }}
+                </h2>
+                
+                {% for faq in faqs %}
+                    {% if faq.category == cat.0 %}
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            <h3>{{ faq.question }}</h3>
+                            <span class="faq-icon"><i class="fas fa-plus"></i></span>
+                        </div>
+                        <div class="faq-answer">
+                            {{ faq.answer|safe }}
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-question-circle"></i>
+            <h3>FAQs Coming Soon</h3>
+            <p>We are currently compiling frequently asked questions. Please check back later.</p>
+        </div>
+        {% endif %}
+
+        <!-- Still Have Questions -->
+        <div class="still-have-questions">
+            <h3>Still Have Questions?</h3>
+            <p>Can't find the answer you're looking for? We're here to help!</p>
+            <a href="{% url 'frontend:contact' %}" class="btn-contact">
+                <i class="fas fa-envelope me-2"></i> Contact Us
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function toggleFAQ(element) {
+        const faqItem = element.parentElement;
+        faqItem.classList.toggle('active');
+    }
+
+    function filterFAQ(category) {
+        document.querySelectorAll('.faq-category-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+
+        document.querySelectorAll('.faq-category-section').forEach(section => {
+            if (category === 'all' || section.dataset.category === category) {
+                section.style.display = '';
+            } else {
+                section.style.display = 'none';
+            }
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends "dashboard/admin/admin_base.html" %}
+{% load static %}
+
+{% block title %}Students - {{ course.title }}{% endblock %}
+{% block page_title %}Course Students{% endblock %}
+
+{% block extra_css %}
+<style>
+    .breadcrumb-row { display:flex;align-items:center;gap:8px;font-size:0.85rem;margin-bottom:4px; }
+    .breadcrumb-row a { color:var(--text-secondary);text-decoration:none; }
+    .breadcrumb-row a:hover { color:var(--accent-blue); }
+    .breadcrumb-row .current { color:var(--accent-blue);font-weight:600; }
+
+    .course-info-card { background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:var(--radius-lg);padding:24px 28px;margin-bottom:20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap; }
+    .course-info-card h2 { color:white;font-size:1.2rem;font-weight:700;flex:1;min-width:200px; }
+    .course-stats-mini { display:flex;gap:20px; }
+    .course-stat-mini { text-align:center; }
+    .course-stat-mini .num { font-size:1.4rem;font-weight:700;color:var(--accent-green); }
+    .course-stat-mini .lbl { font-size:0.7rem;color:rgba(255,255,255,0.6);text-transform:uppercase; }
+
+    .table-card { background:var(--bg-card);border-radius:var(--radius-md);box-shadow:var(--shadow-sm);border:1px solid var(--border-color);overflow:hidden; }
+    .table-responsive { overflow-x:auto; }
+    .data-table { width:100%;border-collapse:collapse;min-width:700px; }
+    .data-table th { text-align:left;padding:12px 14px;font-size:0.72rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;border-bottom:1px solid var(--border-color);background:#f8fafc; }
+    .data-table td { padding:10px 14px;font-size:0.82rem;border-bottom:1px solid var(--border-color); }
+    .data-table tbody tr:hover { background:rgba(241,245,249,0.5); }
+    .student-cell { display:flex;align-items:center;gap:10px; }
+    .student-avatar { width:34px;height:34px;border-radius:50%;object-fit:cover; }
+    .student-avatar-default { width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#10b981,#059669);color:white;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700; }
+    .status-badge { display:inline-flex;padding:3px 10px;border-radius:var(--radius-pill);font-size:0.7rem;font-weight:600; }
+    .status-badge.active { background:rgba(16,185,129,0.1);color:#10b981; }
+    .status-badge.completed { background:rgba(59,130,246,0.1);color:#3b82f6; }
+    .status-badge.dropped { background:rgba(239,68,68,0.1);color:#ef4444; }
+    .progress-mini { display:flex;align-items:center;gap:6px; }
+    .progress-mini-bar { width:60px;height:5px;background:#e5e7eb;border-radius:3px;overflow:hidden; }
+    .progress-mini-fill { height:100%;background:#10b981;border-radius:3px; }
+    .empty-state { text-align:center;padding:40px;color:var(--text-muted); }
+    @media (max-width:768px) { .data-table { min-width:auto; } .data-table thead { display:none; } .data-table tbody td { display:flex;justify-content:space-between;padding:8px 14px;border:none; } .data-table tbody td::before { content:attr(data-label);font-weight:600;color:var(--text-secondary);font-size:0.65rem;text-transform:uppercase; } .data-table tbody tr { display:block;padding:8px 0;border-bottom:1px solid var(--border-color); } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-row">
+    <a href="{% url 'dashboard:manage_courses' %}"><i class="fas fa-arrow-left"></i> Courses</a>
+    <span>/</span>
+    <a href="{% url 'dashboard:admin_course_view' course.id %}">{{ course.title }}</a>
+    <span>/</span>
+    <span class="current">Students</span>
+</div>
+
+<div class="course-info-card">
+    <h2>{{ course.title }} - Enrolled Students</h2>
+    <div class="course-stats-mini">
+        <div class="course-stat-mini"><div class="num">{{ total_enrolled }}</div><div class="lbl">Total</div></div>
+        <div class="course-stat-mini"><div class="num">{{ active_students }}</div><div class="lbl">Active</div></div>
+        <div class="course-stat-mini"><div class="num">{{ completed_students }}</div><div class="lbl">Completed</div></div>
+        <div class="course-stat-mini"><div class="num">{{ dropped_students }}</div><div class="lbl">Dropped</div></div>
+    </div>
+</div>
+
+<div class="table-card">
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead><tr><th>Student</th><th>Email</th><th>Status</th><th>Progress</th><th>Enrolled</th><th>Completed</th></tr></thead>
+            <tbody>
+                {% for enrollment in enrollments %}
+                <tr>
+                    <td data-label="Student">
+                        <div class="student-cell">
+                            {% if enrollment.student.profile_picture %}<img src="{{ enrollment.student.profile_picture.url }}" class="student-avatar">
+                            {% else %}<div class="student-avatar-default">{{ enrollment.student.first_name|slice:":1"|upper }}</div>{% endif %}
+                            <span style="font-weight:600;">{{ enrollment.student.get_full_name }}</span>
+                        </div>
+                    </td>
+                    <td data-label="Email">{{ enrollment.student.email }}</td>
+                    <td data-label="Status"><span class="status-badge {{ enrollment.status }}">{{ enrollment.get_status_display }}</span></td>
+                    <td data-label="Progress">
+                        <div class="progress-mini"><span style="font-size:0.75rem;">{{ enrollment.progress_percentage }}%</span><div class="progress-mini-bar"><div class="progress-mini-fill" style="width:{{ enrollment.progress_percentage }}%"></div></div></div>
+                    </td>
+                    <td data-label="Enrolled">{{ enrollment.enrolled_at|date:"M d, Y" }}</td>
+                    <td data-label="Completed">{{ enrollment.completed_at|date:"M d, Y"|default:"—" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6"><div class="empty-state"><i class="fas fa-users"></i><p>No students enrolled yet.</p></div></td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

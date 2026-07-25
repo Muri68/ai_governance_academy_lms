@@ -1,0 +1,520 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Instructor{% endblock %} - AI Governance Authority</title>
+
+    {% if favicon_url %}
+    <link rel="shortcut icon" type="image/x-icon" href="{{ favicon_url }}">
+    {% else %}
+    <link rel="shortcut icon" type="image/x-icon" href="{% static 'assets/images/favicon.ico' %}">
+    {% endif %}
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --navy: #0c1e2e;
+            --navy-light: #142a3e;
+            --gold: #c8956d;
+            --gold-dark: #b07d55;
+            --sidebar-bg: #0a1628;
+            --sidebar-active: #10b981;
+            --bg-main: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-dark: #1e293b;
+            --text-muted: #94a3b8;
+            --blue: #3b82f6;
+            --green: #10b981;
+            --purple: #8b5cf6;
+            --orange: #f59e0b;
+            --red: #ef4444;
+            --success: #22c55e;
+            --white: #ffffff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-main);
+            overflow-x: hidden;
+        }
+
+        /* ===================== SIDEBAR ===================== */
+        .sidebar {
+            width: 260px;
+            background-color: var(--sidebar-bg);
+            min-height: 100vh;
+            position: fixed;
+            left: 0; top: 0;
+            z-index: 1050;
+            display: flex;
+            flex-direction: column;
+            padding: 28px 0;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 24px 0;
+            margin-bottom: 12px;
+        }
+
+        .sidebar-logo a { display: flex; justify-content: center; width: 100%; }
+
+        .sidebar-logo img {
+            width: 160px;
+            height: auto;
+            max-height: 100px;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-logo img:hover { transform: scale(1.05); }
+
+        .sidebar-logo hr {
+            width: 100%;
+            margin: 20px auto 0;
+            border: none;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #FFFFFF, transparent);
+            border-radius: 2px;
+            opacity: 0.8;
+        }
+
+        .sidebar-nav { list-style: none; padding: 0; margin: 0; flex: 1; }
+        .sidebar-nav-item { margin: 4px 16px; }
+
+        .sidebar-nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            color: rgba(255,255,255,0.6);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-nav-link:hover { background-color: rgba(255,255,255,0.08); color: var(--white); }
+
+        .sidebar-nav-link.active {
+            background-color: var(--sidebar-active);
+            color: var(--white);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .sidebar-nav-link i { font-size: 16px; width: 20px; text-align: center; }
+
+        .sidebar-badge {
+            margin-left: auto;
+            background: var(--gold);
+            color: white;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 16px; left: 16px;
+            z-index: 1100;
+            background: var(--sidebar-bg);
+            color: white;
+            border: none;
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1040;
+        }
+        .sidebar-overlay.active { display: block; }
+
+        /* ===================== MAIN CONTENT ===================== */
+        .main-content {
+            margin-left: 260px;
+            padding: 24px 32px;
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+
+        /* ===================== TOP HEADER ===================== */
+        .top-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .header-welcome h1 { font-size: 20px; font-weight: 700; color: var(--text-dark); margin-bottom: 4px; }
+        .header-welcome p { font-size: 12px; color: var(--text-muted); }
+
+        .header-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; position: relative; }
+
+        .header-search { position: relative; }
+
+        .header-search input {
+            width: 220px;
+            padding: 10px 16px 10px 40px;
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 12px;
+            background: var(--card-bg);
+            font-size: 13px;
+            font-family: 'Poppins', sans-serif;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .header-search input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); }
+
+        .header-search i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .header-icon-btn {
+            width: 42px; height: 42px;
+            border-radius: 12px;
+            background: var(--card-bg);
+            border: 1px solid rgba(0,0,0,0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            position: relative;
+        }
+
+        .header-icon-btn:hover { border-color: var(--gold); color: var(--gold); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+
+        .notification-dot {
+            position: absolute;
+            top: 10px; right: 10px;
+            width: 8px; height: 8px;
+            background-color: #ef4444;
+            border-radius: 50%;
+            border: 2px solid var(--card-bg);
+        }
+
+        .header-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 6px 14px 6px 6px;
+            border-radius: 50px;
+            background: var(--card-bg);
+            border: 1px solid rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .header-profile:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-color: var(--gold); }
+
+        .profile-avatar-img {
+            width: 38px; height: 38px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--gold);
+            flex-shrink: 0;
+        }
+
+        .profile-avatar-default {
+            width: 38px; height: 38px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            flex-shrink: 0;
+            letter-spacing: 0.5px;
+        }
+
+        .profile-info { display: flex; flex-direction: column; min-width: 0; }
+        .profile-name { font-size: 13px; font-weight: 600; color: var(--text-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
+        .profile-role { font-size: 10px; color: var(--text-muted); font-weight: 500; }
+        .profile-arrow { font-size: 10px; color: var(--text-muted); transition: transform 0.3s ease; }
+        .profile-arrow.open { transform: rotate(180deg); }
+
+        .profile-dropdown-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            width: 280px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            padding: 8px;
+            display: none;
+            z-index: 1080;
+            animation: dropdownFadeIn 0.2s ease;
+        }
+
+        .profile-dropdown-menu.active { display: block; }
+
+        @keyframes dropdownFadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .dropdown-header-info { display: flex; align-items: center; gap: 12px; padding: 12px; }
+        .dropdown-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--gold); flex-shrink: 0; }
+        .dropdown-avatar-default {
+            width: 44px; height: 44px; border-radius: 50%;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .dropdown-user-name { font-size: 14px; font-weight: 600; color: var(--text-dark); }
+        .dropdown-user-email { font-size: 11px; color: var(--text-muted); }
+        .dropdown-divider { height: 1px; background: rgba(0,0,0,0.06); margin: 8px 0; }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-dark);
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .dropdown-item:hover { background: rgba(16, 185, 129, 0.08); color: #059669; }
+        .dropdown-item i { font-size: 14px; width: 18px; text-align: center; color: var(--text-muted); }
+        .dropdown-item:hover i { color: #059669; }
+        .logout-item { color: #ef4444 !important; }
+        .logout-item:hover { background: rgba(239, 68, 68, 0.08) !important; color: #ef4444 !important; }
+
+        /* ===================== RESPONSIVE ===================== */
+        @media (max-width: 991px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .menu-toggle { display: flex; align-items: center; justify-content: center; }
+            .main-content { margin-left: 0; padding: 20px; padding-top: 70px; }
+        }
+
+        @media (max-width: 767px) {
+            .header-search input { width: 140px; }
+            .top-header { flex-direction: column; align-items: flex-start; }
+            .header-actions { width: 100%; justify-content: flex-start; }
+            .header-profile .profile-info,
+            .header-profile .profile-arrow { display: none; }
+        }
+
+        @media (max-width: 480px) {
+            .main-content { padding: 12px; padding-top: 65px; }
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <button class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <a href="{% url 'dashboard:instructor_dashboard' %}">
+                {% if site_logo_url %}
+                <img src="{{ site_logo_url }}" alt="{{ site_name }}">
+                {% else %}
+                <img src="{% static 'images/dashboard-logo2.png' %}" alt="AI Governance Authority">
+                {% endif %}
+            </a>
+            <hr>
+        </div>
+        <ul class="sidebar-nav">
+            <li class="sidebar-nav-item">
+                <a href="{% url 'dashboard:instructor_dashboard' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'instructor_dashboard' %}active{% endif %}">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="{% url 'dashboard:instructor_courses' %}" class="sidebar-nav-link {% if 'instructor_course' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="fas fa-book"></i> My Courses
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="{% url 'dashboard:instructor_reviews' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'instructor_reviews' %}active{% endif %}">
+                    <i class="fas fa-star"></i> Reviews
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="{% url 'dashboard:instructor_earnings' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'instructor_earnings' %}active{% endif %}">
+                    <i class="fas fa-chart-line"></i> Earnings
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="{% url 'dashboard:instructor_announcements' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'instructor_announcements' %}active{% endif %}">
+                    <i class="fas fa-bullhorn"></i> Announcements
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="{% url 'dashboard:instructor_profile' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'instructor_profile' %}active{% endif %}">
+                    <i class="fas fa-user-cog"></i> My Profile
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Header -->
+        <div class="top-header">
+            <div class="header-welcome">
+                <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+                <p id="currentDate"></p>
+            </div>
+            <div class="header-actions">
+                <div class="header-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search...">
+                </div>
+                <button class="header-icon-btn" id="notificationBtn" title="Notifications">
+                    <i class="far fa-bell"></i>
+                    <span class="notification-dot"></span>
+                </button>
+                <div class="header-profile" id="profileDropdown">
+                    {% if user.profile_picture %}
+                    <img src="{{ user.profile_picture.url }}" alt="Profile" class="profile-avatar-img">
+                    {% else %}
+                    <div class="profile-avatar-default">{{ user.first_name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}</div>
+                    {% endif %}
+                    <div class="profile-info">
+                        <span class="profile-name">{{ user.get_full_name }}</span>
+                        <span class="profile-role">Instructor</span>
+                    </div>
+                    <i class="fas fa-chevron-down profile-arrow"></i>
+                </div>
+
+                <div class="profile-dropdown-menu" id="profileMenu">
+                    <div class="dropdown-header-info">
+                        {% if user.profile_picture %}
+                        <img src="{{ user.profile_picture.url }}" alt="Profile" class="dropdown-avatar">
+                        {% else %}
+                        <div class="dropdown-avatar-default">{{ user.first_name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}</div>
+                        {% endif %}
+                        <div>
+                            <div class="dropdown-user-name">{{ user.get_full_name }}</div>
+                            <div class="dropdown-user-email">{{ user.email }}</div>
+                        </div>
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <a href="{% url 'dashboard:instructor_dashboard' %}" class="dropdown-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                    <a href="{% url 'dashboard:instructor_profile' %}" class="dropdown-item"><i class="fas fa-user-cog"></i> My Profile</a>
+                    <div class="dropdown-divider"></div>
+                    <a href="{% url 'accounts:logout' %}" class="dropdown-item logout-item"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                </div>
+            </div>
+        </div>
+
+        {% if messages %}
+            <div style="position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 400px;">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const alerts = document.querySelectorAll('.alert-dismissible');
+                    alerts.forEach(function(alert) {
+                        // Longer display for error messages, shorter for success
+                        let duration = 5000; // default 5 seconds
+                        if (alert.classList.contains('alert-danger')) duration = 8000;
+                        if (alert.classList.contains('alert-success')) duration = 3000;
+                        if (alert.classList.contains('alert-warning')) duration = 6000;
+                        
+                        setTimeout(function() {
+                            const bsAlert = new bootstrap.Alert(alert);
+                            bsAlert.close();
+                        }, duration);
+                    });
+                });
+            </script>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const now = new Date();
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
+
+            const menuToggle = document.getElementById('menuToggle');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            menuToggle.addEventListener('click', () => { sidebar.classList.add('open'); sidebarOverlay.classList.add('active'); });
+            sidebarOverlay.addEventListener('click', () => { sidebar.classList.remove('open'); sidebarOverlay.classList.remove('active'); });
+
+            const profileDropdown = document.getElementById('profileDropdown');
+            const profileMenu = document.getElementById('profileMenu');
+            const profileArrow = document.querySelector('.profile-arrow');
+            profileDropdown.addEventListener('click', function(e) {
+                e.stopPropagation();
+                profileMenu.classList.toggle('active');
+                profileArrow.classList.toggle('open');
+            });
+            document.addEventListener('click', function(e) {
+                if (!profileDropdown.contains(e.target) && !profileMenu.contains(e.target)) {
+                    profileMenu.classList.remove('active');
+                    profileArrow.classList.remove('open');
+                }
+            });
+
+            document.getElementById('notificationBtn').addEventListener('click', function() {
+                alert('Notifications:\n\n• 5 assignments submitted\n• 3 new student enrollments\n• 1 course review completed');
+            });
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

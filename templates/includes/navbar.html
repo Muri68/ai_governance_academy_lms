@@ -1,0 +1,798 @@
+{% load static %}
+
+<!-- ===================== NAVBAR ===================== -->
+<div class="header-section">
+    <!-- Header Top -->
+    <div class="header-top d-none d-lg-block">
+        <div class="container">
+            <div class="header-top-wrapper">
+                <div class="header-top-medal">
+                    <div class="top-info">
+                        <p><i class="flaticon-phone-call"></i> <a href="tel:{{ contact_phone }}">{{ contact_phone }}</a></p>
+                        <p><i class="flaticon-email"></i> <a href="mailto:{{ contact_email }}">{{ contact_email }}</a></p>
+                    </div>
+                </div>
+                <div class="header-top-right">
+                    <ul class="social">
+                        {% if facebook_url and facebook_url != '#' %}<li><a href="{{ facebook_url }}" target="_blank"><i class="flaticon-facebook"></i></a></li>{% endif %}
+                        {% if twitter_url and twitter_url != '#' %}<li><a href="{{ twitter_url }}" target="_blank"><i class="flaticon-twitter"></i></a></li>{% endif %}
+                        {% if linkedin_url and linkedin_url != '#' %}<li><a href="{{ linkedin_url }}" target="_blank"><i class="flaticon-skype"></i></a></li>{% endif %}
+                        {% if instagram_url and instagram_url != '#' %}<li><a href="{{ instagram_url }}" target="_blank"><i class="flaticon-instagram"></i></a></li>{% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header Main -->
+    <div class="header-main">
+        <div class="container">
+            <div class="header-main-wrapper">
+                <div class="header-logo">
+                    <a class="navbar-brand" href="{% url 'frontend:index' %}">
+                        <div class="logo-icon">
+                            {% if site_logo_url %}
+                            <img src="{{ site_logo_url }}" alt="{{ site_name }}" width="100%">
+                            {% else %}
+                            <img src="{% static 'images/logo.png' %}" alt="{{ site_name }}" width="100%">
+                            {% endif %}
+                        </div>
+                        <div class="logo-text">
+                            <span class="main-title">{{ site_name_line1|default:'AI GOVERNANCE' }}</span>
+                            <span class="main-title">{{ site_name_line2|default:'ACADEMY' }}</span>
+                            <span class="sub-title">{{ site_tagline|default:'AI Ethics & Compliance Platform' }}</span>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="header-menu d-none d-lg-block">
+                    <ul class="nav-menu">
+                        <li class="{% if request.resolver_match.url_name == 'index' %}active{% endif %}">
+                            <a href="{% url 'frontend:index' %}">Home</a>
+                        </li>
+                        <li class="{% if request.resolver_match.url_name == 'courses' %}active{% endif %}">
+                            <a href="{% url 'frontend:courses' %}">Courses</a>
+                        </li>
+                        <li class="{% if request.resolver_match.url_name == 'about' %}active{% endif %}">
+                            <a href="{% url 'frontend:about' %}">About</a>
+                        </li>
+                        <li class="{% if request.resolver_match.url_name == 'contact' %}active{% endif %}">
+                            <a href="{% url 'frontend:contact' %}">Contact</a>
+                        </li>
+                    </ul>
+                </div>
+
+                
+
+                <!-- Header Sign In & Up Start -->
+                <div class="header-sign-in-up d-none d-lg-block">
+                    <ul>
+                        {% if user.is_authenticated %}
+                        <!-- Notification Icon -->
+                        <li>
+                            <a href="#" class="icon-btn notification-btn">
+                                <i class="fas fa-bell"></i>
+                                <span class="count-badge bg-danger">3</span>
+                            </a>
+                        </li>
+
+                        <!-- Cart Icon -->
+                        <li>
+                            <a href="#" class="icon-btn cart-btn">
+                                <i class="fas fa-shopping-cart"></i>
+                                <span class="count-badge bg-primary">2</span>
+                            </a>
+                        </li>
+
+                        <!-- User Avatar Dropdown -->
+                        <li class="dropdown">
+                            <a href="#" class="user-toggle" data-toggle="dropdown" aria-haspopup="true"
+                                aria-expanded="false">
+                                {% if user.profile_picture %}
+                                <img src="{{ user.profile_picture.url }}" alt="{{ user.full_name }} - Profile" class="user-avatar">
+                                {% else %}
+                                <span class="user-avatar-default">{{ user.full_name|slice:":1"|upper }}</span>
+                                {% endif %}
+                                <i class="fas fa-chevron-down"></i>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-right">
+                                <!-- User Info -->
+                                <div class="dropdown-header-info">
+                                    {% if user.profile_picture %}
+                                    <img src="{{ user.profile_picture.url }}" alt="{{ user.full_name }} - Profile" class="dropdown-avatar">
+                                    {% else %}
+                                    <span class="dropdown-avatar-default">{{ user.full_name|slice:":1"|upper }}</span>
+                                    {% endif %}
+                                    <div>
+                                        <div class="user-name">{{ user.full_name }}</div>
+                                        <div class="user-email">{{ user.email }}</div>
+                                    </div>
+                                </div>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="{% url 'accounts:dashboard' %}">
+                                    <i class="fas fa-th-large"></i> Dashboard
+                                </a>
+                                {% if user.is_student %}
+                                <a class="dropdown-item" href="{% url 'dashboard:student_profile' %}">
+                                    <i class="fas fa-user"></i> My Profile
+                                </a>
+                                {% elif user.is_instructor %}
+                                <a class="dropdown-item" href="{% url 'dashboard:instructor_profile' %}">
+                                    <i class="fas fa-user"></i> My Profile
+                                </a>
+                                {% endif %}
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item text-danger" href="{% url 'account_logout' %}">
+                                    <i class="fas fa-sign-out-alt"></i> Logout
+                                </a>
+                            </div>
+                        </li>
+                        {% else %}
+                        <li><a class="btn-sign-in" href="{% url 'accounts:login' %}">Sign In</a></li>
+                        <li><a class="btn-sign-up" href="{% url 'accounts:student_register' %}">Sign Up</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <!-- Header Sign In & Up End -->
+
+                <!-- Header Mobile Toggle Start -->
+                <div class="header-toggle d-lg-none">
+                    <a class="menu-toggle" href="javascript:void(0)">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </a>
+                </div>
+                <!-- Header Mobile Toggle End -->
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Mobile Menu Start -->
+<div class="mobile-menu">
+    <a class="menu-close" href="javascript:void(0)">
+        <i class="icofont-close-line"></i>
+    </a>
+    <div class="mobile-top">
+        <p><i class="flaticon-phone-call"></i> <a href="tel:9702621413">(970) 262-1413</a></p>
+        <p><i class="flaticon-email"></i> <a href="mailto:address@gmail.com">address@gmail.com</a></p>
+    </div>
+
+    <!-- Mobile User Section (when logged in) -->
+    {% if user.is_authenticated %}
+    <div class="mobile-user-section">
+        <div class="mobile-user-info">
+            {% if user.profile_picture %}
+            <img src="{{ user.profile_picture.url }}" alt="{{ user.full_name }} - Profile" class="mobile-user-avatar">
+            {% else %}
+            <span class="mobile-user-avatar-default">{{ user.full_name|slice:":1"|upper }}</span>
+            {% endif %}
+            <div class="mobile-user-details">
+                <div class="mobile-user-name">{{ user.full_name }}</div>
+                <div class="mobile-user-email">{{ user.email }}</div>
+            </div>
+        </div>
+
+        <!-- Mobile Dashboard Links -->
+        <div class="mobile-dashboard-links">
+            <a href="{% url 'accounts:dashboard' %}" class="mobile-dashboard-link">
+                <i class="fas fa-th-large"></i>
+                <span>Dashboard</span>
+            </a>
+            {% if user.is_student %}
+            <a href="{% url 'dashboard:student_profile' %}" class="mobile-dashboard-link">
+                <i class="fas fa-user"></i>
+                <span>My Profile</span>
+            </a>
+            {% elif user.is_instructor %}
+            <a href="{% url 'dashboard:instructor_profile' %}" class="mobile-dashboard-link">
+                <i class="fas fa-user"></i>
+                <span>My Profile</span>
+            </a>
+            {% endif %}
+            <a href="#" class="mobile-dashboard-link">
+                <i class="fas fa-book"></i>
+                <span>My Courses</span>
+            </a>
+            <a href="#" class="mobile-dashboard-link">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Cart (2)</span>
+            </a>
+            <a href="#" class="mobile-dashboard-link">
+                <i class="fas fa-bell"></i>
+                <span>Notifications (3)</span>
+            </a>
+            <a href="#" class="mobile-dashboard-link">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </a>
+        </div>
+
+        <div class="mobile-user-divider"></div>
+        <a href="{% url 'account_logout' %}" class="mobile-logout-btn">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logout</span>
+        </a>
+    </div>
+    {% else %}
+    <div class="mobile-sign-in-up">
+        <ul>
+            <li><a class="sign-in" href="{% url 'account_login' %}">Sign In</a></li>
+            <li><a class="sign-up" href="{% url 'account_signup' %}">Sign Up</a></li>
+        </ul>
+    </div>
+    {% endif %}
+
+    <!-- Mobile Navigation -->
+    <div class="mobile-menu-items">
+        <h4 class="mobile-menu-heading">Navigation</h4>
+        <ul class="nav-menu">
+            <li><a href="{% url 'frontend:index' %}">Home</a></li>
+            <li><a href="{% url 'frontend:courses' %}">Courses</a></li>
+            <li><a href="{% url 'frontend:about' %}">About</a></li>
+            <li><a href="{% url 'frontend:contact' %}">Contact</a></li>
+        </ul>
+    </div>
+
+    <div class="mobile-social">
+        <ul class="social">
+            <li><a href="#"><i class="flaticon-facebook"></i></a></li>
+            <li><a href="#"><i class="flaticon-twitter"></i></a></li>
+            <li><a href="#"><i class="flaticon-skype"></i></a></li>
+            <li><a href="#"><i class="flaticon-instagram"></i></a></li>
+        </ul>
+    </div>
+</div>
+<!-- Mobile Menu End -->
+
+<style>
+    /* ============================================ */
+    /* HEADER ICONS & DROPDOWN STYLES */
+    /* ============================================ */
+
+    .header-sign-in-up ul {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .header-sign-in-up ul li {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    /* Icon Buttons (Notification & Cart) */
+    .icon-btn {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+        color: #555;
+        text-decoration: none !important;
+        border-radius: 50%;
+        transition: all 0.3s ease;
+    }
+
+    .icon-btn:hover {
+        color: #ad7a49;
+        background-color: rgba(173, 122, 73, 0.1);
+    }
+
+    /* Count Badges */
+    .count-badge {
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 5px;
+        border-radius: 9px;
+        font-size: 10px;
+        font-weight: 600;
+        line-height: 18px;
+        text-align: center;
+        color: #fff;
+    }
+
+    .bg-danger {
+        background-color: #dc3545;
+    }
+
+    .bg-primary {
+        background-color: #ad7a49;
+    }
+
+    /* Dropdown Container */
+    .header-sign-in-up .dropdown {
+        display: flex;
+        align-items: center;
+    }
+
+    /* User Dropdown Toggle */
+    .user-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 12px 4px 4px;
+        border-radius: 50px;
+        border: 2px solid transparent;
+        color: #333;
+        text-decoration: none !important;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+        flex-wrap: nowrap;
+        line-height: 1;
+    }
+
+    .user-toggle:hover {
+        border-color: #ad7a49;
+        background-color: rgba(173, 122, 73, 0.05);
+        color: #333;
+    }
+
+    .user-avatar,
+    .user-avatar-default {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .user-avatar {
+        object-fit: cover;
+        border: 2px solid #ad7a49;
+    }
+
+    .user-avatar-default {
+        background-color: #ad7a49;
+        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        font-weight: 600;
+        flex-shrink: 0;
+    }
+
+    .user-toggle .fa-chevron-down {
+        font-size: 10px;
+        margin-left: 2px;
+        flex-shrink: 0;
+        transition: transform 0.3s ease;
+    }
+
+    .dropdown.open .user-toggle .fa-chevron-down {
+        transform: rotate(180deg);
+    }
+
+    /* Dropdown Menu */
+    .dropdown-menu {
+        display: none;
+        position: absolute;
+        top: 100%;
+        right: 0;
+        z-index: 1000;
+        min-width: 240px;
+        padding: 8px 0;
+        margin-top: 10px;
+        background-color: #fff;
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .dropdown-menu.show {
+        display: block;
+    }
+
+    /* Dropdown Header Info */
+    .dropdown-header-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+    }
+
+    .dropdown-avatar,
+    .dropdown-avatar-default {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .dropdown-avatar {
+        object-fit: cover;
+        border: 2px solid #ad7a49;
+    }
+
+    .dropdown-avatar-default {
+        background-color: #ad7a49;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        font-weight: 600;
+    }
+
+    .user-name {
+        font-weight: 600;
+        color: #333;
+        font-size: 14px;
+    }
+
+    .user-email {
+        font-size: 12px;
+        color: #999;
+        margin-top: 2px;
+    }
+
+    /* Dropdown Items */
+    .dropdown-item {
+        display: flex;
+        align-items: center;
+        padding: 10px 16px;
+        color: #555;
+        font-size: 14px;
+        text-decoration: none !important;
+        transition: all 0.2s ease;
+        gap: 12px;
+    }
+
+    .dropdown-item i {
+        width: 18px;
+        color: #999;
+        font-size: 15px;
+        text-align: center;
+        transition: color 0.2s ease;
+    }
+
+    .dropdown-item:hover {
+        background-color: rgba(173, 122, 73, 0.08);
+        color: #ad7a49;
+    }
+
+    .dropdown-item:hover i {
+        color: #ad7a49;
+    }
+
+    .dropdown-divider {
+        margin: 6px 0;
+        border-top: 1px solid #f0f0f0;
+    }
+
+    .dropdown-item.text-danger {
+        color: #dc3545;
+    }
+
+    .dropdown-item.text-danger i {
+        color: #dc3545;
+    }
+
+    .dropdown-item.text-danger:hover {
+        background-color: rgba(220, 53, 69, 0.08);
+        color: #dc3545;
+    }
+
+    /* Sign In/Up Buttons */
+    .btn-sign-in,
+    .btn-sign-up {
+        padding: 8px 20px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        text-decoration: none !important;
+        transition: all 0.3s ease;
+        display: inline-block;
+    }
+
+    .btn-sign-in {
+        color: #555;
+        border: 1px solid #ddd;
+    }
+
+    .btn-sign-in:hover {
+        background-color: #f5f5f5;
+        color: #333;
+    }
+
+    .btn-sign-up {
+        background-color: #ad7a49;
+        color: #fff;
+        border: 1px solid #ad7a49;
+    }
+
+    .btn-sign-up:hover {
+        background-color: #8c6339;
+        border-color: #8c6339;
+        color: #fff;
+    }
+
+    /* Responsive */
+    @media (max-width: 991px) {
+        .dropdown-menu {
+            right: auto;
+            left: 0;
+        }
+    }
+
+
+    /* ============================================ */
+    /* MOBILE MENU STYLES */
+    /* ============================================ */
+
+    /* Mobile User Section */
+    .mobile-user-section {
+        padding: 15px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .mobile-user-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 10px;
+    }
+
+    .mobile-user-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #ad7a49;
+        flex-shrink: 0;
+    }
+
+    .mobile-user-avatar-default {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background-color: #ad7a49;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        font-weight: 600;
+        flex-shrink: 0;
+    }
+
+    .mobile-user-details {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .mobile-user-name {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+        line-height: 1.3;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .mobile-user-email {
+        font-size: 12px;
+        color: #888;
+        margin-top: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Mobile Dashboard Links */
+    .mobile-dashboard-links {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        margin-bottom: 15px;
+    }
+
+    .mobile-dashboard-link {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px;
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        color: #555;
+        text-decoration: none !important;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .mobile-dashboard-link i {
+        width: 16px;
+        color: #ad7a49;
+        font-size: 14px;
+        text-align: center;
+        flex-shrink: 0;
+    }
+
+    .mobile-dashboard-link:hover {
+        background: rgba(173, 122, 73, 0.08);
+        border-color: #ad7a49;
+        color: #ad7a49;
+    }
+
+    .mobile-dashboard-link:active {
+        transform: scale(0.98);
+    }
+
+    /* Mobile User Divider */
+    .mobile-user-divider {
+        height: 1px;
+        background: #e9ecef;
+        margin: 15px 0;
+    }
+
+    /* Mobile Logout Button */
+    .mobile-logout-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        padding: 12px;
+        background: #fff;
+        border: 1px solid #dc3545;
+        border-radius: 8px;
+        color: #dc3545 !important;
+        text-decoration: none !important;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .mobile-logout-btn:hover {
+        background: #dc3545;
+        color: #fff !important;
+    }
+
+    .mobile-logout-btn:active {
+        transform: scale(0.98);
+    }
+
+    /* Mobile Menu Heading */
+    .mobile-menu-heading {
+        font-size: 11px;
+        font-weight: 600;
+        color: #999;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 0 15px;
+        margin: 15px 0 10px;
+    }
+
+    /* Ensure mobile menu items look good */
+    .mobile-menu-items {
+        padding: 0 15px;
+    }
+
+    .mobile-menu-items .nav-menu {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .mobile-menu-items .nav-menu li {
+        margin-bottom: 2px;
+    }
+
+    .mobile-menu-items .nav-menu li a {
+        display: block;
+        padding: 12px 15px;
+        color: #555;
+        text-decoration: none;
+        font-size: 15px;
+        font-weight: 500;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .mobile-menu-items .nav-menu li a:hover {
+        background: #f8f9fa;
+        color: #ad7a49;
+    }
+
+    .mobile-menu-items .nav-menu li.active a {
+        background: rgba(173, 122, 73, 0.1);
+        color: #ad7a49;
+        font-weight: 600;
+    }
+
+    /* Mobile Social */
+    .mobile-social {
+        padding: 15px;
+        margin-top: 10px;
+    }
+
+    .mobile-social .social {
+        display: flex;
+        gap: 10px;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        justify-content: center;
+    }
+
+    .mobile-social .social li a {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        background: #f8f9fa;
+        border-radius: 50%;
+        color: #555;
+        font-size: 16px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .mobile-social .social li a:hover {
+        background: #ad7a49;
+        color: #fff;
+    }
+</style>
+
+<script>
+    // Simple dropdown toggle - no jQuery or Bootstrap JS needed
+    document.addEventListener('DOMContentLoaded', function () {
+        // Handle dropdown toggle
+        document.addEventListener('click', function (e) {
+            var toggle = e.target.closest('.user-toggle');
+            var dropdownMenu = e.target.closest('.dropdown-menu');
+
+            // If clicking the toggle button
+            if (toggle) {
+                e.preventDefault();
+                var dropdown = toggle.closest('.dropdown');
+                var menu = dropdown.querySelector('.dropdown-menu');
+
+                // Close all other dropdowns
+                document.querySelectorAll('.dropdown-menu.show').forEach(function (menu) {
+                    if (menu !== dropdown.querySelector('.dropdown-menu')) {
+                        menu.classList.remove('show');
+                    }
+                });
+
+                // Toggle current dropdown
+                menu.classList.toggle('show');
+                dropdown.classList.toggle('open');
+                return;
+            }
+
+            // If clicking inside dropdown menu, don't close it
+            if (dropdownMenu) {
+                return;
+            }
+
+            // Close all dropdowns when clicking outside
+            document.querySelectorAll('.dropdown-menu.show').forEach(function (menu) {
+                menu.classList.remove('show');
+            });
+            document.querySelectorAll('.dropdown.open').forEach(function (dropdown) {
+                dropdown.classList.remove('open');
+            });
+        });
+    });
+</script>

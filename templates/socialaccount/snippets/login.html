@@ -1,0 +1,46 @@
+{% load i18n %}
+{% load allauth %}
+{% load socialaccount %}
+
+{% for provider in socialaccount_providers %}
+    {% if provider.id == "google" %}
+        <!-- Custom Google Button -->
+        <form method="post" action="{% provider_login_url provider.id process='login' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-secondary p-3 rounded-pill bg-white text-dark d-flex align-items-center justify-content-center gap-2 social-btn w-100">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google" width="20">
+                {% trans "Continue with Google" %}
+            </button>
+        </form>
+        
+    {% elif provider.id == "facebook" %}
+        <!-- Custom Facebook Button -->
+        <form method="post" action="{% provider_login_url provider.id process='login' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-secondary p-3 rounded-pill bg-white text-dark d-flex align-items-center justify-content-center gap-2 social-btn w-100">
+                <i class="fab fa-facebook-f text-primary fs-5"></i>
+                {% trans "Continue with Facebook" %}
+            </button>
+        </form>
+        
+    {% elif provider.id == "github" %}
+        <!-- Custom GitHub Button -->
+        <form method="post" action="{% provider_login_url provider.id process='login' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-secondary p-3 rounded-pill bg-white text-dark d-flex align-items-center justify-content-center gap-2 social-btn w-100">
+                <i class="fab fa-github fs-5"></i>
+                {% trans "Continue with GitHub" %}
+            </button>
+        </form>
+        
+    {% else %}
+        <!-- Default button for other providers -->
+        <form method="post" action="{% provider_login_url provider.id process='login' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-secondary p-3 rounded-pill bg-white text-dark d-flex align-items-center justify-content-center gap-2 social-btn w-100">
+                <i class="fab fa-{{ provider.id }} fs-5"></i>
+                {% blocktranslate with provider.name as provider_name %}Continue with {{ provider_name }}{% endblocktranslate %}
+            </button>
+        </form>
+    {% endif %}
+{% endfor %}

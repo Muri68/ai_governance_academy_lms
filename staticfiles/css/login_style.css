@@ -1,0 +1,219 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+
+/* Ensure no default browser margin interferes with 100vw */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+    /* Prevents scrollbars */
+    background-color: #f8f9fa;
+}
+
+.login-container {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+}
+
+/* --- Left Panel Styling --- */
+.left-panel {
+    background-color: #0b2338;
+    /* Dark Navy Blue */
+    position: relative;
+    /* Creating the slanted right edge */
+    clip-path: polygon(0 0, 100% 0, 84.6% 100%, 0% 100%);
+    padding-right: 8rem;
+    /* Space for the slant cut-off */
+    z-index: 2;
+}
+
+/* The tan/brown angled stripe that appears on the outer edge of the left panel */
+.left-panel::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 22px;
+    /* Width of the tan stripe */
+    background-color: #b07d55;
+    /* The Tan/Brown color from image */
+    transform: skewX(-9deg);
+    transform-origin: top right;
+    z-index: -1;
+    box-shadow: 5px 0 15px rgba(0, 0, 0, 0.2);
+}
+
+/* --- LOGO STYLES START --- */
+.header-logo {
+    position: absolute;
+    top: 40px;
+    left: 40px;
+}
+
+.header-logo .navbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0;
+    text-decoration: none;
+    color: white !important; /* Ensures text is white on dark blue */
+}
+
+.header-logo .logo-icon {
+    width: 45px;
+    height: 45px;
+    background: white; /* White background behind transparent logo */
+    border-radius: 6px;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.header-logo .logo-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+}
+
+.header-logo .main-title {
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+}
+
+.header-logo .sub-title {
+    font-size: 0.6rem;
+    color: #d1d5db; /* Slightly lighter color for subtitle */
+    font-weight: 400;
+}
+/* --- LOGO STYLES END --- */
+
+.slogan-text {
+    line-height: 1.2;
+    /* margin-top: 20vh; */
+}
+
+.text-warning {
+    color: #cb8f53 !important;
+    /* Overriding Bootstrap's default yellow */
+}
+
+/* --- Right Panel Styling --- */
+.right-panel {
+    background-color: #ffffff;
+    /* margin-left: -15%; */
+    /* Fills the background under the slant */
+    /* padding-left: 10%; */
+    z-index: 1;
+}
+
+/* --- Form & Input Styling --- */
+.form-control {
+    background-color: #f8fafc;
+    /* Light gray background */
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
+.input-group .btn {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-left: none;
+    border-radius: 0 8px 8px 0;
+    color: #64748b;
+}
+
+.input-group .btn:hover {
+    background-color: #f1f5f9;
+}
+
+.form-check-input:checked {
+    background-color: #cb8f53;
+    border-color: #cb8f53;
+}
+
+.custom-btn {
+    background-color: #cb8f53 !important;
+    /* Matches the text color */
+    border: none;
+    border-radius: 50px;
+    /* Fully rounded pill button */
+    box-shadow: 0 4px 10px rgba(203, 143, 83, 0.3);
+    transition: all 0.3s ease;
+}
+
+.custom-btn:hover {
+    background-color: #b37a44 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(203, 143, 83, 0.4);
+}
+
+/* --- Social Buttons --- */
+.social-btn {
+    border-radius: 50px !important;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+}
+
+.social-btn:hover {
+    background-color: #f1f5f9 !important;
+    border-color: #94a3b8;
+}
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 991px) {
+    body {
+        overflow-y: auto;
+        /* Allow vertical scroll on mobile */
+        height: auto;
+    }
+
+    .login-container {
+        height: auto;
+        min-height: 100vh;
+    }
+
+    .left-panel {
+        clip-path: none;
+        height: 30vh;
+        padding-right: 0;
+        padding: 20px;
+        width: 100%;
+        /* Ensure it fills 100vw on mobile */
+    }
+
+    .left-panel::after {
+        display: none;
+        /* Remove slant for mobile */
+    }
+
+    .right-panel {
+        margin-left: 0;
+        padding-left: 0;
+        height: auto;
+        min-height: 70vh;
+        width: 100%;
+        /* Ensure it fills 100vw on mobile */
+    }
+
+    .logo-box {
+        position: relative;
+        top: 0;
+        left: 0;
+        display: inline-flex;
+        margin-bottom: 2rem;
+    }
+
+    .slogan-text {
+        margin-top: 0;
+        font-size: 2rem;
+    }
+}

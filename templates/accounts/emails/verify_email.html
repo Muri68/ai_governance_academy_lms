@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #0b2338 0%, #1a4a7a 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+        .content {
+            background: white;
+            padding: 30px;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #cb8f53 0%, #b07d55 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .btn:hover {
+            background: linear-gradient(135deg, #b07d55 0%, #cb8f53 100%);
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 12px;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Verify Your Email Address</h1>
+            <p>AI Governance Authority</p>
+        </div>
+        <div class="content">
+            <h2>Welcome, {{ user.get_full_name }}!</h2>
+            
+            <p>Thank you for registering with AI Governance Authority. To complete your registration and access your account, please verify your email address by clicking the button below:</p>
+            
+            <div style="text-align: center;">
+                <a href="{{ verification_url }}" class="btn">Verify Email Address</a>
+            </div>
+            
+            <p>Or copy and paste this link in your browser:</p>
+            <p style="word-break: break-all; background: #f8f9fa; padding: 10px; border-radius: 5px;">
+                {{ verification_url }}
+            </p>
+            
+            <div class="warning">
+                <strong>⚠️ Important:</strong> This verification link will expire in {{ expiry_hours }} hours. If you did not create an account with us, please ignore this email.
+            </div>
+            
+            <p>After verification, you'll be able to:</p>
+            <ul>
+                <li>Access your student dashboard</li>
+                <li>Enroll in courses</li>
+                <li>Track your learning progress</li>
+                <li>Connect with instructors</li>
+            </ul>
+            
+            <p>Best regards,<br>
+            <strong>AI Governance Authority Team</strong></p>
+        </div>
+        <div class="footer">
+            <p>This email was sent to {{ user.email }}. If you have any questions, please contact our support team.</p>
+            <p>&copy; {% now "Y" %} AI Governance Authority. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,189 @@
+{% load static %}
+<!-- Footer Start  -->
+<div class="section footer-section">
+    <div class="footer-widget-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 col-md-6 order-md-1 order-lg-1">
+                    <div class="footer-widget">
+                        <div class="widget-logo">
+                            <a class="navbar-brand footer-logo" href="{% url 'frontend:index' %}">
+                                <div class="logo-icon">
+                                    {% if site_logo_url %}
+                                    <img src="{{ site_logo_url }}" alt="{{ site_name }}" width="100%">
+                                    {% else %}
+                                    <img src="{% static 'images/logo.png' %}" alt="{{ site_name }}" width="100%">
+                                    {% endif %}
+                                </div>
+                                <div class="logo-text">
+                                    <span class="main-title">{{ site_name_line1|default:'AI GOVERNANCE' }}</span>
+                                    <span class="main-title">{{ site_name_line2|default:'ACADEMY' }}</span>
+                                    <span class="sub-title">{{ site_tagline|default:'AI Ethics & Compliance Platform' }}</span>
+                                </div>
+                            </a>
+                        </div>
+
+                        <div class="widget-address">
+                            <p class="text-muted">Empowering professionals with cutting-edge knowledge in AI governance, cybersecurity, and ethical technology practices.</p>
+                        </div>
+
+                        <ul class="widget-info">
+                            <li><p><i class="flaticon-email"></i> <a href="mailto:{{ contact_email }}">{{ contact_email }}</a></p></li>
+                            <li><p><i class="flaticon-phone-call"></i> <a href="tel:{{ contact_phone }}">{{ contact_phone }}</a></p></li>
+                        </ul>
+
+                        <ul class="widget-social">
+                            {% if facebook_url and facebook_url != '#' %}<li><a href="{{ facebook_url }}" target="_blank"><i class="flaticon-facebook"></i></a></li>{% endif %}
+                            {% if twitter_url and twitter_url != '#' %}<li><a href="{{ twitter_url }}" target="_blank"><i class="flaticon-twitter"></i></a></li>{% endif %}
+                            {% if linkedin_url and linkedin_url != '#' %}<li><a href="{{ linkedin_url }}" target="_blank"><i class="flaticon-skype"></i></a></li>{% endif %}
+                            {% if instagram_url and instagram_url != '#' %}<li><a href="{{ instagram_url }}" target="_blank"><i class="flaticon-instagram"></i></a></li>{% endif %}
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 order-md-3 order-lg-2">
+                    <div class="footer-widget-link">
+                        <div class="footer-widget">
+                            <h4 class="footer-widget-title">Categories</h4>
+                            <ul class="widget-link">
+                                <li><a href="{% url 'frontend:courses' %}?category=cybersecurity">Cybersecurity</a></li>
+                                <li><a href="{% url 'frontend:courses' %}?category=ai-ethics">AI & Ethics</a></li>
+                                <li><a href="{% url 'frontend:courses' %}?category=cloud-security">Cloud Security</a></li>
+                                <li><a href="{% url 'frontend:courses' %}?category=data-privacy">Data Privacy</a></li>
+                                <li><a href="{% url 'frontend:courses' %}?category=network-security">Network Security</a></li>
+                                <li><a href="{% url 'frontend:courses' %}?category=programming">Programming</a></li>
+                            </ul>
+                        </div>
+                        <div class="footer-widget">
+                            <h4 class="footer-widget-title">Quick Links</h4>
+                            <ul class="widget-link">
+                                <li><a href="{% url 'frontend:privacy' %}">Privacy Policy</a></li>
+                                <li><a href="{% url 'frontend:terms' %}">Terms & Conditions</a></li>
+                                <li><a href="{% url 'frontend:faq' %}">Course FAQ's</a></li>
+                                <li><a href="{% url 'frontend:contact' %}">Contact Us</a></li>
+                                <li><a href="{% url 'frontend:about' %}">About Us</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6 order-md-2 order-lg-3">
+                    <div class="footer-widget">
+                        <h4 class="footer-widget-title">Subscribe to Our Newsletter</h4>
+                        <div class="widget-subscribe">
+                            <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;line-height:1.6;">
+                                Stay updated with our latest courses, industry insights, and exclusive offers delivered straight to your inbox.
+                            </p>
+                            <div class="widget-form">
+                                <form id="newsletterForm" onsubmit="return false;">
+                                    {% csrf_token %}
+                                    <input type="email" name="email" id="newsletterEmail" placeholder="Enter your email address" required>
+                                    <button type="submit" id="newsletterBtn" class="btn btn-primary btn-hover-dark">
+                                        <i class="fas fa-paper-plane me-2"></i> Subscribe Now
+                                    </button>
+                                </form>
+                            </div>
+                            <div id="newsletterMessage" style="margin-top:12px;display:none;"></div>
+                            <p style="font-size:11px;color:var(--text-muted);margin-top:12px;">
+                                <i class="fas fa-lock me-1"></i> We respect your privacy. No spam, ever.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-copyright" style="background:#0a1628;padding:20px 0;text-align:center;">
+        <div class="container">
+            <p style="color:rgba(255,255,255,0.6);font-size:13px;margin:0;">
+                {% if footer_text %}
+                    {{ footer_text }}
+                {% else %}
+                    &copy; {% now "Y" %} {{ site_name|default:'AI Governance Academy' }}. All rights reserved.
+                {% endif %}
+                | 
+                <a href="{% url 'frontend:privacy' %}" style="color:#ad7a49;text-decoration:none;">Privacy Policy</a> | 
+                <a href="{% url 'frontend:terms' %}" style="color:#ad7a49;text-decoration:none;">Terms & Conditions</a>
+            </p>
+        </div>
+    </div>
+</div>
+<!-- Footer End -->
+
+<!-- Newsletter JavaScript -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const newsletterForm = document.getElementById('newsletterForm');
+        const newsletterBtn = document.getElementById('newsletterBtn');
+        const newsletterEmail = document.getElementById('newsletterEmail');
+        const newsletterMessage = document.getElementById('newsletterMessage');
+        
+        if (newsletterForm) {
+            newsletterForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const email = newsletterEmail.value.trim();
+                if (!email) {
+                    showNewsletterMessage('Please enter your email address.', 'error');
+                    return;
+                }
+                
+                const originalText = newsletterBtn.innerHTML;
+                newsletterBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Subscribing...';
+                newsletterBtn.disabled = true;
+                
+                fetch("{% url 'frontend:subscribe_newsletter' %}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'email=' + encodeURIComponent(email)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNewsletterMessage(data.message, 'success');
+                        newsletterEmail.value = '';
+                    } else {
+                        showNewsletterMessage(data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    showNewsletterMessage('An error occurred. Please try again.', 'error');
+                })
+                .finally(() => {
+                    newsletterBtn.innerHTML = originalText;
+                    newsletterBtn.disabled = false;
+                });
+            });
+        }
+        
+        function showNewsletterMessage(message, type) {
+            if (newsletterMessage) {
+                newsletterMessage.style.display = 'block';
+                newsletterMessage.style.padding = '10px 14px';
+                newsletterMessage.style.borderRadius = '8px';
+                newsletterMessage.style.fontSize = '13px';
+                newsletterMessage.style.fontWeight = '500';
+                
+                if (type === 'success') {
+                    newsletterMessage.style.background = 'rgba(16, 185, 129, 0.1)';
+                    newsletterMessage.style.color = '#065f46';
+                    newsletterMessage.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+                    newsletterMessage.innerHTML = '<i class="fas fa-check-circle me-2"></i>' + message;
+                } else {
+                    newsletterMessage.style.background = 'rgba(239, 68, 68, 0.1)';
+                    newsletterMessage.style.color = '#991b1b';
+                    newsletterMessage.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                    newsletterMessage.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>' + message;
+                }
+                
+                setTimeout(() => {
+                    newsletterMessage.style.display = 'none';
+                }, 6000);
+            }
+        }
+    });
+</script>

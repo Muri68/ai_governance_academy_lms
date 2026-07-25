@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}404 - Page Not Found | {{ site_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .error-wrapper {
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 80px 20px;
+        background: linear-gradient(135deg, #faf9f7 0%, #f5f0eb 50%, #faf9f7 100%);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .error-wrapper::before {
+        content: '';
+        position: absolute;
+        top: -100px;
+        right: -100px;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(173, 122, 73, 0.06) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+
+    .error-wrapper::after {
+        content: '';
+        position: absolute;
+        bottom: -80px;
+        left: -80px;
+        width: 350px;
+        height: 350px;
+        background: radial-gradient(circle, rgba(173, 122, 73, 0.04) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+
+    .error-container {
+        max-width: 600px;
+        width: 100%;
+        text-align: center;
+        position: relative;
+        z-index: 1;
+        animation: fadeInUp 0.6s ease;
+    }
+
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .error-icon-circle {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #fef3c7, #fde68a);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 30px;
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.2); }
+        50% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(245, 158, 11, 0); }
+    }
+
+    .error-icon-circle i {
+        font-size: 50px;
+        color: #d97706;
+    }
+
+    .error-code {
+        font-size: 110px;
+        font-weight: 800;
+        background: linear-gradient(135deg, #ad7a49 0%, #8b6239 50%, #6b4423 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1;
+        margin-bottom: 10px;
+        letter-spacing: -3px;
+    }
+
+    .error-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 15px;
+    }
+
+    .error-message {
+        font-size: 16px;
+        color: #6b7280;
+        line-height: 1.7;
+        margin-bottom: 35px;
+        max-width: 450px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .error-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .btn-primary {
+        padding: 14px 32px;
+        background-color: #ad7a49;
+        color: #ffffff;
+        border: 1px solid #ad7a49;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.3s ease;
+        font-family: 'Poppins', sans-serif;
+    }
+
+    .btn-primary:hover {
+        background-color: #8b6239;
+        color: #ffffff;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(173, 122, 73, 0.3);
+    }
+
+    .btn-outline {
+        padding: 14px 32px;
+        background: transparent;
+        color: #1a1a1a;
+        border: 1.5px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.3s ease;
+        font-family: 'Poppins', sans-serif;
+    }
+
+    .btn-outline:hover {
+        border-color: #ad7a49;
+        color: #ad7a49;
+        background: #fdf8f4;
+    }
+
+    .error-search {
+        max-width: 400px;
+        margin: 0 auto 30px;
+    }
+
+    .error-search form {
+        display: flex;
+        gap: 8px;
+    }
+
+    .error-search input {
+        flex: 1;
+        padding: 14px 18px;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 15px;
+        font-family: 'Poppins', sans-serif;
+        outline: none;
+        transition: all 0.3s ease;
+        background: white;
+    }
+
+    .error-search input:focus {
+        border-color: #ad7a49;
+        box-shadow: 0 0 0 3px rgba(173, 122, 73, 0.1);
+    }
+
+    .error-search button {
+        padding: 14px 22px;
+        background-color: #ad7a49;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: all 0.3s ease;
+    }
+
+    .error-search button:hover {
+        background-color: #8b6239;
+    }
+
+    @media (max-width: 768px) {
+        .error-code { font-size: 80px; }
+        .error-title { font-size: 22px; }
+        .error-message { font-size: 14px; }
+        .error-icon-circle { width: 100px; height: 100px; }
+        .error-icon-circle i { font-size: 40px; }
+        .btn-primary, .btn-outline { width: 100%; justify-content: center; padding: 12px 24px; font-size: 14px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="error-wrapper">
+    <div class="error-container">
+        <div class="error-icon-circle">
+            <i class="fas fa-search"></i>
+        </div>
+        
+        <h1 class="error-code">404</h1>
+        <h2 class="error-title">Page Not Found</h2>
+        <p class="error-message">
+            The page you are looking for might have been removed, 
+            had its name changed, or is temporarily unavailable.
+        </p>
+        
+        <div class="error-search">
+            <form action="{% url 'frontend:courses' %}" method="GET">
+                <input type="text" name="search" placeholder="Search courses...">
+                <button type="submit"><i class="fas fa-search"></i></button>
+            </form>
+        </div>
+        
+        <div class="error-actions">
+            <a href="{% url 'frontend:index' %}" class="btn-primary">
+                <i class="fas fa-home"></i> Go to Homepage
+            </a>
+            <a href="javascript:history.back()" class="btn-outline">
+                <i class="fas fa-arrow-left"></i> Go Back
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

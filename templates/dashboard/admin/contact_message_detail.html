@@ -1,0 +1,307 @@
+{% extends "dashboard/admin/admin_base.html" %}
+{% load static %}
+
+{% block title %}Reply to Message{% endblock %}
+{% block page_title %}Reply to Message{% endblock %}
+
+{% block extra_css %}
+<script src="{% static 'tinymce/tinymce.min.js' %}"></script>
+<style>
+    .reply-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        align-items: start;
+    }
+    
+    .message-card,
+    .reply-card {
+        background: var(--bg-card);
+        border-radius: 14px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        border: 1px solid var(--border-color);
+        padding: 24px;
+    }
+    
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .card-header h3 {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--text-dark);
+    }
+    
+    .message-info {
+        margin-bottom: 20px;
+    }
+    
+    .info-row {
+        display: flex;
+        margin-bottom: 12px;
+        font-size: 0.85rem;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: var(--text-dark);
+        min-width: 80px;
+    }
+    
+    .info-value {
+        color: var(--text-muted);
+    }
+    
+    .message-content {
+        background: #f8fafc;
+        padding: 16px;
+        border-radius: 10px;
+        color: var(--text-dark);
+        line-height: 1.7;
+        font-size: 0.85rem;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        display: block;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 6px;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1.5px solid var(--border-color);
+        border-radius: 10px;
+        font-size: 0.85rem;
+        font-family: 'Poppins', sans-serif;
+        color: var(--text-dark);
+        background: #f8fafc;
+        outline: none;
+        transition: all 0.2s;
+    }
+    
+    .form-control:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        background: white;
+    }
+    
+    .btn-submit {
+        padding: 10px 24px;
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: 'Poppins', sans-serif;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .btn-submit:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 16px rgba(59,130,246,0.3);
+    }
+    
+    .btn-back {
+        padding: 10px 20px;
+        background: #f3f4f6;
+        color: #374151;
+        border: none;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+    }
+    
+    .btn-back:hover {
+        background: #e5e7eb;
+    }
+    
+    .replies-list {
+        margin-top: 20px;
+    }
+    
+    .reply-item {
+        background: #f0f9ff;
+        padding: 16px;
+        border-radius: 10px;
+        margin-bottom: 12px;
+        border-left: 3px solid #3b82f6;
+    }
+    
+    .reply-item .reply-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+    
+    .reply-item .reply-content {
+        font-size: 0.85rem;
+        color: var(--text-dark);
+        line-height: 1.6;
+    }
+    
+    @media (max-width: 768px) {
+        .reply-container {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 20px;">
+    <a href="{% url 'dashboard:contact_messages' %}" class="btn-back">
+        <i class="fas fa-arrow-left"></i> Back to Messages
+    </a>
+</div>
+
+<div class="reply-container">
+    <!-- Original Message -->
+    <div class="message-card">
+        <div class="card-header">
+            <h3><i class="fas fa-envelope" style="color: #3b82f6; margin-right: 6px;"></i> Original Message</h3>
+            <span class="status-badge status-{{ contact_message.status }}" style="padding: 4px 12px; border-radius: 12px; font-size: 0.7rem; font-weight: 600;">
+                {{ contact_message.get_status_display }}
+            </span>
+        </div>
+        
+        <div class="message-info">
+            <div class="info-row">
+                <span class="info-label">From:</span>
+                <span class="info-value">{{ contact_message.name }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Email:</span>
+                <span class="info-value">{{ contact_message.email }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Date:</span>
+                <span class="info-value">{{ contact_message.created_at|date:"F d, Y H:i" }}</span>
+            </div>
+            {% if contact_message.subject %}
+            <div class="info-row">
+                <span class="info-label">Subject:</span>
+                <span class="info-value">{{ contact_message.subject }}</span>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="message-content">
+            {{ contact_message.message|linebreaks }}
+        </div>
+        
+        <!-- Previous Replies -->
+        {% if replies %}
+        <div class="replies-list">
+            <h4 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 12px; color: var(--text-dark);">
+                Previous Replies ({{ replies.count }})
+            </h4>
+            {% for reply in replies %}
+            <div class="reply-item">
+                <div class="reply-header">
+                    <span>
+                        <strong>
+                            {% if reply.sent_by %}
+                                {{ reply.sent_by.get_full_name|default:reply.sent_by.email }}
+                            {% else %}
+                                Admin
+                            {% endif %}
+                        </strong>
+                    </span>
+                    <span>{{ reply.sent_at|date:"M d, Y H:i" }}</span>
+                </div>
+                <div class="reply-content">
+                    <strong>{{ reply.subject }}</strong>
+                    <div style="margin-top: 6px;">{{ reply.message|safe|truncatewords:50 }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+{% endif %}
+    </div>
+    
+    <!-- Reply Form -->
+    <div class="reply-card">
+        <div class="card-header">
+            <h3><i class="fas fa-reply" style="color: #10b981; margin-right: 6px;"></i> Send Reply</h3>
+        </div>
+        
+        <form method="POST">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label>To</label>
+                <input type="text" class="form-control" value="{{ contact_message.email }}" disabled>
+            </div>
+            
+            <div class="form-group">
+                <label>Subject</label>
+                <input type="text" name="subject" class="form-control" 
+                       value="Re: {{ contact_message.subject|default:'Your Message to AI Governance Academy' }}">
+            </div>
+            
+            <div class="form-group">
+                <label>Message</label>
+                <textarea name="message" id="replyEditor" class="form-control" rows="12">
+                    <p>Dear {{ contact_message.name }},</p>
+                    <p>Thank you for contacting AI Governance Academy.</p>
+                    <p>&nbsp;</p>
+                    <p>Best regards,</p>
+                    <p>AI Governance Academy Team</p>
+                </textarea>
+            </div>
+            
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" class="btn-submit">
+                    <i class="fas fa-paper-plane"></i> Send Reply
+                </button>
+                <a href="{% url 'dashboard:contact_messages' %}" class="btn-back">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize TinyMCE
+    if (typeof tinymce !== 'undefined') {
+        tinymce.init({
+            selector: '#replyEditor',
+            height: 350,
+            menubar: false,
+            plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table codesample help wordcount',
+            toolbar: 'undo redo | formatselect | bold italic underline strikethrough | forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image | removeformat | code | help',
+            content_style: 'body { font-family: Poppins, sans-serif; font-size: 14px; color: #1e293b; }',
+            setup: function(editor) {
+                editor.on('change', function() { editor.save(); });
+            }
+        });
+    }
+</script>
+{% endblock %}

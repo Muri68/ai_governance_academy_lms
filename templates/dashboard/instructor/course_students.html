@@ -1,0 +1,423 @@
+{% extends "dashboard/instructor/instructor_base.html" %}
+{% load static %}
+
+{% block title %}Students - {{ course.title }}{% endblock %}
+{% block page_title %}Course Students{% endblock %}
+
+{% block extra_css %}
+<style>
+    .breadcrumb-row { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; margin-bottom: 16px; flex-wrap: wrap; }
+    .breadcrumb-row a { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+    .breadcrumb-row a:hover { color: var(--green); }
+    .breadcrumb-row .separator { color: var(--text-muted); }
+    .breadcrumb-row .current { color: var(--text-dark); font-weight: 500; }
+
+    .course-header { background: linear-gradient(135deg, #0f172a, #1e293b); border-radius: 16px; padding: 24px 28px; margin-bottom: 24px; color: white; }
+    .course-header-top { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; }
+    .course-header-top h2 { font-size: 1.3rem; font-weight: 700; }
+    .course-header-top .course-meta-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+    .header-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; background: rgba(255,255,255,0.15); backdrop-filter: blur(4px); display: flex; align-items: center; gap: 4px; }
+    
+    .header-stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+    .header-stat { text-align: center; padding: 12px; background: rgba(255,255,255,0.08); border-radius: 12px; }
+    .header-stat .stat-number { font-size: 1.5rem; font-weight: 700; }
+    .header-stat .stat-number.green { color: #10b981; }
+    .header-stat .stat-number.blue { color: #60a5fa; }
+    .header-stat .stat-number.orange { color: #fbbf24; }
+    .header-stat .stat-number.red { color: #f87171; }
+    .header-stat .stat-number.purple { color: #a78bfa; }
+    .header-stat .stat-label { font-size: 0.7rem; color: rgba(255,255,255,0.6); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .header-stat .stat-sub { font-size: 0.65rem; color: rgba(255,255,255,0.4); margin-top: 2px; }
+
+    .controls-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 12px; flex-wrap: wrap; }
+    .search-filter { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .search-input { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.82rem; width: 200px; font-family: 'Poppins', sans-serif; }
+    .search-input:focus { outline: none; border-color: var(--green); }
+    .filter-select { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.82rem; font-family: 'Poppins', sans-serif; background: var(--card-bg); color: var(--text-dark); }
+    .export-btn { padding: 8px 16px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 6px; font-family: 'Poppins', sans-serif; color: var(--text-dark); transition: all 0.2s; }
+    .export-btn:hover { border-color: var(--green); color: var(--green); }
+
+    .table-card { background: var(--card-bg); border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); border: 1px solid var(--border-color); overflow: hidden; }
+    .table-header { padding: 16px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+    .table-header h3 { font-size: 0.9rem; font-weight: 600; }
+    .table-header .count { font-size: 0.75rem; color: var(--text-muted); }
+    .table-responsive { overflow-x: auto; }
+    
+    .data-table { width: 100%; border-collapse: collapse; min-width: 800px; }
+    .data-table th { text-align: left; padding: 14px 16px; font-size: 0.7rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid var(--border-color); background: #f8fafc; white-space: nowrap; cursor: pointer; user-select: none; }
+    .data-table th:hover { color: var(--green); }
+    .data-table th i { margin-left: 4px; font-size: 0.6rem; }
+    .data-table td { padding: 14px 16px; font-size: 0.82rem; border-bottom: 1px solid rgba(0,0,0,0.04); vertical-align: middle; }
+    .data-table tbody tr { transition: background 0.2s; }
+    .data-table tbody tr:hover { background: #f8fafc; }
+    
+    .student-cell { display: flex; align-items: center; gap: 12px; }
+    .student-avatar { width: 40px; height: 40px; border-radius: 10px; color: white; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; flex-shrink: 0; position: relative; }
+    .student-avatar .status-dot { position: absolute; bottom: -2px; right: -2px; width: 10px; height: 10px; border-radius: 50%; border: 2px solid white; }
+    .status-dot.active { background: #10b981; }
+    .status-dot.completed { background: #3b82f6; }
+    .status-dot.dropped { background: #ef4444; }
+    .status-dot.paused { background: #f59e0b; }
+    .student-name { font-weight: 600; color: var(--text-dark); }
+    .student-email { font-size: 0.7rem; color: var(--text-muted); }
+    
+    .status-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; }
+    .status-badge.active { background: #d1fae5; color: #065f46; }
+    .status-badge.completed { background: #dbeafe; color: #1e40af; }
+    .status-badge.dropped { background: #fee2e2; color: #991b1b; }
+    .status-badge.paused { background: #fef3c7; color: #92400e; }
+    
+    .payment-badge { display: inline-flex; align-items: center; gap: 3px; padding: 3px 8px; border-radius: 12px; font-size: 0.65rem; font-weight: 600; }
+    .payment-badge.paid { background: #fef3c7; color: #92400e; }
+    .payment-badge.free { background: #f0fdf4; color: #166534; }
+    
+    .progress-cell { min-width: 120px; }
+    .progress-info { display: flex; align-items: center; gap: 10px; }
+    .progress-bar { flex: 1; height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 3px; transition: width 0.3s ease; }
+    .progress-fill.high { background: linear-gradient(90deg, #10b981, #059669); }
+    .progress-fill.medium { background: linear-gradient(90deg, #f59e0b, #d97706); }
+    .progress-fill.low { background: linear-gradient(90deg, #ef4444, #dc2626); }
+    .progress-text { font-size: 0.75rem; font-weight: 600; min-width: 36px; text-align: right; }
+    .progress-detail { font-size: 0.65rem; color: var(--text-muted); margin-top: 2px; }
+    
+    .action-btns { display: flex; gap: 4px; }
+    .btn-icon { width: 32px; height: 32px; border-radius: 6px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: var(--text-muted); transition: all 0.2s; text-decoration: none; }
+    .btn-icon:hover { background: rgba(16,185,129,0.1); color: var(--green); }
+    
+    .empty-state { text-align: center; padding: 60px 20px; }
+    .empty-state i { font-size: 3rem; color: #d1d5db; margin-bottom: 12px; }
+    .empty-state h3 { font-size: 1.1rem; font-weight: 600; }
+
+    .student-detail-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+    .student-detail-modal.active { display: flex; }
+    .modal-content { background: var(--card-bg); border-radius: 16px; padding: 24px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .modal-close { width: 32px; height: 32px; border-radius: 8px; border: none; background: #f1f5f9; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+    
+    @media (max-width: 768px) { 
+        .header-stats { grid-template-columns: repeat(3, 1fr); }
+        .header-stat:last-child { grid-column: span 2; }
+        .data-table { min-width: 600px; }
+    }
+    @media (max-width: 480px) { 
+        .header-stats { grid-template-columns: repeat(2, 1fr); }
+        .controls-row { flex-direction: column; align-items: stretch; }
+        .search-filter { flex-direction: column; }
+        .search-input, .filter-select { width: 100%; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div class="breadcrumb-row">
+    <a href="{% url 'dashboard:instructor_dashboard' %}"><i class="fas fa-home"></i> Dashboard</a>
+    <span class="separator">/</span>
+    <a href="{% url 'dashboard:instructor_courses' %}">My Courses</a>
+    <span class="separator">/</span>
+    <span class="current">{{ course.title }}</span>
+</div>
+
+<!-- Course Header with Stats -->
+<div class="course-header">
+    <div class="course-header-top">
+        <h2>{{ course.title }}</h2>
+        <div class="course-meta-badges">
+            <span class="header-badge"><i class="fas fa-signal"></i> {{ course.get_level_display }}</span>
+            <span class="header-badge"><i class="fas fa-layer-group"></i> {{ total_lessons }} Lessons</span>
+            {% if course.is_free %}
+                <span class="header-badge" style="background:rgba(16,185,129,0.3);">Free Course</span>
+            {% else %}
+                <span class="header-badge" style="background:rgba(245,158,11,0.3);">${{ course.price }}</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="header-stats">
+        <div class="header-stat">
+            <div class="stat-number green">{{ total_enrolled }}</div>
+            <div class="stat-label">Total Enrolled</div>
+            <div class="stat-sub">All time</div>
+        </div>
+        <div class="header-stat">
+            <div class="stat-number blue">{{ active_students }}</div>
+            <div class="stat-label">Active</div>
+            <div class="stat-sub">Currently learning</div>
+        </div>
+        <div class="header-stat">
+            <div class="stat-number purple">{{ completed_students }}</div>
+            <div class="stat-label">Completed</div>
+            <div class="stat-sub">Finished course</div>
+        </div>
+        <div class="header-stat">
+            <div class="stat-number orange">{{ avg_completion }}%</div>
+            <div class="stat-label">Avg Progress</div>
+            <div class="stat-sub">Course completion</div>
+        </div>
+        <div class="header-stat">
+            <div class="stat-number green">${{ total_revenue|floatformat:2 }}</div>
+            <div class="stat-label">Revenue</div>
+            <div class="stat-sub">{{ paid_students }} paid students</div>
+        </div>
+    </div>
+</div>
+
+<!-- Controls -->
+<div class="controls-row">
+    <div class="search-filter">
+        <input type="text" class="search-input" id="studentSearch" placeholder="Search students...">
+        <select class="filter-select" id="statusFilter">
+            <option value="all">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="completed">Completed</option>
+            <option value="dropped">Dropped</option>
+            <option value="paused">Paused</option>
+        </select>
+        <select class="filter-select" id="progressFilter">
+            <option value="all">All Progress</option>
+            <option value="completed">Completed (100%)</option>
+            <option value="in-progress">In Progress (1-99%)</option>
+            <option value="not-started">Not Started (0%)</option>
+        </select>
+    </div>
+    <button class="export-btn" onclick="exportToCSV()">
+        <i class="fas fa-download"></i> Export CSV
+    </button>
+</div>
+
+<!-- Students Table -->
+<div class="table-card">
+    <div class="table-header">
+        <h3>Enrolled Students</h3>
+        <span class="count" id="studentCount">{{ total_enrolled }} students</span>
+    </div>
+    <div class="table-responsive">
+        <table class="data-table" id="studentsTable">
+            <thead>
+                <tr>
+                    <th onclick="sortTable(0)">Student <i class="fas fa-sort"></i></th>
+                    <th onclick="sortTable(1)">Status <i class="fas fa-sort"></i></th>
+                    <th onclick="sortTable(2)">Payment <i class="fas fa-sort"></i></th>
+                    <th onclick="sortTable(3)">Progress <i class="fas fa-sort"></i></th>
+                    <th onclick="sortTable(4)">Enrolled <i class="fas fa-sort"></i></th>
+                    <th onclick="sortTable(5)">Last Active <i class="fas fa-sort"></i></th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for enrollment in enrollments %}
+                <tr data-status="{{ enrollment.status }}" data-progress="{{ enrollment.lesson_progress }}" data-student="{{ enrollment.student.get_full_name|lower }}{{ enrollment.student.email|lower }}">
+                    <td>
+                        <div class="student-cell">
+                            <div class="student-avatar" style="background: linear-gradient(135deg, {% cycle '#3b82f6' '#10b981' '#8b5cf6' '#f59e0b' '#ef4444' %}, {% cycle '#2563eb' '#059669' '#7c3aed' '#d97706' '#dc2626' %});">
+                                {{ enrollment.student.get_full_name|slice:":1"|upper|default:enrollment.student.email|slice:":1"|upper }}
+                                <span class="status-dot {{ enrollment.status }}"></span>
+                            </div>
+                            <div>
+                                <div class="student-name">{{ enrollment.student.get_full_name|default:"Unknown Student" }}</div>
+                                <div class="student-email">{{ enrollment.student.email }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="status-badge {{ enrollment.status }}">
+                            {% if enrollment.status == 'active' %}
+                                <i class="fas fa-spinner fa-pulse" style="font-size:0.55rem;"></i>
+                            {% elif enrollment.status == 'completed' %}
+                                <i class="fas fa-check-circle"></i>
+                            {% elif enrollment.status == 'dropped' %}
+                                <i class="fas fa-times-circle"></i>
+                            {% elif enrollment.status == 'paused' %}
+                                <i class="fas fa-pause-circle"></i>
+                            {% endif %}
+                            {{ enrollment.get_status_display }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if course.is_free %}
+                            <span class="payment-badge free"><i class="fas fa-gift"></i> Free</span>
+                        {% elif enrollment.has_paid %}
+                            <span class="payment-badge paid"><i class="fas fa-check"></i> Paid</span>
+                        {% else %}
+                            <span style="font-size:0.7rem;color:var(--text-muted);">Not paid</span>
+                        {% endif %}
+                    </td>
+                    <td class="progress-cell">
+                        <div class="progress-info">
+                            <div class="progress-bar">
+                                <div class="progress-fill {% if enrollment.lesson_progress >= 80 %}high{% elif enrollment.lesson_progress >= 40 %}medium{% else %}low{% endif %}" 
+                                     style="width: {{ enrollment.lesson_progress }}%"></div>
+                            </div>
+                            <span class="progress-text">{{ enrollment.lesson_progress }}%</span>
+                        </div>
+                        <div class="progress-detail">
+                            {{ enrollment.completed_lessons_count }}/{{ enrollment.total_lessons_count }} lessons completed
+                        </div>
+                    </td>
+                    <td>{{ enrollment.enrolled_at|date:"M d, Y" }}</td>
+                    <td>
+                        {% if enrollment.last_activity %}
+                            {{ enrollment.last_activity.last_accessed|timesince }} ago
+                        {% else %}
+                            <span style="color:var(--text-muted);">Never</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="action-btns">
+                            <a href="{% url 'dashboard:instructor_student_detail' course.id enrollment.student.id %}" class="btn-icon" title="View Progress">
+                                <i class="fas fa-chart-line me-2"></i>
+                                <span class="tooltip-text">View Progress</span>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <i class="fas fa-users"></i>
+                            <h3>No Students Enrolled Yet</h3>
+                            <p style="color:var(--text-muted);">Students will appear here once they enroll in this course.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Student Detail Modal -->
+<div class="student-detail-modal" id="studentModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalStudentName">Student Details</h3>
+            <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <div id="modalContent">
+            <!-- Dynamically loaded content -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Search and Filter Functionality
+    function filterStudents() {
+        const searchTerm = document.getElementById('studentSearch').value.toLowerCase();
+        const statusFilter = document.getElementById('statusFilter').value;
+        const progressFilter = document.getElementById('progressFilter').value;
+        const rows = document.querySelectorAll('#studentsTable tbody tr');
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const studentData = row.dataset.student || '';
+            const status = row.dataset.status;
+            const progress = parseInt(row.dataset.progress) || 0;
+
+            const matchesSearch = studentData.includes(searchTerm);
+            const matchesStatus = statusFilter === 'all' || status === statusFilter;
+            
+            let matchesProgress = true;
+            if (progressFilter === 'completed') matchesProgress = progress === 100;
+            else if (progressFilter === 'in-progress') matchesProgress = progress > 0 && progress < 100;
+            else if (progressFilter === 'not-started') matchesProgress = progress === 0;
+
+            if (matchesSearch && matchesStatus && matchesProgress) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        document.getElementById('studentCount').textContent = `${visibleCount} students`;
+    }
+
+    document.getElementById('studentSearch').addEventListener('input', filterStudents);
+    document.getElementById('statusFilter').addEventListener('change', filterStudents);
+    document.getElementById('progressFilter').addEventListener('change', filterStudents);
+
+    // Table Sorting
+    function sortTable(columnIndex) {
+        const table = document.getElementById('studentsTable');
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        
+        rows.sort((a, b) => {
+            const aVal = a.querySelectorAll('td')[columnIndex]?.textContent.trim() || '';
+            const bVal = b.querySelectorAll('td')[columnIndex]?.textContent.trim() || '';
+            return aVal.localeCompare(bVal);
+        });
+        
+        rows.forEach(row => tbody.appendChild(row));
+    }
+
+    // Export to CSV
+    function exportToCSV() {
+        const rows = document.querySelectorAll('#studentsTable tbody tr');
+        let csv = 'Student,Email,Status,Payment,Progress,Enrolled,Last Active\n';
+        
+        rows.forEach(row => {
+            if (row.style.display !== 'none') {
+                const cells = row.querySelectorAll('td');
+                const name = cells[0]?.querySelector('.student-name')?.textContent || '';
+                const email = cells[0]?.querySelector('.student-email')?.textContent || '';
+                const status = cells[1]?.textContent.trim() || '';
+                const payment = cells[2]?.textContent.trim() || '';
+                const progress = cells[3]?.querySelector('.progress-text')?.textContent || '';
+                const enrolled = cells[4]?.textContent.trim() || '';
+                const lastActive = cells[5]?.textContent.trim() || '';
+                
+                csv += `"${name}","${email}","${status}","${payment}","${progress}","${enrolled}","${lastActive}"\n`;
+            }
+        });
+        
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = '{{ course.title|slugify }}_students.csv';
+        a.click();
+    }
+
+    // Student Detail Modal
+    function viewStudentDetail(studentId, studentName) {
+        document.getElementById('modalStudentName').textContent = studentName;
+        document.getElementById('modalContent').innerHTML = '<p style="text-align:center;padding:20px;">Loading...</p>';
+        document.getElementById('studentModal').classList.add('active');
+        
+        // You can make an AJAX call here to fetch student details
+        // For now, show basic info
+        setTimeout(() => {
+            document.getElementById('modalContent').innerHTML = `
+                <div style="padding: 16px;">
+                    <p style="color:var(--text-muted);">Detailed student information would be loaded here via AJAX.</p>
+                    <p style="color:var(--text-muted);">This can include:</p>
+                    <ul style="color:var(--text-muted);font-size:0.85rem;padding-left:20px;">
+                        <li>Complete lesson progress breakdown</li>
+                        <li>Time spent on each lesson</li>
+                        <li>Quiz scores and attempts</li>
+                        <li>Assignment submissions</li>
+                        <li>Activity timeline</li>
+                    </ul>
+                </div>
+            `;
+        }, 500);
+    }
+
+    function closeModal() {
+        document.getElementById('studentModal').classList.remove('active');
+    }
+
+    function sendMessage(email) {
+        window.location.href = `mailto:${email}?subject=Regarding {{ course.title|urlencode }}`;
+    }
+
+    // Close modal on outside click
+    document.getElementById('studentModal').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+</script>
+{% endblock %}
