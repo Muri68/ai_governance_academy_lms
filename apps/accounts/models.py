@@ -160,9 +160,15 @@ class AdminProfile(models.Model):
         on_delete=models.CASCADE,
         related_name='admin_profile'
     )
-    admin_id = models.CharField(max_length=20, unique=True)
+    admin_id = models.CharField(max_length=20, unique=True, blank=True)
     department = models.CharField(max_length=100, blank=True)
-    access_level = models.IntegerField(default=1)
+    access_level = models.IntegerField(default=1, help_text="1=Basic, 2=Manager, 3=Super Admin")
+    signature = models.ImageField(
+        upload_to='signatures/', 
+        blank=True, 
+        null=True, 
+        help_text="Program Director's digital signature for certificates"
+    )
     
     class Meta:
         verbose_name = _('admin profile')
@@ -170,3 +176,16 @@ class AdminProfile(models.Model):
     
     def __str__(self):
         return f"Admin: {self.user.email}"
+    
+    def save(self, *args, **kwargs):
+        if not self.admin_id:
+            last_admin = AdminProfile.objects.order_by('-id').first()
+            if last_admin and last_admin.admin_id and last_admin.admin_id.startswith('ADM-'):
+                try:
+                    last_num = int(last_admin.admin_id.split('-')[1])
+                    self.admin_id = f'ADM-{last_num + 1:04d}'
+                except (ValueError, IndexError):
+                    self.admin_id = 'ADM-0001'
+            else:
+                self.admin_id = 'ADM-0001'
+        super().save(*args, **kwargs)

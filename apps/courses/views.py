@@ -13,6 +13,8 @@ import qrcode
 import tempfile
 from urllib.parse import quote
 
+from apps.accounts.models import AdminProfile, InstructorProfile
+
 from .models import (
     Course, Lesson, LessonContent, Enrollment, 
     LessonProgress, CourseReview
@@ -743,12 +745,26 @@ def view_certificate(request, enrollment_id):
     qr_img.save(qr_temp.name)
     qr_temp.close()
     
-    # Handle signatures
+        # ===== HANDLE SIGNATURES =====
     instructor_sig_temp = None
     director_sig_temp = None
     
+    # ===== INSTRUCTOR SIGNATURE =====
     instructor = enrollment.course.instructor
-    instructor_profile = getattr(instructor, 'instructor_profile', None)
+    print(f"Instructor: {instructor.email}, ID: {instructor.id}")
+    
+    # Check if instructor has a profile
+    try:
+        instructor_profile = InstructorProfile.objects.get(user=instructor)
+        print(f"Instructor profile found: {instructor_profile.instructor_id}")
+        print(f"Has signature: {bool(instructor_profile.signature)}")
+        
+        if instructor_profile.signature:
+            print(f"Signature path: {instructor_profile.signature.path}")
+            print(f"Signature exists: {os.path.exists(instructor_profile.signature.path)}")
+    except InstructorProfile.DoesNotExist:
+        instructor_profile = None
+        print("No InstructorProfile found for this instructor!")
     
     if instructor_profile and instructor_profile.signature:
         try:
@@ -756,11 +772,83 @@ def view_certificate(request, enrollment_id):
             if os.path.exists(sig_path):
                 instructor_sig_temp = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
                 instructor_sig_temp.close()
-                convert_signature_to_white(sig_path, instructor_sig_temp.name)
-        except Exception:
+                result = convert_signature_to_white(sig_path, instructor_sig_temp.name)
+                print(f"Instructor signature converted. Result: {result}")
+                # Verify the output file exists and has content
+                if os.path.exists(instructor_sig_temp.name):
+                    file_size = os.path.getsize(instructor_sig_temp.name)
+                    print(f"Instructor temp file size: {file_size} bytes")
+                    if file_size == 0:
+                        print("WARNING: Instructor signature temp file is empty!")
+                        instructor_sig_temp = None
+        except Exception as e:
+            print(f"ERROR processing instructor signature: {e}")
+            import traceback
+            traceback.print_exc()
             instructor_sig_temp = None
+    else:
+        print("No instructor signature available")
+        if not instructor_profile:
+            print("  - No instructor profile exists")
+        elif not instructor_profile.signature:
+            print("  - Instructor profile exists but no signature uploaded")
     
-    # Build PDF
+    # ===== DIRECTOR SIGNATURE (Admin Profile or Static Default) =====
+    admin_profile = None
+    director_name = None
+    
+    # Find any admin/superadmin with a signature
+    admin_profile = AdminProfile.objects.filter(
+        signature__isnull=False
+    ).exclude(signature='').order_by('-access_level').first()
+    
+    if admin_profile and admin_profile.signature:
+        try:
+            sig_path = admin_profile.signature.path
+            if os.path.exists(sig_path):
+                director_sig_temp = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
+                director_sig_temp.close()
+                convert_signature_to_white(sig_path, director_sig_temp.name)
+                print(f"Admin signature processed: {director_sig_temp.name}")
+        except Exception as e:
+            print(f"Error processing admin signature: {e}")
+            director_sig_temp = None
+    
+    # If no admin signature, fall back to default static file
+    if not director_sig_temp:
+        print("No admin signature found, trying static file...")
+        static_dirs = []
+        if hasattr(settings, 'STATIC_ROOT') and settings.STATIC_ROOT:
+            static_dirs.append(settings.STATIC_ROOT)
+        if hasattr(settings, 'STATICFILES_DIRS'):
+            static_dirs.extend(settings.STATICFILES_DIRS)
+        
+        for static_dir in static_dirs:
+            if static_dir:
+                test_path = os.path.join(static_dir, 'images', 'director-signature.png')
+                print(f"Checking: {test_path}")
+                if os.path.exists(test_path):
+                    try:
+                        director_sig_temp = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
+                        director_sig_temp.close()
+                        convert_signature_to_white(test_path, director_sig_temp.name)
+                        print(f"Static signature processed: {director_sig_temp.name}")
+                        break
+                    except Exception as e:
+                        print(f"Error processing static signature: {e}")
+                        director_sig_temp = None
+    
+    # ===== DIRECTOR NAME =====
+    if admin_profile:
+        director_name = admin_profile.user.get_full_name() or admin_profile.user.email
+    else:
+        director_name = getattr(settings, 'CERTIFICATE_DIRECTOR_NAME', 'Dr. James Anderson')
+    
+    director_title = getattr(settings, 'CERTIFICATE_DIRECTOR_TITLE', 'Program Director')
+    
+    print(f"Director name: {director_name}, Instructor sig: {instructor_sig_temp is not None}, Director sig: {director_sig_temp is not None}")
+    
+    # ===== BUILD PDF =====
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=landscape(letter))
     width, height = landscape(letter)
@@ -811,7 +899,7 @@ def view_certificate(request, enrollment_id):
     completed_date = enrollment.completed_at.strftime("%B %d, %Y") if enrollment.completed_at else ""
     c.drawCentredString(width/2, height - 310, f"Completed on: {completed_date}")
     
-    # Signatures
+    # ===== SIGNATURES SECTION =====
     sig_y_line = height - 390
     sig_y_text = height - 410
     sig_y_title = height - 425
@@ -820,17 +908,22 @@ def view_certificate(request, enrollment_id):
     c.setStrokeColor(HexColor('#ad7a49'))
     c.setLineWidth(1)
     
-    # Instructor
+    # ===== INSTRUCTOR SIGNATURE (Left) =====
     instructor_sig_box_x = 100
     instructor_sig_box_width = 180
     
+    # Draw instructor signature image
     if instructor_sig_temp and os.path.exists(instructor_sig_temp.name):
         try:
             c.drawImage(instructor_sig_temp.name, instructor_sig_box_x + 20, sig_y_image, 
                        width=140, height=55, preserveAspectRatio=True, mask='auto')
-        except Exception:
-            pass
+            print("Instructor signature drawn on PDF")
+        except Exception as e:
+            print(f"Error drawing instructor signature: {e}")
+    else:
+        print("No instructor signature to draw")
     
+    # Instructor line and name
     c.line(instructor_sig_box_x, sig_y_line, instructor_sig_box_x + instructor_sig_box_width, sig_y_line)
     c.setFont("Helvetica", 9)
     c.setFillColor(HexColor('#ffffff'))
@@ -839,13 +932,22 @@ def view_certificate(request, enrollment_id):
     c.setFillColor(HexColor('#94a3b8'))
     c.drawCentredString(instructor_sig_box_x + instructor_sig_box_width/2, sig_y_title, "Instructor")
     
-    # Director
+    # ===== DIRECTOR SIGNATURE (Right) =====
     director_sig_box_x = width - 280
     director_sig_box_width = 180
     
-    director_name = getattr(settings, 'CERTIFICATE_DIRECTOR_NAME', 'Dr. James Anderson')
-    director_title = getattr(settings, 'CERTIFICATE_DIRECTOR_TITLE', 'Program Director')
+    # Draw director signature image
+    if director_sig_temp and os.path.exists(director_sig_temp.name):
+        try:
+            c.drawImage(director_sig_temp.name, director_sig_box_x + 20, sig_y_image, 
+                       width=140, height=55, preserveAspectRatio=True, mask='auto')
+            print("Director signature drawn on PDF")
+        except Exception as e:
+            print(f"Error drawing director signature: {e}")
+    else:
+        print("No director signature to draw")
     
+    # Director line and name
     c.line(director_sig_box_x, sig_y_line, director_sig_box_x + director_sig_box_width, sig_y_line)
     c.setFont("Helvetica", 9)
     c.setFillColor(HexColor('#ffffff'))
@@ -854,7 +956,7 @@ def view_certificate(request, enrollment_id):
     c.setFillColor(HexColor('#94a3b8'))
     c.drawCentredString(director_sig_box_x + director_sig_box_width/2, sig_y_title, director_title)
     
-    # QR Code
+    # ===== QR CODE =====
     qr_size = 80
     qr_x = width - qr_size - 55
     qr_y = 55
@@ -864,8 +966,8 @@ def view_certificate(request, enrollment_id):
         c.setFont("Helvetica", 7)
         c.setFillColor(HexColor('#64748b'))
         c.drawCentredString(qr_x + qr_size/2, qr_y - 12, "Scan to verify")
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"Error drawing QR code: {e}")
     
     # Bottom text
     c.setFont("Helvetica", 7)
@@ -882,8 +984,8 @@ def view_certificate(request, enrollment_id):
         if temp_file:
             try:
                 os.unlink(temp_file.name)
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"Error cleaning up temp file: {e}")
     
     response = HttpResponse(pdf, content_type='application/pdf')
     filename = f"Certificate_{enrollment.course.slug}_{student_name.replace(' ', '_')}.pdf"
