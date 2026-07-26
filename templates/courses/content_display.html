@@ -1,0 +1,81 @@
+{# Partial template for displaying lesson content #}
+{% if content.content_type == 'video' and content.video_file %}
+<div class="video-player-container">
+    <div class="video-wrapper">
+        <video controls preload="metadata" playsinline style="width:100%;height:100%;" controlsList="nodownload" oncontextmenu="return false;">
+            <source src="{% url 'courses:serve_file' course_slug=course.slug content_id=content.id %}" type="video/mp4">
+        </video>
+    </div>
+</div>
+{% elif content.content_type == 'video_url' and content.video_url %}
+<div class="video-player-container">
+    <div class="video-wrapper" id="vid-{{ content.id }}"></div>
+</div>
+<script>
+(function(){
+    var url = '{{ content.video_url|safe }}';
+    var el = document.getElementById('vid-{{ content.id }}');
+    if(!el||!url)return;
+    var src = url;
+    if(url.indexOf('youtube.com/watch')>-1){
+        var v = url.split('v=')[1];
+        if(v.indexOf('&')>-1) v = v.split('&')[0];
+        if(v.indexOf('#')>-1) v = v.split('#')[0];
+        src = 'https://www.youtube.com/embed/'+v;
+    }else if(url.indexOf('youtu.be/')>-1){
+        src = 'https://www.youtube.com/embed/'+url.split('youtu.be/')[1].split('?')[0];
+    }else if(url.indexOf('vimeo.com/')>-1){
+        src = 'https://player.vimeo.com/video/'+url.split('vimeo.com/')[1].split('?')[0];
+    }
+    el.innerHTML = '<iframe src="'+src+'" frameborder="0" allowfullscreen style="width:100%;height:100%;position:absolute;top:0;left:0;border:0;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"></iframe>';
+})();
+</script>
+{% endif %}
+
+<span class="content-type-badge {{ content.content_type }}"><i class="{{ content.content_type_icon }}"></i> {{ content.get_content_type_display }}</span>
+
+{% if content.content_type == 'text' and content.text_content %}
+    <div class="content-text">{{ content.text_content|safe }}</div>
+{% elif content.content_type == 'pdf' and content.pdf_file %}
+    <div class="pdf-viewer-container" id="pdf-viewer-{{ content.id }}">
+        <div class="pdf-viewer-inner" id="pdf-inner-{{ content.id }}"><div class="pdf-canvas-wrapper"><canvas class="pdf-page-canvas" id="pdf-canvas-{{ content.id }}"></canvas></div></div>
+        <div class="pdf-loading-overlay" id="pdf-loading-{{ content.id }}"><div style="text-align:center;"><i class="fas fa-spinner fa-spin" style="font-size:32px;display:block;margin-bottom:12px;"></i><p style="font-size:14px;">Loading PDF...</p></div></div>
+        <div class="pdf-error-overlay" id="pdf-error-{{ content.id }}"><i class="fas fa-file-pdf"></i><h4>Unable to Load PDF</h4><button onclick="retryPdfLoad('{{ content.id }}')" style="background:#0c1e2e;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;"><i class="fas fa-redo"></i> Retry</button></div>
+    </div>
+    <div class="pdf-controls-bar" id="pdf-controls-{{ content.id }}">
+        <button onclick="changePdfPage('{{ content.id }}', -1)" id="pdf-prev-{{ content.id }}" disabled><i class="fas fa-chevron-left"></i> Previous</button>
+        <span style="font-size:12px;color:var(--text-dark);">Page <input type="number" class="page-input" id="pdf-page-input-{{ content.id }}" value="1" min="1" onchange="goToPdfPage('{{ content.id }}', this.value)"> of <span id="pdf-total-pages-{{ content.id }}">?</span></span>
+        <button onclick="changePdfPage('{{ content.id }}', 1)" id="pdf-next-{{ content.id }}" disabled>Next <i class="fas fa-chevron-right"></i></button>
+    </div>
+    {% if content.allow_download %}<a href="{% url 'courses:serve_file' course_slug=course.slug content_id=content.id %}?download=1" class="btn-header btn-header-outline" style="display:inline-flex;text-decoration:none;margin-top:8px;color:var(--text-dark);border-color:rgba(0,0,0,0.2);"><i class="fas fa-download"></i> Download PDF</a>{% else %}<p class="download-locked"><i class="fas fa-lock"></i> Download not permitted</p>{% endif %}
+{% elif content.content_type == 'quiz' %}
+    <div class="quiz-container" id="quiz-{{ content.id }}">
+        <h4>{{ content.title|default:"Quiz" }}</h4>
+        {% if content.text_content %}<p class="content-text">{{ content.text_content|safe }}</p>{% endif %}
+        {% if content.quiz_data and content.quiz_data.questions %}
+            {% for q in content.quiz_data.questions %}
+            <div class="quiz-question-block"><div class="quiz-question">{{ forloop.counter }}. {{ q.question }}</div>
+                {% for option in q.options %}<label class="quiz-option" onclick="selectQuizOption(this)"><span class="quiz-radio"></span> {{ option }}</label>{% endfor %}
+            </div>
+            {% endfor %}
+            <button class="btn-submit-quiz" onclick="submitQuiz('{{ content.id }}', {{ content.quiz_data.questions|length }}, {{ content.passing_score }})">Submit Quiz</button>
+            <div class="quiz-result" id="quiz-result-{{ content.id }}"></div>
+        {% endif %}
+    </div>
+{% elif content.content_type == 'code' and content.text_content %}
+    <div class="code-block"><pre><code>{{ content.text_content|safe }}</code></pre></div>
+{% elif content.content_type == 'assignment' %}
+    <div class="assignment-box"><h4>{{ content.title|default:"Assignment" }}</h4><span class="max-score">Max Score: {{ content.max_score }}</span><div style="margin-top:12px;white-space:pre-wrap;font-size:13px;color:#4a5568;">{{ content.assignment_instructions|default:content.text_content|safe }}</div></div>
+{% elif content.content_type == 'slides' and content.pdf_file %}
+    <div class="pdf-viewer-container" id="pdf-viewer-{{ content.id }}">
+        <div class="pdf-viewer-inner" id="pdf-inner-{{ content.id }}"><div class="pdf-canvas-wrapper"><canvas class="pdf-page-canvas" id="pdf-canvas-{{ content.id }}"></canvas></div></div>
+        <div class="pdf-loading-overlay" id="pdf-loading-{{ content.id }}"><div style="text-align:center;"><i class="fas fa-spinner fa-spin" style="font-size:32px;display:block;margin-bottom:12px;"></i><p style="font-size:14px;">Loading Slides...</p></div></div>
+        <div class="pdf-error-overlay" id="pdf-error-{{ content.id }}"><i class="fas fa-file-pdf"></i><h4>Unable to Load Slides</h4><button onclick="retryPdfLoad('{{ content.id }}')" style="background:#0c1e2e;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;"><i class="fas fa-redo"></i> Retry</button></div>
+    </div>
+    <div class="pdf-controls-bar" id="pdf-controls-{{ content.id }}">
+        <button onclick="changePdfPage('{{ content.id }}', -1)" disabled>Previous</button>
+        <span>Page <span id="pdf-current-page-{{ content.id }}">1</span> of <span id="pdf-total-pages-{{ content.id }}">?</span></span>
+        <button onclick="changePdfPage('{{ content.id }}', 1)" disabled>Next</button>
+    </div>
+    {% if content.text_content %}<div class="content-text" style="margin-top:16px;">{{ content.text_content|safe }}</div>{% endif %}
+{% endif %}

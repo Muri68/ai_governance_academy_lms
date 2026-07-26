@@ -18173,45 +18173,7 @@ only screen and (min-width:768px) and (max-width:991px) {
     }
 }
 
-/* Desktop: Show full decoration */
-.section-title.shape-02 .sub-title span:before {
-    position: absolute;
-    content: "";
-    background-image: url(../../images/reviews-line.png);
-    background-position: center center;
-    background-size: cover;
-    background-repeat: no-repeat;
-    width: 180px;
-    height: 40px;
-    left: 21%;
-    bottom: 245px;
-    -webkit-transform: translateX(-50%);
-    transform: translateX(-50%)
-}
 
-/* Tablet: Adjust sizes */
-@media only screen and (min-width: 768px) and (max-width: 991px) {
-    .section-title.shape-02 .main-title span:before {
-        width: 140px;
-        height: 15px
-    }
-
-    /* Hide sub-title decoration on tablet */
-    .section-title.shape-02 .sub-title span:before {
-        display: none;
-    }
-}
-
-/* Mobile: Hide decorations */
-@media only screen and (max-width: 575px) {
-    .section-title.shape-02 .main-title span:before {
-        display: none;
-    }
-
-    .section-title.shape-02 .sub-title span:before {
-        display: none;
-    }
-}
 
 .section-title.shape-03 {
     padding-bottom: 11px

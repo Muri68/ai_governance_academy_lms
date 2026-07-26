@@ -9,6 +9,9 @@ from io import BytesIO
 import os
 import json
 import hashlib
+import qrcode
+import tempfile
+from urllib.parse import quote
 
 from .models import (
     Course, Lesson, LessonContent, Enrollment, 
@@ -19,6 +22,8 @@ from .models import (
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter, landscape
 from reportlab.lib.colors import HexColor
+from reportlab.lib.utils import ImageReader
+from PIL import Image
 
 
 # ===================== COURSE LEARNING =====================
@@ -32,7 +37,7 @@ def course_learning(request, course_slug):
         status='published'
     )
     
-    # Get or create enrollment (no duplicates)
+    # Get or create enrollment
     enrollment = Enrollment.objects.filter(
         student=request.user,
         course=course
@@ -68,10 +73,29 @@ def course_learning(request, course_slug):
     elif lessons.exists():
         current_lesson = lessons.first()
     
-    # Get lesson contents
+    # Get lesson contents and current content
     lesson_contents = []
+    current_content = None
+    current_content_index = 0
+    
     if current_lesson:
         lesson_contents = current_lesson.contents.all().order_by('order')
+        
+        content_id = request.GET.get('content')
+        if content_id:
+            try:
+                current_content = lesson_contents.get(id=content_id)
+            except LessonContent.DoesNotExist:
+                current_content = lesson_contents.first() if lesson_contents.exists() else None
+        elif lesson_contents.exists():
+            current_content = lesson_contents.first()
+        
+        # Calculate content index
+        if current_content:
+            for idx, c in enumerate(lesson_contents):
+                if c.id == current_content.id:
+                    current_content_index = idx
+                    break
     
     # Get progress
     lesson_progress = {}
@@ -91,38 +115,290 @@ def course_learning(request, course_slug):
     enrollment.progress_percentage = progress_percentage
     enrollment.save()
     
-    # Previous and next
+    # Previous and next lesson
     prev_lesson = None
     next_lesson = None
     if current_lesson and lessons.exists():
         lesson_list = list(lessons)
         try:
             idx = lesson_list.index(current_lesson)
-            if idx > 0: prev_lesson = lesson_list[idx - 1]
-            if idx < len(lesson_list) - 1: next_lesson = lesson_list[idx + 1]
+            if idx > 0: 
+                prev_lesson = lesson_list[idx - 1]
+            if idx < len(lesson_list) - 1: 
+                next_lesson = lesson_list[idx + 1]
         except ValueError:
             pass
     
     context = {
-        'course': course, 'enrollment': enrollment, 'lessons': lessons,
-        'current_lesson': current_lesson, 'lesson_contents': lesson_contents,
-        'lesson_progress': lesson_progress, 'completed_lesson_ids': completed_lesson_ids,
-        'prev_lesson': prev_lesson, 'next_lesson': next_lesson,
+        'course': course,
+        'enrollment': enrollment,
+        'lessons': lessons,
+        'current_lesson': current_lesson,
+        'current_content': current_content,
+        'lesson_contents': lesson_contents,
+        'current_content_index': current_content_index,
+        'lesson_progress': lesson_progress,
+        'completed_lesson_ids': completed_lesson_ids,
+        'prev_lesson': prev_lesson,
+        'next_lesson': next_lesson,
         'progress_percentage': progress_percentage,
-        'completed_lessons': completed_lessons, 'total_lessons': total_lessons,
+        'completed_lessons': completed_lessons,
+        'total_lessons': total_lessons,
     }
     return render(request, 'courses/learning.html', context)
 
 
-# ===================== LESSON ACTIONS =====================
+# ===================== AJAX: LOAD LESSON CONTENT =====================
+
+@login_required
+def load_lesson_content(request, course_slug, lesson_id, content_id):
+    """AJAX endpoint to load specific lesson content without page refresh"""
+    course = get_object_or_404(Course, slug=course_slug, status='published')
+    lesson = get_object_or_404(Lesson, id=lesson_id, course=course, is_published=True)
+    content = get_object_or_404(LessonContent, id=content_id, lesson=lesson)
+    
+    # Get all contents for this lesson
+    all_contents = list(lesson.contents.all().order_by('order'))
+    current_index = 0
+    for i, c in enumerate(all_contents):
+        if c.id == content.id:
+            current_index = i
+            break
+    
+    # Get next and previous content IDs
+    prev_content_id = all_contents[current_index - 1].id if current_index > 0 else None
+    next_content_id = all_contents[current_index + 1].id if current_index < len(all_contents) - 1 else None
+    
+    # Get next/prev lessons
+    all_lessons = list(course.lessons.filter(is_published=True).order_by('order'))
+    lesson_index = 0
+    for i, l in enumerate(all_lessons):
+        if l.id == lesson.id:
+            lesson_index = i
+            break
+    
+    next_lesson_id = all_lessons[lesson_index + 1].id if lesson_index < len(all_lessons) - 1 else None
+    prev_lesson_id = all_lessons[lesson_index - 1].id if lesson_index > 0 else None
+    
+    # Get enrollment for notes
+    enrollment = Enrollment.objects.filter(student=request.user, course=course).first()
+    
+    notes = ''
+    if enrollment:
+        progress = LessonProgress.objects.filter(
+            student=request.user, lesson=lesson, enrollment=enrollment
+        ).first()
+        if progress:
+            notes = progress.notes or ''
+    
+    # Build content HTML
+    content_html = build_content_html(content, course)
+    
+    # Build badge
+    type_icons = {
+        'video': 'fas fa-play-circle',
+        'video_url': 'fas fa-link',
+        'text': 'fas fa-file-alt',
+        'pdf': 'fas fa-file-pdf',
+        'quiz': 'fas fa-question-circle',
+        'assignment': 'fas fa-tasks',
+        'code': 'fas fa-code',
+        'slides': 'fas fa-desktop',
+    }
+    type_icon = type_icons.get(content.content_type, 'fas fa-file')
+    type_display = dict(LessonContent.CONTENT_TYPE_CHOICES).get(content.content_type, content.content_type)
+    
+    badge_html = f'<span class="content-type-badge {content.content_type}"><i class="{type_icon}"></i> {type_display}</span>'
+    
+    response_data = {
+        'status': 'success',
+        'content': {
+            'id': content.id,
+            'title': content.title or type_display,
+            'type': content.content_type,
+            'type_display': type_display,
+            'html': content_html,
+            'badge_html': badge_html,
+        },
+        'lesson': {
+            'id': lesson.id,
+            'title': lesson.title,
+            'order': lesson.order,
+        },
+        'navigation': {
+            'current_content_index': current_index,
+            'total_contents': len(all_contents),
+            'prev_content_id': prev_content_id,
+            'next_content_id': next_content_id,
+            'prev_lesson_id': prev_lesson_id,
+            'next_lesson_id': next_lesson_id,
+        },
+        'notes': notes,
+    }
+    
+    return JsonResponse(response_data)
+
+
+def build_content_html(content, course):
+    """Helper function to build HTML for different content types"""
+    content_type = content.content_type
+    html = ''
+    
+    # FIX: Use the correct URL pattern
+    serve_file_url = reverse('courses:serve_file', kwargs={
+        'course_slug': course.slug,
+        'content_id': content.id
+    })
+    
+    # For YouTube videos, the script needs special handling
+    if content_type == 'video_url' and content.video_url:
+        html = f'''
+        <div class="video-player-container">
+            <div class="video-wrapper" id="vid-{content.id}"></div>
+        </div>
+        <script>
+        (function(){{
+            var url = '{content.video_url}';
+            var el = document.getElementById('vid-{content.id}');
+            if(!el||!url)return;
+            var src = url;
+            if(url.indexOf('youtube.com/watch')>-1){{
+                var v = url.split('v=')[1];
+                if(v.indexOf('&')>-1) v = v.split('&')[0];
+                if(v.indexOf('#')>-1) v = v.split('#')[0];
+                src = 'https://www.youtube.com/embed/'+v;
+            }}else if(url.indexOf('youtu.be/')>-1){{
+                src = 'https://www.youtube.com/embed/'+url.split('youtu.be/')[1].split('?')[0];
+            }}else if(url.indexOf('vimeo.com/')>-1){{
+                src = 'https://player.vimeo.com/video/'+url.split('vimeo.com/')[1].split('?')[0];
+            }}
+            setTimeout(function(){{
+                el.innerHTML = '<iframe src="'+src+'" frameborder="0" allowfullscreen style="width:100%;height:100%;position:absolute;top:0;left:0;border:0;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"></iframe>';
+            }}, 100);
+        }})();
+        </script>
+        '''
+    
+    elif content_type == 'video' and content.video_file:
+        html = f'''
+        <div class="video-player-container">
+            <div class="video-wrapper">
+                <video controls preload="metadata" playsinline style="width:100%;height:100%;" 
+                       controlsList="nodownload" oncontextmenu="return false;">
+                    <source src="{serve_file_url}" type="video/mp4">
+                </video>
+            </div>
+        </div>
+        '''
+    
+    elif content_type == 'text' and content.text_content:
+        html = f'<div class="content-text">{content.text_content}</div>'
+    
+    elif content_type in ['pdf', 'slides'] and content.pdf_file:
+        download_html = ''
+        if content.allow_download:
+            download_html = f'''
+            <a href="{serve_file_url}?download=1" class="btn-header btn-header-outline" 
+               style="display:inline-flex;text-decoration:none;margin-top:8px;color:var(--text-dark);border-color:rgba(0,0,0,0.2);">
+               <i class="fas fa-download"></i> Download PDF
+            </a>'''
+        else:
+            download_html = '<p class="download-locked"><i class="fas fa-lock"></i> Download not permitted</p>'
+        
+        loading_text = 'Loading PDF...' if content_type == 'pdf' else 'Loading Slides...'
+        error_text = 'Unable to Load PDF' if content_type == 'pdf' else 'Unable to Load Slides'
+        
+        html = f'''
+        <div class="pdf-viewer-container" id="pdf-viewer-{content.id}">
+            <div class="pdf-viewer-inner" id="pdf-inner-{content.id}">
+                <div class="pdf-canvas-wrapper">
+                    <canvas class="pdf-page-canvas" id="pdf-canvas-{content.id}"></canvas>
+                </div>
+            </div>
+            <div class="pdf-loading-overlay" id="pdf-loading-{content.id}">
+                <div style="text-align:center;">
+                    <i class="fas fa-spinner fa-spin" style="font-size:32px;display:block;margin-bottom:12px;"></i>
+                    <p style="font-size:14px;">{loading_text}</p>
+                </div>
+            </div>
+            <div class="pdf-error-overlay" id="pdf-error-{content.id}" style="display:none;">
+                <i class="fas fa-file-pdf" style="font-size:48px;display:block;margin-bottom:16px;color:#ef4444;"></i>
+                <h4>{error_text}</h4>
+                <button onclick="retryPdfLoad('{content.id}')" 
+                        style="background:#0c1e2e;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;margin-top:8px;">
+                    <i class="fas fa-redo"></i> Retry
+                </button>
+            </div>
+        </div>
+        <div class="pdf-controls-bar" id="pdf-controls-{content.id}">
+            <button onclick="changePdfPage('{content.id}', -1)" id="pdf-prev-{content.id}" disabled>
+                <i class="fas fa-chevron-left"></i> Previous
+            </button>
+            <span style="font-size:12px;color:var(--text-dark);">
+                Page 
+                <input type="number" class="page-input" id="pdf-page-input-{content.id}" 
+                       value="1" min="1" onchange="goToPdfPage('{content.id}', this.value)" 
+                       onkeypress="if(event.key==='Enter')goToPdfPage('{content.id}', this.value)"
+                       style="width:50px;text-align:center;padding:6px;border:1px solid #e5e7eb;border-radius:4px;font-size:12px;">
+                of <span id="pdf-total-pages-{content.id}">?</span>
+            </span>
+            <button onclick="changePdfPage('{content.id}', 1)" id="pdf-next-{content.id}" disabled>
+                Next <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+        {download_html}
+        {f'<div class="content-text" style="margin-top:16px;">{content.text_content}</div>' if content_type == 'slides' and content.text_content else ''}
+        <script>setTimeout(function(){{ initPdfViewer('{content.id}'); }}, 100);</script>
+        '''
+    
+    elif content_type == 'quiz':
+        questions_html = ''
+        if content.quiz_data and content.quiz_data.get('questions'):
+            for i, q in enumerate(content.quiz_data['questions']):
+                options_html = ''
+                for option in q.get('options', []):
+                    options_html += f'<label class="quiz-option" onclick="selectQuizOption(this)"><span class="quiz-radio"></span> {option}</label>'
+                questions_html += f'''
+                <div class="quiz-question-block">
+                    <div class="quiz-question">{i+1}. {q["question"]}</div>
+                    {options_html}
+                </div>'''
+        
+        html = f'''
+        <div class="quiz-container" id="quiz-{content.id}">
+            <h4>{content.title or "Quiz"}</h4>
+            {f'<p class="content-text">{content.text_content}</p>' if content.text_content else ''}
+            {questions_html}
+            <button class="btn-submit-quiz" onclick="submitQuiz('{content.id}', {len(content.quiz_data.get('questions', []))}, {content.passing_score})">
+                Submit Quiz
+            </button>
+            <div class="quiz-result" id="quiz-result-{content.id}"></div>
+        </div>
+        '''
+    
+    elif content_type == 'code' and content.text_content:
+        html = f'<div class="code-block"><pre><code>{content.text_content}</code></pre></div>'
+    
+    elif content_type == 'assignment':
+        instructions = content.assignment_instructions or content.text_content or ''
+        html = f'''
+        <div class="assignment-box">
+            <h4>{content.title or "Assignment"}</h4>
+            <span class="max-score">Max Score: {content.max_score}</span>
+            <div style="margin-top:12px;white-space:pre-wrap;font-size:13px;color:#4a5568;">
+                {instructions}
+            </div>
+        </div>
+        '''
+    
+    return html
+
+
+# ===================== AJAX: MARK LESSON COMPLETE =====================
 
 @login_required
 def mark_lesson_complete(request, course_slug, lesson_id):
-    """
-    AJAX endpoint to mark a lesson as complete.
-    Enforces sequential completion - cannot skip lessons.
-    Auto-completes enrollment when all lessons are done.
-    """
+    """AJAX endpoint to toggle lesson completion"""
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=400)
     
@@ -137,35 +413,29 @@ def mark_lesson_complete(request, course_slug, lesson_id):
         enrollment.status = 'active'
         enrollment.save()
     
-    # ===== CHECK SEQUENTIAL ORDER =====
-    # Get all published lessons ordered by their order field
+    # Check sequential order
     all_lessons = list(course.lessons.filter(is_published=True).order_by('order'))
     current_lesson_index = None
     
-    # Find the current lesson's position
     for i, les in enumerate(all_lessons):
         if les.id == lesson.id:
             current_lesson_index = i
             break
     
-    # If toggling OFF (uncompleting), allow it regardless of order
     progress = LessonProgress.objects.filter(
         student=request.user, lesson=lesson, enrollment=enrollment
     ).first()
     
     is_uncompleting = progress and progress.completed
     
+    # ONLY check sequential order if user is trying to COMPLETE (not uncomplete)
     if not is_uncompleting and current_lesson_index is not None and current_lesson_index > 0:
-        # Check if ALL previous lessons are completed
         previous_lessons = all_lessons[:current_lesson_index]
         incomplete_previous = []
         
         for prev_lesson in previous_lessons:
             prev_progress = LessonProgress.objects.filter(
-                student=request.user,
-                lesson=prev_lesson,
-                enrollment=enrollment,
-                completed=True
+                student=request.user, lesson=prev_lesson, enrollment=enrollment, completed=True
             ).first()
             if not prev_progress:
                 incomplete_previous.append({
@@ -175,19 +445,18 @@ def mark_lesson_complete(request, course_slug, lesson_id):
                 })
         
         if incomplete_previous:
-            # Build error message with links to incomplete lessons
             lesson_names = [f'"{l["title"]}"' for l in incomplete_previous[:3]]
             if len(incomplete_previous) > 3:
                 lesson_names.append(f'and {len(incomplete_previous) - 3} more')
             
             return JsonResponse({
                 'status': 'error',
-                'message': f'You must complete the following lessons first: {", ".join(lesson_names)}.',
+                'message': f'You must complete these lessons first: {", ".join(lesson_names)}.',
                 'incomplete_lessons': incomplete_previous,
                 'code': 'SEQUENTIAL_REQUIRED'
             }, status=400)
     
-    # ===== TOGGLE COMPLETION =====
+    # Toggle completion
     if not progress:
         progress = LessonProgress.objects.create(
             student=request.user, lesson=lesson, enrollment=enrollment
@@ -202,7 +471,7 @@ def mark_lesson_complete(request, course_slug, lesson_id):
     
     progress.save()
     
-    # ===== RECALCULATE PROGRESS =====
+    # Recalculate progress
     total_lessons = len(all_lessons)
     completed_lessons = LessonProgress.objects.filter(
         student=request.user, enrollment=enrollment, completed=True
@@ -211,19 +480,32 @@ def mark_lesson_complete(request, course_slug, lesson_id):
     if total_lessons > 0:
         enrollment.progress_percentage = int((completed_lessons / total_lessons) * 100)
     
-    # ===== AUTO-COMPLETE COURSE =====
+    # Auto-complete course - FIXED: Check if ALL lessons are completed
     course_completed = False
-    if enrollment.progress_percentage >= 100 and enrollment.status == 'active':
-        enrollment.status = 'completed'
-        enrollment.completed_at = timezone.now()
-        
-        cert_string = f"{request.user.id}-{course.id}-{timezone.now().timestamp()}"
-        cert_hash = hashlib.md5(cert_string.encode()).hexdigest()[:12].upper()
-        cert_id = f"CERT-{cert_hash}"
-        
-        enrollment.certificate_url = reverse('courses:verify_certificate', kwargs={'cert_id': cert_id})
-        enrollment.certificate_issued = True
-        course_completed = True
+    certificate_url = None
+    
+    # Check if all lessons are completed and enrollment is still active
+    if completed_lessons >= total_lessons and total_lessons > 0:
+        if enrollment.status == 'active':
+            enrollment.status = 'completed'
+            enrollment.completed_at = timezone.now()
+            course_completed = True
+            
+            if course.has_certificate:
+                cert_string = f"{request.user.id}-{course.id}-{timezone.now().timestamp()}"
+                cert_hash = hashlib.md5(cert_string.encode()).hexdigest()[:12].upper()
+                cert_id = f"CERT-{cert_hash}"
+                enrollment.certificate_url = reverse('courses:verify_certificate', kwargs={'cert_id': cert_id})
+                enrollment.certificate_issued = True
+                certificate_url = reverse('courses:view_certificate', kwargs={'enrollment_id': enrollment.id})
+            else:
+                enrollment.certificate_issued = False
+                enrollment.certificate_url = None
+        elif enrollment.status == 'completed':
+            # Already completed, check if certificate was issued
+            course_completed = True
+            if enrollment.certificate_issued and enrollment.certificate_url:
+                certificate_url = reverse('courses:view_certificate', kwargs={'enrollment_id': enrollment.id})
     
     enrollment.save()
     
@@ -234,10 +516,9 @@ def mark_lesson_complete(request, course_slug, lesson_id):
         p.completed_courses = Enrollment.objects.filter(student=request.user, status='completed').count()
         p.save()
     
-    # ===== FIND NEXT UNLOCKED LESSON =====
+    # Find next unlocked lesson
     next_lesson = None
     if progress.completed and current_lesson_index is not None:
-        # Find the next lesson that is not completed
         for i in range(current_lesson_index + 1, len(all_lessons)):
             next_les = all_lessons[i]
             next_progress = LessonProgress.objects.filter(
@@ -261,39 +542,45 @@ def mark_lesson_complete(request, course_slug, lesson_id):
         response_data['next_lesson'] = next_lesson
     
     if course_completed:
-        response_data['message'] = f'Congratulations! You have completed "{course.title}"!'
-        response_data['certificate_url'] = reverse('courses:view_certificate', kwargs={'enrollment_id': enrollment.id})
+        if certificate_url:
+            response_data['message'] = f'Congratulations! You have completed "{course.title}"! Your certificate is ready.'
+            response_data['certificate_url'] = certificate_url
+        else:
+            response_data['message'] = f'Congratulations! You have completed "{course.title}"!'
+            response_data['certificate_url'] = None
     
     return JsonResponse(response_data)
 
+# ===================== AJAX: SAVE NOTES =====================
 
 @login_required
 def save_lesson_notes(request, course_slug, lesson_id):
     """AJAX: Save lesson notes"""
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            notes = data.get('notes', '')
-        except json.JSONDecodeError:
-            notes = request.POST.get('notes', '')
-        
-        course = get_object_or_404(Course, slug=course_slug)
-        lesson = get_object_or_404(Lesson, id=lesson_id, course=course)
-        
-        enrollment = Enrollment.objects.filter(
-            student=request.user, course=course, status__in=['active', 'completed']
-        ).first()
-        if not enrollment:
-            enrollment = Enrollment.objects.create(student=request.user, course=course, status='active')
-        
-        progress, _ = LessonProgress.objects.get_or_create(
-            student=request.user, lesson=lesson, enrollment=enrollment
-        )
-        progress.notes = notes
-        progress.save()
-        
-        return JsonResponse({'status': 'success', 'message': 'Notes saved!'})
-    return JsonResponse({'status': 'error'}, status=400)
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=400)
+    
+    try:
+        data = json.loads(request.body)
+        notes = data.get('notes', '')
+    except json.JSONDecodeError:
+        notes = request.POST.get('notes', '')
+    
+    course = get_object_or_404(Course, slug=course_slug)
+    lesson = get_object_or_404(Lesson, id=lesson_id, course=course)
+    
+    enrollment = Enrollment.objects.filter(
+        student=request.user, course=course, status__in=['active', 'completed']
+    ).first()
+    if not enrollment:
+        enrollment = Enrollment.objects.create(student=request.user, course=course, status='active')
+    
+    progress, _ = LessonProgress.objects.get_or_create(
+        student=request.user, lesson=lesson, enrollment=enrollment
+    )
+    progress.notes = notes
+    progress.save()
+    
+    return JsonResponse({'status': 'success', 'message': 'Notes saved!'})
 
 
 # ===================== FILE SERVING =====================
@@ -312,83 +599,45 @@ def serve_protected_file(request, course_slug, content_id):
         enrollment = Enrollment.objects.create(student=request.user, course=course, status='active')
     
     file_field = None
-    content_type = 'application/octet-stream'
+    mime_type = 'application/octet-stream'
     
     if content.content_type == 'pdf' and content.pdf_file:
         file_field = content.pdf_file
-        content_type = 'application/pdf'
+        mime_type = 'application/pdf'
     elif content.content_type == 'video' and content.video_file:
         file_field = content.video_file
-        # Detect video mime type
         file_ext = os.path.splitext(content.video_file.name)[1].lower()
-        if file_ext == '.mp4':
-            content_type = 'video/mp4'
-        elif file_ext == '.webm':
-            content_type = 'video/webm'
-        elif file_ext == '.ogg':
-            content_type = 'video/ogg'
-        else:
-            content_type = 'video/mp4'
+        mime_map = {'.mp4': 'video/mp4', '.webm': 'video/webm', '.ogg': 'video/ogg'}
+        mime_type = mime_map.get(file_ext, 'video/mp4')
     elif content.content_type == 'slides' and content.pdf_file:
         file_field = content.pdf_file
-        content_type = 'application/pdf'
+        mime_type = 'application/pdf'
     
     if file_field:
         try:
-            # Open the file
             file_handle = file_field.open('rb')
-            
-            # Create response
-            response = FileResponse(file_handle, content_type=content_type)
-            
-            # Get the original filename
+            response = FileResponse(file_handle, content_type=mime_type)
             filename = os.path.basename(file_field.name)
-            
-            # URL encode the filename for proper handling of special characters
-            from urllib.parse import quote
             encoded_filename = quote(filename)
             
-            # Check if download is requested
             download = request.GET.get('download', '')
             
-            # Set Content-Disposition based on file type and request
             if download:
-                # Force download
                 response['Content-Disposition'] = f'attachment; filename="{encoded_filename}"; filename*=UTF-8\'\'{encoded_filename}'
-            elif content_type == 'application/pdf':
-                # Always try to display PDF inline
-                response['Content-Disposition'] = f'inline; filename="{encoded_filename}"; filename*=UTF-8\'\'{encoded_filename}'
-            elif content_type.startswith('video/'):
-                # Videos should play inline
+            elif mime_type in ['application/pdf', 'video/mp4', 'video/webm', 'video/ogg']:
                 response['Content-Disposition'] = f'inline; filename="{encoded_filename}"; filename*=UTF-8\'\'{encoded_filename}'
             else:
-                # Default to inline
                 response['Content-Disposition'] = f'inline; filename="{encoded_filename}"; filename*=UTF-8\'\'{encoded_filename}'
             
-            # Security headers
             response['X-Content-Type-Options'] = 'nosniff'
-            response['X-Frame-Options'] = 'SAMEORIGIN'
-            response['X-XSS-Protection'] = '1; mode=block'
-            
-            # Cache control for better performance
-            response['Cache-Control'] = 'public, max-age=3600, must-revalidate'
             response['Accept-Ranges'] = 'bytes'
-            
-            # For PDF files, add additional headers to ensure inline display
-            if content_type == 'application/pdf':
-                response['Content-Transfer-Encoding'] = 'binary'
-                response['Content-Security-Policy'] = "default-src 'self'; frame-ancestors 'self'; object-src 'self'"
             
             return response
             
         except FileNotFoundError:
-            raise Http404("File not found on server")
+            raise Http404("File not found")
         except Exception as e:
-            # Log the error for debugging
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"Error serving file: {str(e)}")
-            raise Http404("Error serving file")
+            raise Http404(f"Error serving file: {str(e)}")
     
     raise Http404("No file available")
 
@@ -430,41 +679,22 @@ def submit_review(request, course_slug):
 
 # ===================== CERTIFICATES =====================
 
-import qrcode
-from PIL import Image, ImageOps, ImageFilter
-from reportlab.lib.utils import ImageReader
-from django.core.files.base import ContentFile
-import tempfile
-import os
-
-
 def convert_signature_to_white(signature_path, output_path):
-    """
-    Convert a signature image to white color for dark backgrounds.
-    Handles green, blue, black, or any color pen.
-    """
+    """Convert signature image to white for dark backgrounds"""
     try:
         img = Image.open(signature_path).convert('RGBA')
-        
-        # Make the image white while preserving transparency
         data = img.getdata()
         new_data = []
         
         for item in data:
             r, g, b, a = item
-            
-            # If pixel is not transparent (has some opacity)
             if a > 50:
-                # Calculate brightness - if it's dark enough (signature ink)
                 brightness = (r + g + b) / 3
-                if brightness < 200:  # This is part of the signature
-                    # Convert to white, keep alpha
+                if brightness < 200:
                     new_data.append((255, 255, 255, a))
                 else:
-                    # Background/noise - make transparent
                     new_data.append((255, 255, 255, 0))
             else:
-                # Fully transparent
                 new_data.append((255, 255, 255, 0))
         
         img.putdata(new_data)
@@ -472,7 +702,7 @@ def convert_signature_to_white(signature_path, output_path):
         return output_path
     except Exception as e:
         print(f"Error converting signature: {e}")
-        return signature_path  # Return original if conversion fails
+        return signature_path
 
 
 @login_required
@@ -483,7 +713,7 @@ def view_certificate(request, enrollment_id):
         id=enrollment_id, student=request.user, status='completed'
     )
     
-    # Get cert_id from stored URL
+    # Get cert_id
     cert_id = None
     if enrollment.certificate_url:
         parts = enrollment.certificate_url.rstrip('/').split('/')
@@ -503,29 +733,23 @@ def view_certificate(request, enrollment_id):
         reverse('courses:verify_certificate', kwargs={'cert_id': cert_id})
     )
     
-    # ===== GENERATE QR CODE =====
-    qr = qrcode.QRCode(
-        version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_M,
-        box_size=4,
-        border=2,
-    )
+    # Generate QR code
+    qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_M, box_size=4, border=2)
     qr.add_data(verification_url)
     qr.make(fit=True)
-    qr_img = qr.make_image(fill_color="white", back_color="#0c1e2e")  # White QR on dark background
+    qr_img = qr.make_image(fill_color="white", back_color="#0c1e2e")
     
     qr_temp = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
     qr_img.save(qr_temp.name)
     qr_temp.close()
     
-    # ===== PREPARE SIGNATURES (Convert to white) =====
+    # Handle signatures
     instructor_sig_temp = None
     director_sig_temp = None
     
     instructor = enrollment.course.instructor
     instructor_profile = getattr(instructor, 'instructor_profile', None)
     
-    # Convert instructor signature to white
     if instructor_profile and instructor_profile.signature:
         try:
             sig_path = instructor_profile.signature.path
@@ -536,185 +760,114 @@ def view_certificate(request, enrollment_id):
         except Exception:
             instructor_sig_temp = None
     
-    # Convert director signature to white
-    director_sig_path = None
-    static_dirs = [settings.STATIC_ROOT] if settings.STATIC_ROOT else []
-    if hasattr(settings, 'STATICFILES_DIRS'):
-        static_dirs.extend(settings.STATICFILES_DIRS)
-    
-    for static_dir in static_dirs:
-        if static_dir:
-            test_path = os.path.join(static_dir, 'images', 'director-signature.png')
-            if os.path.exists(test_path):
-                director_sig_path = test_path
-                break
-    
-    if director_sig_path and os.path.exists(director_sig_path):
-        try:
-            director_sig_temp = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
-            director_sig_temp.close()
-            convert_signature_to_white(director_sig_path, director_sig_temp.name)
-        except Exception:
-            director_sig_temp = None
-    
-    # ===== BUILD PDF =====
+    # Build PDF
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=landscape(letter))
-    width, height = landscape(letter)  # 792 x 612
+    width, height = landscape(letter)
     
     # Background
     c.setFillColor(HexColor('#0c1e2e'))
     c.rect(0, 0, width, height, fill=True, stroke=False)
     
-    # Gold outer border
+    # Borders
     c.setStrokeColor(HexColor('#ad7a49'))
     c.setLineWidth(3)
     c.rect(25, 25, width - 50, height - 50, fill=False, stroke=True)
-    
-    # Gold inner border
     c.setLineWidth(1)
     c.rect(38, 38, width - 76, height - 76, fill=False, stroke=True)
     
-    # Organization at top
+    # Text
     c.setFillColor(HexColor('#94a3b8'))
     c.setFont("Helvetica", 9)
     c.drawCentredString(width/2, height - 65, getattr(settings, 'CERTIFICATE_ORGANIZATION', 'AI GOVERNANCE AUTHORITY'))
     
-    # Certificate title
     c.setFillColor(HexColor('#ad7a49'))
     c.setFont("Helvetica-Bold", 28)
     c.drawCentredString(width/2, height - 115, "CERTIFICATE OF COMPLETION")
     
-    # Decorative line under title
     c.setStrokeColor(HexColor('#ad7a49'))
     c.setLineWidth(2)
     c.line(width/2 - 180, height - 130, width/2 + 180, height - 130)
     
-    # "This is to certify that"
     c.setFillColor(HexColor('#cbd5e1'))
     c.setFont("Helvetica", 13)
     c.drawCentredString(width/2, height - 165, "This is to certify that")
     
-    # Student name (highlighted)
     c.setFillColor(HexColor('#ad7a49'))
     c.setFont("Helvetica-Bold", 24)
     student_name = enrollment.student.get_full_name()
     c.drawCentredString(width/2, height - 205, student_name)
     
-    # "has successfully completed"
     c.setFillColor(HexColor('#cbd5e1'))
     c.setFont("Helvetica", 13)
     c.drawCentredString(width/2, height - 240, "has successfully completed the course")
     
-    # Course name (highlighted)
     c.setFillColor(HexColor('#ad7a49'))
     c.setFont("Helvetica-Bold", 20)
     c.drawCentredString(width/2, height - 275, enrollment.course.title)
     
-    # Date
     c.setFillColor(HexColor('#94a3b8'))
     c.setFont("Helvetica", 11)
     completed_date = enrollment.completed_at.strftime("%B %d, %Y") if enrollment.completed_at else ""
     c.drawCentredString(width/2, height - 310, f"Completed on: {completed_date}")
     
-    # ===== SIGNATURES (Bottom area) =====
-    sig_y_line = height - 390  # Y position for signature lines
-    sig_y_text = height - 410  # Y position for name text
-    sig_y_title = height - 425  # Y position for title text
-    sig_y_image = height - 395  # Y position for signature images
+    # Signatures
+    sig_y_line = height - 390
+    sig_y_text = height - 410
+    sig_y_title = height - 425
+    sig_y_image = height - 395
     
     c.setStrokeColor(HexColor('#ad7a49'))
     c.setLineWidth(1)
     
-    # --- Instructor Signature (Left side) ---
-    instructor_sig_box_x = 100  # Left position
+    # Instructor
+    instructor_sig_box_x = 100
     instructor_sig_box_width = 180
     
-    # Draw signature image if available
-    sig_drawn = False
     if instructor_sig_temp and os.path.exists(instructor_sig_temp.name):
         try:
-            c.drawImage(
-                instructor_sig_temp.name,
-                instructor_sig_box_x + 20,  # Centered in box
-                sig_y_image,
-                width=140,
-                height=55,
-                preserveAspectRatio=True,
-                mask='auto'
-            )
-            sig_drawn = True
+            c.drawImage(instructor_sig_temp.name, instructor_sig_box_x + 20, sig_y_image, 
+                       width=140, height=55, preserveAspectRatio=True, mask='auto')
         except Exception:
             pass
     
-    # Signature line
     c.line(instructor_sig_box_x, sig_y_line, instructor_sig_box_x + instructor_sig_box_width, sig_y_line)
-    
-    # Name
     c.setFont("Helvetica", 9)
     c.setFillColor(HexColor('#ffffff'))
     c.drawCentredString(instructor_sig_box_x + instructor_sig_box_width/2, sig_y_text, instructor.get_full_name())
-    
-    # Title
     c.setFont("Helvetica", 8)
     c.setFillColor(HexColor('#94a3b8'))
     c.drawCentredString(instructor_sig_box_x + instructor_sig_box_width/2, sig_y_title, "Instructor")
     
-    # --- Director Signature (Right side) ---
-    director_sig_box_x = width - 280  # Right position
+    # Director
+    director_sig_box_x = width - 280
     director_sig_box_width = 180
     
     director_name = getattr(settings, 'CERTIFICATE_DIRECTOR_NAME', 'Dr. James Anderson')
     director_title = getattr(settings, 'CERTIFICATE_DIRECTOR_TITLE', 'Program Director')
     
-    # Draw director signature image if available
-    if director_sig_temp and os.path.exists(director_sig_temp.name):
-        try:
-            c.drawImage(
-                director_sig_temp.name,
-                director_sig_box_x + 20,
-                sig_y_image,
-                width=140,
-                height=55,
-                preserveAspectRatio=True,
-                mask='auto'
-            )
-        except Exception:
-            pass
-    
-    # Signature line
     c.line(director_sig_box_x, sig_y_line, director_sig_box_x + director_sig_box_width, sig_y_line)
-    
-    # Name
     c.setFont("Helvetica", 9)
     c.setFillColor(HexColor('#ffffff'))
     c.drawCentredString(director_sig_box_x + director_sig_box_width/2, sig_y_text, director_name)
-    
-    # Title
     c.setFont("Helvetica", 8)
     c.setFillColor(HexColor('#94a3b8'))
     c.drawCentredString(director_sig_box_x + director_sig_box_width/2, sig_y_title, director_title)
     
-    # ===== QR CODE (Bottom Right Corner) =====
+    # QR Code
     qr_size = 80
     qr_x = width - qr_size - 55
     qr_y = 55
     
     try:
-        c.drawImage(
-            qr_temp.name,
-            qr_x, qr_y,
-            width=qr_size, height=qr_size,
-            preserveAspectRatio=True
-        )
-        # QR Label
+        c.drawImage(qr_temp.name, qr_x, qr_y, width=qr_size, height=qr_size, preserveAspectRatio=True)
         c.setFont("Helvetica", 7)
         c.setFillColor(HexColor('#64748b'))
         c.drawCentredString(qr_x + qr_size/2, qr_y - 12, "Scan to verify")
     except Exception:
         pass
     
-    # ===== BOTTOM TEXT =====
+    # Bottom text
     c.setFont("Helvetica", 7)
     c.setFillColor(HexColor('#64748b'))
     c.drawCentredString(width/2, 55, f"Certificate ID: {cert_id}")
@@ -743,7 +896,6 @@ def verify_certificate(request, cert_id):
     verified = False
     enrollment = None
     
-    # Find enrollment by certificate_url containing this cert_id
     enrollment = Enrollment.objects.filter(
         certificate_url__icontains=cert_id,
         status='completed',

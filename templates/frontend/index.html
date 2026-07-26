@@ -51,37 +51,24 @@
 
 
     .courses-category-nav .swiper-slide button {
-    white-space: nowrap;
-    padding: 10px 20px;
-    width: auto;
-    min-width: max-content;
-    display: inline-block;
-}
+        white-space: nowrap;
+        padding: 10px 20px;
+        width: auto;
+        min-width: max-content;
+        display: inline-block;
+    }
 
-/* Or if the button needs to fill the slide */
-.courses-category-nav .swiper-slide {
-    width: auto !important;
-}
+    /* Or if the button needs to fill the slide */
+    .courses-category-nav .swiper-slide {
+        width: auto !important;
+    }
 
-.courses-category-nav .swiper-slide button {
-    white-space: nowrap;
-    padding: 10px 24px;
-    width: 100%;
-    display: block;
-}
-</style>
-
-
-<style>
-    /* Fix: Equal height cards */
-    .row { display: flex; flex-wrap: wrap; }
-    .row > [class*="col-"] { display: flex; }
-    .single-courses { display: flex; flex-direction: column; width: 100%; margin-bottom: 30px; }
-    .courses-content { flex: 1; display: flex; flex-direction: column; }
-    .courses-content .text-lead { flex: 1; }
-    .courses-images { height: 200px; overflow: hidden; }
-    .courses-images a { display: block; height: 100%; }
-    .courses-images img { width: 100%; height: 100%; object-fit: cover; }
+    .courses-category-nav .swiper-slide button {
+        white-space: nowrap;
+        padding: 10px 24px;
+        width: 100%;
+        display: block;
+    }
 
     /* Rating Stars */
     .rating-stars-input { display: inline-flex; gap: 8px; justify-content: center; margin-bottom: 4px; }
@@ -98,6 +85,341 @@
     @keyframes slideInRight {
         from { transform: translateX(100%); opacity: 0; }
         to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* Show filter wrapper when toggled */
+    .filter-wrapper.show {
+        display: block !important;
+    }
+    
+    /* Category tabs styling */
+    .courses-tabs-menu {
+        position: relative;
+        padding: 10px 75px;
+    }
+    
+    .courses-tabs-menu .swiper-container {
+        overflow: hidden;
+        padding: 5px 0;
+    }
+    
+    .courses-tabs-menu .swiper-wrapper {
+        display: flex !important;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        align-items: center;
+    }
+    
+    .courses-tabs-menu .swiper-slide {
+        width: auto !important;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+    }
+    
+    .courses-tabs-menu .nav button {
+        white-space: nowrap;
+        padding: 10px 24px;
+        border: none;
+        background: #f3f4f6;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 500;
+        font-family: 'Montserrat', sans-serif;
+        transition: all 0.3s ease;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+    }
+    
+    .courses-tabs-menu .nav button.active {
+        background: #ad7a49 !important;
+        color: white !important;
+    }
+    
+    .courses-tabs-menu .nav button:hover {
+        background: #e5e7eb !important;
+    }
+    
+    /* Swiper Navigation Arrows */
+    .courses-tabs-menu .swiper-button-next,
+    .courses-tabs-menu .swiper-button-prev {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 38px;
+        height: 38px;
+        background: white;
+        border-radius: 50%;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        transition: all 0.3s ease;
+        color: #374151;
+        border: 1px solid #e5e7eb;
+        margin-top: 0;
+    }
+    
+    .courses-tabs-menu .swiper-button-next:hover,
+    .courses-tabs-menu .swiper-button-prev:hover {
+        background: #ad7a49;
+        color: white;
+        border-color: #ad7a49;
+        box-shadow: 0 4px 15px rgba(173, 122, 73, 0.3);
+    }
+    
+    .courses-tabs-menu .swiper-button-next {
+        right: 5px;
+    }
+    
+    .courses-tabs-menu .swiper-button-prev {
+        left: 16px;
+    }
+    
+    .courses-tabs-menu .swiper-button-next i,
+    .courses-tabs-menu .swiper-button-prev i {
+        font-size: 14px;
+        line-height: 1;
+    }
+    
+    .courses-tabs-menu .swiper-button-disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+    
+    /* Filter button active state */
+    .filter-btn.active {
+        background: #ad7a49 !important;
+        color: white !important;
+    }
+    
+    .filter-btn {
+        transition: all 0.3s ease;
+        height: 60px;
+        width: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Coming soon box animation */
+    .tab-pane .py-5 {
+        transition: all 0.3s ease;
+    }
+    
+    .tab-pane .py-5:hover {
+        transform: scale(1.02);
+    }
+
+    .filter-wrapper {
+        padding: 15px 0;
+    }
+
+    /* Desktop: Show full decoration */
+    .section-title.shape-02 .sub-title span:before {
+        position: absolute;
+        content: "";
+        background-image: url({% static "images/reviews-line.png" %});
+        background-position: center center;
+        background-size: cover;
+        background-repeat: no-repeat;
+        width: 180px;
+        height: 40px;
+        left: 21%;
+        bottom: 246px !important;
+        -webkit-transform: translateX(-50%);
+        transform: translateX(-50%);
+    }
+
+    /* Tablet: Adjust sizes */
+    @media only screen and (min-width: 768px) and (max-width: 991px) {
+        .section-title.shape-02 .main-title span:before {
+            width: 140px;
+            height: 15px;
+        }
+
+        .section-title.shape-02 .sub-title span:before {
+            display: none;
+        }
+    }
+
+    /* Mobile: Hide decorations */
+    @media only screen and (max-width: 575px) {
+        .section-title.shape-02 .main-title span:before {
+            display: none;
+        }
+
+        .section-title.shape-02 .sub-title span:before {
+            display: none;
+        }
+    }
+
+    /* ============================================
+       RESPONSIVE FIXES (Added without changing design)
+    ============================================ */
+    
+    @media (max-width: 576px) {
+        /* Fix: Search wrapper on mobile */
+        .courses-search-wrapper {
+            flex-wrap: wrap;
+            gap: 10px;
+            width: 100%;
+        }
+        
+        .courses-search {
+            flex: 1;
+            min-width: 140px;
+        }
+        
+        .courses-search form {
+            height: 40px;
+        }
+        
+        .courses-search input {
+            font-size: 13px;
+            padding: 0 12px;
+            min-width: 80px;
+            height: 50px;
+        }
+        
+        .courses-search button {
+            min-height: 40px;
+            padding: 0 14px;
+            height: 38px;
+        }
+        
+        .courses-search button i {
+            font-size: 16px;
+        }
+        
+        /* Fix: Filter button on mobile */
+        .filter-btn {
+            height: 40px;
+            width: 40px;
+            min-width: 40px;
+            font-size: 16px;
+            margin-top: 21px;
+        }
+        
+        /* Fix: Category tabs arrows on mobile */
+        .courses-tabs-menu {
+            padding: 10px 40px;
+        }
+        
+        .courses-tabs-menu .swiper-button-next,
+        .courses-tabs-menu .swiper-button-prev {
+            width: 30px;
+            height: 30px;
+        }
+        
+        .courses-tabs-menu .swiper-button-next i,
+        .courses-tabs-menu .swiper-button-prev i {
+            font-size: 12px;
+        }
+        
+        .courses-tabs-menu .swiper-button-next {
+            right: 2px;
+        }
+        
+        .courses-tabs-menu .swiper-button-prev {
+            left: 2px;
+        }
+        
+        .courses-tabs-menu .nav button {
+            height: 38px;
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+        
+        /* Fix: Section title on mobile */
+        .section-title .main-title {
+            font-size: 24px;
+        }
+        
+        /* Fix: Course cards on mobile */
+        .single-courses {
+            margin-bottom: 20px;
+        }
+        
+        .courses-images {
+            height: 160px;
+        }
+    }
+
+    @media (max-width: 400px) {
+        .courses-search-wrapper {
+            gap: 8px;
+        }
+        
+        .courses-search {
+            min-width: 100px;
+        }
+        
+        .courses-search form {
+            height: 36px;
+        }
+        
+        .courses-search input {
+            font-size: 12px;
+            padding: 0 10px;
+            min-width: 60px;
+        }
+        
+        .courses-search button {
+            min-height: 36px;
+            padding: 0 10px;
+        }
+        
+        .courses-search button i {
+            font-size: 14px;
+        }
+        
+        .filter-btn {
+            height: 36px;
+            width: 36px;
+            min-width: 36px;
+            font-size: 14px;
+        }
+        
+        .courses-tabs-menu {
+            padding: 10px 30px;
+        }
+        
+        .courses-tabs-menu .swiper-button-next,
+        .courses-tabs-menu .swiper-button-prev {
+            width: 26px;
+            height: 26px;
+        }
+        
+        .courses-tabs-menu .swiper-button-next i,
+        .courses-tabs-menu .swiper-button-prev i {
+            font-size: 10px;
+        }
+        
+        .courses-tabs-menu .swiper-button-next {
+            right: 0px;
+        }
+        
+        .courses-tabs-menu .swiper-button-prev {
+            left: 0px;
+        }
+        
+        .courses-tabs-menu .nav button {
+            height: 34px;
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        
+        .courses-images {
+            height: 140px;
+        }
     }
 </style>
 {% endblock %}
@@ -181,7 +503,7 @@
                 <h2 class="main-title" style="color: #000000;">All <span style="color: #000000;">Courses</span></h2>
             </div>
             <div class="courses-search-wrapper">
-                <button class="filter-btn" id="filterBtn">
+                <button class="filter-btn" id="filterBtn" type="button">
                     <i class="bi bi-sliders"></i>
                 </button>
                 <div class="courses-search">
@@ -196,29 +518,37 @@
         </div>
         <!-- All Courses Top End -->
 
-        {% if categories %}
-        <!-- All Courses Tabs Menu Start -->
+        <!-- Category Filter Wrapper -->
         <div class="filter-wrapper" id="filterWrapper">
-            <div class="courses-tabs-menu courses-active">
-                <div class="courses-tabs-menu courses-active">
-                    <div class="swiper-container">
-                        <ul class="swiper-wrapper nav">
-                            <li class="swiper-slide">
-                                <button class="active" data-bs-toggle="tab" data-bs-target="#tabs-all">All Courses</button>
-                            </li>
-                            {% for category in categories %}
-                            <li class="swiper-slide">
-                                <button data-bs-toggle="tab" data-bs-target="#tabs-{{ category.slug }}">{{ category.name }}</button>
-                            </li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                    <div class="swiper-button-next"><i class="icofont-rounded-right"></i></div>
-                    <div class="swiper-button-prev"><i class="icofont-rounded-left"></i></div>
+            {% if categories %}
+            <div class="courses-tabs-menu">
+                <!-- Swiper Container -->
+                <div class="swiper-container" id="categorySwiper">
+                    <ul class="swiper-wrapper nav" id="categoryTabs">
+                        <li class="swiper-slide nav-item">
+                            <button class="active" data-bs-target="#tabs-all" style="padding: 10px 24px; border: none; background: #f3f4f6; border-radius: 8px; cursor: pointer; font-weight: 500; font-family: 'Montserrat', sans-serif; transition: all 0.3s ease; white-space: nowrap;">
+                                All Courses
+                            </button>
+                        </li>
+                        {% for category in categories %}
+                        <li class="swiper-slide nav-item">
+                            <button data-bs-target="#tabs-{{ category.slug }}" style="padding: 10px 24px; border: none; background: #f3f4f6; border-radius: 8px; cursor: pointer; font-weight: 500; font-family: 'Montserrat', sans-serif; transition: all 0.3s ease; white-space: nowrap;">
+                                {{ category.name }}
+                            </button>
+                        </li>
+                        {% endfor %}
+                    </ul>
                 </div>
+                <!-- Navigation Arrows -->
+                <div class="swiper-button-next"><i class="fas fa-chevron-right"></i></div>
+                <div class="swiper-button-prev"><i class="fas fa-chevron-left"></i></div>
             </div>
+            {% else %}
+            <p style="padding: 20px; color: #6b7280; text-align: center;">
+                <i class="fas fa-info-circle"></i> No categories found. Please add categories in the admin panel.
+            </p>
+            {% endif %}
         </div>
-        <!-- All Courses Tabs Menu End -->
 
         <!-- All Courses tab content Start -->
         <div class="tab-content courses-tab-content">
@@ -227,53 +557,81 @@
             <div class="tab-pane fade show active" id="tabs-all">
                 <div class="courses-wrapper">
                     <div class="row">
-                        {% for course in all_courses %}
-                        <div class="col-lg-4 col-md-6">
-                            <div class="single-courses">
-                                <div class="courses-images">
-                                    <a href="{% url 'frontend:course_detail' slug=course.slug %}">
-                                        {% if course.featured_image %}
-                                        <img src="{{ course.featured_image.url }}" alt="{{ course.title }}" loading="lazy">
-                                        {% else %}
-                                        <img src="{% static 'assets/images/courses/courses-01.jpg' %}" alt="{{ course.title }}" loading="lazy">
-                                        {% endif %}
-                                    </a>
-                                </div>
-                                <div class="courses-content">
-                                    <h4 class="title">
-                                        <a href="{% url 'frontend:course_detail' slug=course.slug %}">{{ course.title }}</a>
-                                    </h4>
-                                    <p class="text-lead">{{ course.short_description|default:course.description|truncatechars:80 }}</p>
-                                    <div class="courses-meta">
-                                        <span><i class="icofont-clock-time"></i> {{ course.duration|default:"Self-paced" }}</span>
-                                    </div>
-                                    <div class="courses-price-review">
-                                        <div class="courses-price">
-                                            {% if course.is_free %}
-                                            <span class="sale-parice" style="color: #10b981;">Free</span>
-                                            {% elif course.discount_price %}
-                                            <span class="sale-parice">${{ course.discount_price }}</span>
-                                            <span class="old-parice">${{ course.price }}</span>
+                        {% if display_courses %}
+                            {% for course in display_courses %}
+                            <div class="col-lg-4 col-md-6">
+                                <div class="single-courses">
+                                    <div class="courses-images">
+                                        <a href="{% url 'frontend:course_detail' slug=course.slug %}">
+                                            {% if course.featured_image %}
+                                            <img src="{{ course.featured_image.url }}" alt="{{ course.title }}" loading="lazy">
                                             {% else %}
-                                            <span class="sale-parice">${{ course.price }}</span>
+                                            <img src="{% static 'assets/images/courses/courses-01.jpg' %}" alt="{{ course.title }}" loading="lazy">
                                             {% endif %}
+                                        </a>
+                                    </div>
+                                    <div class="courses-content">
+                                        <h4 class="title">
+                                            <a href="{% url 'frontend:course_detail' slug=course.slug %}">{{ course.title }}</a>
+                                        </h4>
+                                        <p class="text-lead">{{ course.short_description|default:course.description|truncatechars:80 }}</p>
+                                        <div class="courses-meta">
+                                            <span><i class="icofont-clock-time"></i> {{ course.duration|default:"Self-paced" }}</span>
                                         </div>
-                                        <div class="courses-review">
-                                            <span class="rating-count">{{ course.average_rating|default:"4.5" }}</span>
-                                            <span class="rating-star">
-                                                <span class="rating-bar" style="width: {% widthratio course.average_rating|default:4.5 5 100 %}%;"></span>
-                                                ({{ course.review_count|default:"0" }})
-                                            </span>
+                                        <div class="courses-price-review">
+                                            <div class="courses-price">
+                                                {% if course.is_free %}
+                                                <span class="sale-parice" style="color: #10b981;">Free</span>
+                                                {% elif course.discount_price %}
+                                                <span class="sale-parice">${{ course.discount_price }}</span>
+                                                <span class="old-parice">${{ course.price }}</span>
+                                                {% else %}
+                                                <span class="sale-parice">${{ course.price }}</span>
+                                                {% endif %}
+                                            </div>
+                                            <div class="courses-review">
+                                                <span class="rating-count">{{ course.average_rating|default:"4.5" }}</span>
+                                                <span class="rating-star">
+                                                    <span class="rating-bar" style="width: {% widthratio course.average_rating|default:4.5 5 100 %}%;"></span>
+                                                </span>
+                                                <span>({{ course.review_count|default:"0" }})</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        {% empty %}
-                        <div class="col-12 text-center py-5">
-                            <p style="color: var(--text-muted);">No courses available yet. Check back soon!</p>
-                        </div>
-                        {% endfor %}
+                            {% endfor %}
+                        {% else %}
+                            <!-- Show sample courses when no real courses exist -->
+                            {% for i in "123456"|make_list %}
+                            <div class="col-lg-4 col-md-6">
+                                <div class="single-courses">
+                                    <div class="courses-images">
+                                        <a href="#"><img src="{% static 'assets/images/courses/courses-01.jpg' %}" alt="Courses"></a>
+                                    </div>
+                                    <div class="courses-content">
+                                        <h4 class="title"><a href="#">Sample Course {{ forloop.counter }}</a></h4>
+                                        <p class="text-lead">This is a sample course description. Real courses will appear when added.</p>
+                                        <div class="courses-meta">
+                                            <span><i class="icofont-clock-time"></i> 08 hr 15 mins</span>
+                                        </div>
+                                        <div class="courses-price-review">
+                                            <div class="courses-price">
+                                                <span class="sale-parice">$100.00</span>
+                                            </div>
+                                            <div class="courses-review">
+                                                <span class="rating-count">4.9</span>
+                                                <span class="rating-star">
+                                                    <span class="rating-bar" style="width: 80%;"></span>
+                                                </span>
+                                                <span>(3K)</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -283,55 +641,66 @@
             <div class="tab-pane fade" id="tabs-{{ category.slug }}">
                 <div class="courses-wrapper">
                     <div class="row">
-                        {% for course in category.courses.all %}
-                        {% if course.status == 'published' %}
-                        <div class="col-lg-4 col-md-6">
-                            <div class="single-courses">
-                                <div class="courses-images">
-                                    <a href="{% url 'frontend:course_detail' slug=course.slug %}">
-                                        {% if course.featured_image %}
-                                        <img src="{{ course.featured_image.url }}" alt="{{ course.title }}" loading="lazy">
-                                        {% else %}
-                                        <img src="{% static 'assets/images/courses/courses-01.jpg' %}" alt="{{ course.title }}" loading="lazy">
-                                        {% endif %}
-                                    </a>
-                                </div>
-                                <div class="courses-content">
-                                    <h4 class="title">
-                                        <a href="{% url 'frontend:course_detail' slug=course.slug %}">{{ course.title }}</a>
-                                    </h4>
-                                    <p class="text-lead">{{ course.short_description|default:course.description|truncatechars:80 }}</p>
-                                    <div class="courses-meta">
-                                        <span><i class="icofont-clock-time"></i> {{ course.duration|default:"Self-paced" }}</span>
-                                    </div>
-                                    <div class="courses-price-review">
-                                        <div class="courses-price">
-                                            {% if course.is_free %}
-                                            <span class="sale-parice" style="color: #10b981;">Free</span>
-                                            {% elif course.discount_price %}
-                                            <span class="sale-parice">${{ course.discount_price }}</span>
-                                            <span class="old-parice">${{ course.price }}</span>
-                                            {% else %}
-                                            <span class="sale-parice">${{ course.price }}</span>
-                                            {% endif %}
+                        {% with category_courses=category.courses.all|dictsort:"status" %}
+                            {% for course in category_courses %}
+                                {% if course.status == 'published' %}
+                                <div class="col-lg-4 col-md-6">
+                                    <div class="single-courses">
+                                        <div class="courses-images">
+                                            <a href="{% url 'frontend:course_detail' slug=course.slug %}">
+                                                {% if course.featured_image %}
+                                                <img src="{{ course.featured_image.url }}" alt="{{ course.title }}" loading="lazy">
+                                                {% else %}
+                                                <img src="{% static 'assets/images/courses/courses-01.jpg' %}" alt="{{ course.title }}" loading="lazy">
+                                                {% endif %}
+                                            </a>
                                         </div>
-                                        <div class="courses-review">
-                                            <span class="rating-count">{{ course.average_rating|default:"4.5" }}</span>
-                                            <span class="rating-star">
-                                                <span class="rating-bar" style="width: {% widthratio course.average_rating|default:4.5 5 100 %}%;"></span>
-                                                ({{ course.review_count|default:"0" }})
+                                        <div class="courses-content">
+                                            <h4 class="title">
+                                                <a href="{% url 'frontend:course_detail' slug=course.slug %}">{{ course.title }}</a>
+                                            </h4>
+                                            <p class="text-lead">{{ course.short_description|default:course.description|truncatechars:80 }}</p>
+                                            <div class="courses-meta">
+                                                <span><i class="icofont-clock-time"></i> {{ course.duration|default:"Self-paced" }}</span>
+                                            </div>
+                                            <div class="courses-price-review">
+                                                <div class="courses-price">
+                                                    {% if course.is_free %}
+                                                    <span class="sale-parice" style="color: #10b981;">Free</span>
+                                                    {% elif course.discount_price %}
+                                                    <span class="sale-parice">${{ course.discount_price }}</span>
+                                                    <span class="old-parice">${{ course.price }}</span>
+                                                    {% else %}
+                                                    <span class="sale-parice">${{ course.price }}</span>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="courses-review">
+                                                    <span class="rating-count">{{ course.average_rating|default:"4.5" }}</span>
+                                                    <span class="rating-star">
+                                                        <span class="rating-bar" style="width: {% widthratio course.average_rating|default:4.5 5 100 %}%;"></span>
+                                                    </span>
+                                                    <span>({{ course.review_count|default:"0" }})</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            {% empty %}
+                                <div class="col-12 text-center py-5">
+                                    <div class="col-12 text-center py-5" style="padding: 60px 20px; background: #f9fafb; border-radius: 12px; border: 2px dashed #e5e7eb;">
+                                        <i class="fas fa-book-open" style="font-size: 48px; color: #d1d5db; margin-bottom: 20px; display: block;"></i>
+                                        <h4 style="color: #374151; font-weight: 600; margin-bottom: 10px;">No Courses Yet</h4>
+                                        <p style="color: #6b7280; max-width: 400px; margin: 0 auto;">
+                                            We're working on adding courses to this category. 
+                                            <span style="display: block; margin-top: 5px; color: #ad7a49; font-weight: 500;">
+                                                <i class="fas fa-clock"></i> Coming Soon!
                                             </span>
-                                        </div>
+                                        </p>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                        {% endif %}
-                        {% empty %}
-                        <div class="col-12 text-center py-5">
-                            <p style="color: var(--text-muted);">No courses in this category yet.</p>
-                        </div>
-                        {% endfor %}
+                            {% endfor %}
+                        {% endwith %}
                     </div>
                 </div>
             </div>
@@ -339,47 +708,13 @@
 
         </div>
         <!-- All Courses tab content End -->
-        
-        {% else %}
-        <!-- Fallback: Show static courses if no categories exist -->
-        <div class="courses-wrapper">
-            <div class="row">
-                {% for i in "123456" %}
-                <div class="col-lg-4 col-md-6">
-                    <div class="single-courses">
-                        <div class="courses-images">
-                            <a href="#"><img src="{% static 'assets/images/courses/courses-01.jpg' %}" alt="Courses"></a>
-                        </div>
-                        <div class="courses-content">
-                            <h4 class="title"><a href="#">Sample Course Title</a></h4>
-                            <p class="text-lead">Lorem ipsum dolor sit amet consectetur adipisicing elit.</p>
-                            <div class="courses-meta">
-                                <span><i class="icofont-clock-time"></i> 08 hr 15 mins</span>
-                            </div>
-                            <div class="courses-price-review">
-                                <div class="courses-price">
-                                    <span class="sale-parice">$100.00</span>
-                                </div>
-                                <div class="courses-review">
-                                    <span class="rating-count">4.9</span>
-                                    <span class="rating-star">
-                                        <span class="rating-bar" style="width: 80%;"></span>
-                                        (3K)
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
 
         <!-- All Courses Button Start -->
-        <div class="courses-btn text-center">
-            <a href="{% url 'frontend:courses' %}" class="btn btn-hover-dark">View More</a>
+        {% if all_courses_count > 6 %}
+        <div class="courses-btn text-center mt-4">
+            <a href="{% url 'frontend:courses' %}" class="btn">View More <i class="fas fa-arrow-right ms-2"></i></a>
         </div>
+        {% endif %}
         <!-- All Courses Button End -->
 
     </div>
@@ -579,9 +914,103 @@
 </div>
 {% endblock %}
 
+
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // ============================================
+        // 1. CATEGORY SWIPER INITIALIZATION
+        // ============================================
+        const categorySwiperEl = document.querySelector('#categorySwiper');
+        if (categorySwiperEl && typeof Swiper !== 'undefined') {
+            try {
+                new Swiper(categorySwiperEl, {
+                    slidesPerView: 'auto',
+                    spaceBetween: 10,
+                    freeMode: true,
+                    navigation: {
+                        nextEl: '.swiper-button-next',
+                        prevEl: '.swiper-button-prev',
+                    },
+                    breakpoints: {
+                        320: { slidesPerView: 2, spaceBetween: 8 },
+                        576: { slidesPerView: 3, spaceBetween: 10 },
+                        768: { slidesPerView: 4, spaceBetween: 12 },
+                        992: { slidesPerView: 5, spaceBetween: 14 },
+                        1200: { slidesPerView: 6, spaceBetween: 16 },
+                    }
+                });
+                console.log('Category Swiper initialized');
+            } catch(e) {
+                console.log('Category Swiper error:', e);
+            }
+        }
+
+        // ============================================
+        // 2. CATEGORY TABS - Manual switching
+        // ============================================
+        const tabButtons = document.querySelectorAll('#categoryTabs .swiper-slide button');
+        
+        if (tabButtons.length > 0) {
+            tabButtons.forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Remove active from all tabs
+                    tabButtons.forEach(function(b) {
+                        b.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    
+                    // Get target
+                    const target = this.getAttribute('data-bs-target');
+                    if (target) {
+                        // Hide all tab panes
+                        document.querySelectorAll('.tab-pane').forEach(function(pane) {
+                            pane.classList.remove('show', 'active');
+                        });
+                        // Show target pane
+                        const targetPane = document.querySelector(target);
+                        if (targetPane) {
+                            targetPane.classList.add('show', 'active');
+                        }
+                    }
+                });
+            });
+        }
+
+        // ============================================
+        // 3. TESTIMONIAL SWIPER
+        // ============================================
+        const testimonialSwiperEl = document.querySelector('#testimonialSwiper');
+        if (testimonialSwiperEl && typeof Swiper !== 'undefined') {
+            try {
+                new Swiper(testimonialSwiperEl, {
+                    slidesPerView: 1,
+                    spaceBetween: 30,
+                    loop: true,
+                    autoplay: {
+                        delay: 5000,
+                        disableOnInteraction: false,
+                    },
+                    pagination: {
+                        el: '.swiper-pagination',
+                        clickable: true,
+                    },
+                    breakpoints: {
+                        768: { slidesPerView: 2, spaceBetween: 30 },
+                        992: { slidesPerView: 3, spaceBetween: 30 },
+                    }
+                });
+                console.log('Testimonial Swiper initialized');
+            } catch(e) {
+                console.log('Testimonial Swiper error:', e);
+            }
+        }
+
+        // ============================================
+        // 4. STAR RATING
+        // ============================================
         const siteStars = document.querySelectorAll('#siteRatingStars .star');
         const siteRatingValue = document.getElementById('siteRatingValue');
         const ratingLabel = document.getElementById('ratingLabel');
@@ -589,7 +1018,7 @@
         const ratingLabels = { 1: 'Poor', 2: 'Fair', 3: 'Good', 4: 'Very Good', 5: 'Excellent!' };
         
         if (siteStars.length && siteRatingValue) {
-            siteStars.forEach(star => {
+            siteStars.forEach(function(star) {
                 star.addEventListener('click', function() {
                     const val = parseInt(this.dataset.value);
                     siteRatingValue.value = val;
@@ -603,16 +1032,28 @@
                 });
             });
             
-            document.getElementById('siteRatingStars').addEventListener('mouseleave', function() {
-                updateSiteStars(parseInt(siteRatingValue.value));
-                if (ratingLabel) ratingLabel.textContent = ratingLabels[siteRatingValue.value] || '';
-            });
+            const starsContainer = document.getElementById('siteRatingStars');
+            if (starsContainer) {
+                starsContainer.addEventListener('mouseleave', function() {
+                    updateSiteStars(parseInt(siteRatingValue.value));
+                    if (ratingLabel) ratingLabel.textContent = ratingLabels[siteRatingValue.value] || '';
+                });
+            }
             
             function updateSiteStars(val) {
-                siteStars.forEach((s, i) => { s.classList.toggle('active', i < val); });
+                siteStars.forEach(function(s, i) {
+                    if (i < val) {
+                        s.classList.add('active');
+                    } else {
+                        s.classList.remove('active');
+                    }
+                });
             }
         }
 
+        // ============================================
+        // 5. SITE REVIEW FORM
+        // ============================================
         const siteReviewForm = document.getElementById('siteReviewForm');
         if (siteReviewForm) {
             siteReviewForm.addEventListener('submit', function(e) {
@@ -622,13 +1063,17 @@
                 const originalText = submitBtn.innerHTML;
                 const reviewText = document.getElementById('siteReviewText').value.trim();
                 
-                if (!reviewText) { alert('Please write your review.'); return; }
+                if (!reviewText) { 
+                    alert('Please write your review.'); 
+                    return; 
+                }
                 
                 submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Submitting...';
                 submitBtn.disabled = true;
                 
                 fetch(this.action, {
-                    method: 'POST', body: formData,
+                    method: 'POST',
+                    body: formData,
                     headers: {
                         'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
                         'X-Requested-With': 'XMLHttpRequest'
@@ -640,7 +1085,10 @@
                         const modalEl = document.getElementById('siteReviewModal');
                         const modal = bootstrap.Modal.getInstance(modalEl);
                         if (modal) modal.hide();
-                        document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+                        
+                        document.querySelectorAll('.modal-backdrop').forEach(function(b) {
+                            b.remove();
+                        });
                         document.body.classList.remove('modal-open');
                         document.body.style.overflow = '';
                         document.body.style.paddingRight = '';
@@ -650,32 +1098,35 @@
                         siteRatingValue.value = 5;
                         if (ratingLabel) ratingLabel.textContent = 'Excellent!';
                         
-                        showAlert(data.updated ? '✅ Your review has been updated! It will be displayed after approval.' : '✅ Thank you for your review! It will be displayed after approval.', 'success');
+                        showAlert(
+                            data.updated ? '✅ Your review has been updated! It will be displayed after approval.' : '✅ Thank you for your review! It will be displayed after approval.', 
+                            'success'
+                        );
                     } else {
                         showAlert(data.message || 'An error occurred.', 'danger');
                     }
                 })
-                .catch(error => { showAlert('An error occurred. Please try again.', 'danger'); })
-                .finally(() => { submitBtn.innerHTML = originalText; submitBtn.disabled = false; });
-            });
-        }
-        
-        const siteReviewModal = document.getElementById('siteReviewModal');
-        if (siteReviewModal) {
-            siteReviewModal.addEventListener('hidden.bs.modal', function() {
-                document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
-                document.body.classList.remove('modal-open');
-                document.body.style.overflow = '';
-                document.body.style.paddingRight = '';
+                .catch(function(error) { 
+                    showAlert('An error occurred. Please try again.', 'danger'); 
+                })
+                .finally(function() { 
+                    submitBtn.innerHTML = originalText; 
+                    submitBtn.disabled = false; 
+                });
             });
         }
         
         function showAlert(message, type) {
             const alertDiv = document.createElement('div');
-            alertDiv.style.cssText = `position:fixed;top:20px;right:20px;z-index:9999;max-width:400px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.15);padding:16px 20px;background:${type==='success'?'#d1fae5':'#fee2e2'};color:${type==='success'?'#065f46':'#991b1b'};border:1px solid ${type==='success'?'#10b981':'#ef4444'};`;
-            alertDiv.innerHTML = `<div style="display:flex;align-items:center;gap:10px;"><i class="fas fa-${type==='success'?'check-circle':'exclamation-circle'}" style="font-size:20px;"></i><span style="font-size:14px;font-weight:500;">${message}</span></div>`;
+            alertDiv.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;max-width:400px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.15);padding:16px 20px;background:' + (type === 'success' ? '#d1fae5' : '#fee2e2') + ';color:' + (type === 'success' ? '#065f46' : '#991b1b') + ';border:1px solid ' + (type === 'success' ? '#10b981' : '#ef4444') + ';font-family:"Montserrat",sans-serif;';
+            alertDiv.innerHTML = '<div style="display:flex;align-items:center;gap:10px;"><i class="fas fa-' + (type === 'success' ? 'check-circle' : 'exclamation-circle') + '" style="font-size:20px;"></i><span style="font-size:14px;font-weight:500;">' + message + '</span></div>';
             document.body.appendChild(alertDiv);
-            setTimeout(() => { alertDiv.style.opacity = '0'; alertDiv.style.transition = 'opacity 0.3s ease'; setTimeout(() => alertDiv.remove(), 300); }, 4000);
+            
+            setTimeout(function() {
+                alertDiv.style.opacity = '0';
+                alertDiv.style.transition = 'opacity 0.3s ease';
+                setTimeout(function() { alertDiv.remove(); }, 300);
+            }, 4000);
         }
     });
 </script>

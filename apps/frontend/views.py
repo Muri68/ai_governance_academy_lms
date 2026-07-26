@@ -17,17 +17,23 @@ class IndexView(TemplateView):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Welcome to Our LMS'
         
-        # Get active categories with course count
+        # Get ALL published courses (no limit)
+        all_courses = Course.objects.filter(
+            status='published'
+        ).select_related('instructor', 'category').prefetch_related('reviews')
+        
+        context['all_courses_count'] = all_courses.count()
+        context['display_courses'] = all_courses[:6]
+        
+        # FIXED: Get ALL active categories (even without courses)
         context['categories'] = CourseCategory.objects.filter(
             is_active=True
-        ).annotate(
-            published_courses=Count('courses', filter=Q(courses__status='published'))
-        ).filter(published_courses__gt=0)[:6]
+        )
         
-        # Get published courses grouped by category for tabs
-        context['all_courses'] = Course.objects.filter(
-            status='published'
-        ).select_related('instructor', 'category').prefetch_related('reviews')[:6]
+        # For debugging - you can remove this later
+        print(f"Total active categories: {context['categories'].count()}")
+        for cat in context['categories']:
+            print(f"Category: {cat.name}, ID: {cat.id}, Slug: {cat.slug}")
         
         # Featured courses
         context['featured_courses'] = Course.objects.filter(
@@ -39,10 +45,14 @@ class IndexView(TemplateView):
             status='published', is_free=True
         ).select_related('instructor', 'category')[:6]
         
-        context['site_reviews'] = SiteReview.objects.filter(is_approved=True).select_related('user').order_by('-created_at')[:10]
-        context['user_has_review'] = self.request.user.is_authenticated and SiteReview.objects.filter(user=self.request.user).exists()
+        context['site_reviews'] = SiteReview.objects.filter(
+            is_approved=True
+        ).select_related('user').order_by('-created_at')[:10]
         
-        # Total course count
+        context['user_has_review'] = self.request.user.is_authenticated and SiteReview.objects.filter(
+            user=self.request.user
+        ).exists()
+        
         context['total_courses'] = Course.objects.filter(status='published').count()
         
         return context
