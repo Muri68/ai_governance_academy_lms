@@ -40,17 +40,83 @@
     .dots-dropdown:hover .dots-dropdown-content { display: block; }
     .dots-menu { color: #a0aec0; cursor: pointer; font-size: 18px; padding: 4px 8px; border: none; background: none; text-decoration: none; }
 
-    /* Same as home page - only fix image height and equal cards */
+    /* ===================== FEATURED COURSE SECTION ===================== */
+    .fc-section {
+        background: linear-gradient(160deg, #0a1929 0%, #0d2137 30%, #0f2944 60%, #0c1e2e 100%);
+        padding: 80px 0; position: relative; overflow: hidden; isolation: isolate;
+    }
+    .fc-bg-shape { position: absolute; border-radius: 50%; pointer-events: none; z-index: 0; }
+    .fc-bg-shape-top { width: 600px; height: 600px; background: radial-gradient(circle, rgba(173,122,73,0.12) 0%, rgba(173,122,73,0.03) 40%, transparent 70%); top: -300px; right: -200px; }
+    .fc-bg-shape-bottom { width: 500px; height: 500px; background: radial-gradient(circle, rgba(173,122,73,0.08) 0%, rgba(173,122,73,0.01) 40%, transparent 70%); bottom: -250px; left: -150px; }
+    .fc-row { display: flex; align-items: center; gap: 60px; position: relative; z-index: 1; }
+    .fc-left { flex: 1; min-width: 0; }
+    .fc-right { flex: 0 0 450px; position: relative; }
+    .fc-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(173,122,73,0.15); border: 1px solid rgba(173,122,73,0.25); color: #d4a77d; padding: 10px 20px; border-radius: 50px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 24px; }
+    .fc-badge svg { width: 18px; height: 18px; color: #f59e0b; }
+    .fc-title { font-size: 38px; font-weight: 700; color: #fff; margin-bottom: 20px; line-height: 1.15; }
+    .fc-desc { font-size: 16px; color: #94a3b8; line-height: 1.75; margin-bottom: 30px; max-width: 520px; }
+    .fc-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 30px; max-width: 480px; }
+    .fc-meta-item { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; }
+    .fc-meta-item svg { width: 20px; height: 20px; color: #ad7a49; flex-shrink: 0; margin-top: 1px; }
+    .fc-meta-text { display: flex; flex-direction: column; gap: 2px; }
+    .fc-meta-value { font-size: 15px; font-weight: 600; color: #fff; }
+    .fc-meta-label { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+    .fc-stats-row { display: flex; align-items: center; margin-bottom: 32px; padding: 18px 0; border-top: 1px solid rgba(255,255,255,0.08); border-bottom: 1px solid rgba(255,255,255,0.08); max-width: 480px; }
+    .fc-stat { flex: 1; text-align: center; }
+    .fc-stat-number { font-size: 24px; font-weight: 700; color: #d4a77d; display: block; }
+    .fc-stat-label { font-size: 11px; color: #94a3b8; }
+    .fc-stat-divider { width: 1px; height: 35px; background: rgba(255,255,255,0.1); }
+    .fc-actions { display: flex; gap: 14px; flex-wrap: wrap; }
+    .fc-btn-primary { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #ad7a49, #c9965e); color: #fff !important; text-decoration: none; padding: 14px 30px; border-radius: 10px; font-size: 15px; font-weight: 600; transition: all 0.3s; box-shadow: 0 4px 15px rgba(173,122,73,0.3); }
+    .fc-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(173,122,73,0.4); color: #fff !important; }
+    .fc-btn-outline { display: inline-flex; align-items: center; background: transparent; color: #cbd5e0 !important; text-decoration: none; padding: 14px 28px; border-radius: 10px; font-size: 15px; font-weight: 500; border: 1.5px solid rgba(255,255,255,0.2); transition: all 0.3s; }
+    .fc-btn-outline:hover { border-color: #ad7a49; color: #d4a77d !important; background: rgba(173,122,73,0.08); transform: translateY(-2px); }
+    .fc-image-frame { position: relative; border-radius: 20px; overflow: hidden; box-shadow: 0 25px 60px rgba(0,0,0,0.4); transition: transform 0.4s; }
+    .fc-image-frame:hover { transform: translateY(-6px); }
+    .fc-image { width: 100%; display: block; border-radius: 20px; position: relative; z-index: 2; }
+    .fc-image-glow { position: absolute; bottom: -30px; left: 50%; transform: translateX(-50%); width: 60%; height: 50px; background: radial-gradient(ellipse, rgba(173,122,73,0.4) 0%, transparent 70%); z-index: 1; }
+    .fc-float-card { position: absolute; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-radius: 12px; padding: 10px 16px; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #1e293b; box-shadow: 0 10px 30px rgba(0,0,0,0.15); z-index: 10; animation: fcFloat 3s ease-in-out infinite; }
+    .fc-float-card-1 { top: 12%; left: -20px; animation-delay: 0s; }
+    .fc-float-card-2 { bottom: 18%; right: -25px; animation-delay: 1.5s; }
+    .fc-float-card span:first-child { font-size: 18px; }
+    @keyframes fcFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+    /* ===================== TOP PICKS & ALL COURSES - ORIGINAL CARD DESIGN ===================== */
+    .tp-section { background: #f8fafc; padding: 70px 0; }
+    .tp-header { text-align: center; margin-bottom: 45px; }
+    .tp-header-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(173,122,73,0.1); border: 1px solid rgba(173,122,73,0.2); color: #ad7a49; padding: 8px 18px; border-radius: 50px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 14px; }
+    .tp-header-badge i { color: #f59e0b; }
+    .tp-main-title { font-size: 36px; font-weight: 700; color: #0c1e2e; margin-bottom: 10px; }
+    .tp-subtitle { font-size: 16px; color: #6b7280; max-width: 550px; margin: 0 auto; }
+
+    .section-padding-02 { padding: 60px 0; }
+    .cg-section-header { text-align: center; margin-bottom: 35px; }
+    .cg-section-title { font-size: 36px; font-weight: 700; color: #0c1e2e; margin-bottom: 6px; }
+    .cg-section-subtitle { font-size: 16px; color: #6b7280; }
+
+    /* YOUR ORIGINAL CARD DESIGN */
     .row { display: flex; flex-wrap: wrap; }
     .row > [class*="col-"] { display: flex; }
-    .single-courses { display: flex; flex-direction: column; width: 100%; margin-bottom: 30px; }
-    .courses-content { flex: 1; display: flex; flex-direction: column; }
+    .single-courses { display: flex; flex-direction: column; width: 100%; margin-bottom: 30px; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 15px rgba(0,0,0,0.06); transition: all 0.3s ease; position: relative; }
+    .single-courses:hover { transform: translateY(-5px); box-shadow: 0 12px 35px rgba(0,0,0,0.1); }
+    .courses-content { flex: 1; display: flex; flex-direction: column; padding: 20px; }
     .courses-content .text-lead { flex: 1; }
-    .courses-images { height: 200px; overflow: hidden; }
+    .courses-images { height: 200px; overflow: hidden; position: relative; }
     .courses-images a { display: block; height: 100%; }
-    .courses-images img { width: 100%; height: 100%; object-fit: cover; }
+    .courses-images img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+    .single-courses:hover .courses-images img { transform: scale(1.05); }
 
-    .results-count { font-size: 14px; color: #6b7280; margin-bottom: 25px; }
+    /* Badge overlay */
+    .course-badge { position: absolute; top: 12px; left: 12px; color: #fff; padding: 5px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; z-index: 5; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+    .badge-bestseller { background: #ef4444; }
+    .badge-trending { background: #8b5cf6; }
+    .badge-new { background: #10b981; }
+    .badge-featured { background: #f59e0b; color: #1a1a2e; }
+
+    /* Category label on card */
+    .course-category-label { font-size: 11px; font-weight: 600; color: #ad7a49; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; display: block; }
+
+    .results-count { font-size: 14px; color: #6b7280; margin-bottom: 25px; text-align: center; }
     .results-count strong { color: #111827; font-weight: 600; }
     .empty-courses { text-align: center; padding: 80px 20px; }
     .empty-courses i { font-size: 4rem; color: #d1d5db; margin-bottom: 16px; }
@@ -62,12 +128,48 @@
     .pagination .page-item.active .page-link { background-color: var(--gold); color: #ffffff; border-color: var(--gold); }
     .pagination .page-item.disabled .page-link { color: #d1d5db; background-color: #f9fafb; border-color: #e5e7eb; cursor: not-allowed; }
 
-    @media (max-width: 767px) { .course-header-title { font-size: 28px; } .course-header-subtitle { font-size: 17px; } .course-filters-wrapper { flex-direction: column; align-items: stretch; } .search-input-wrapper { max-width: 100%; } .courses-images { height: 200px; } }
-    @media (max-width: 480px) { .courses-images { height: 180px; } .course-search-section { padding: 30px 0 40px 0; } }
+    @media (max-width: 991px) {
+        .fc-row { flex-direction: column; gap: 45px; }
+        .fc-left { text-align: center; }
+        .fc-desc { max-width: 100%; margin-left: auto; margin-right: auto; }
+        .fc-meta-grid, .fc-stats-row { max-width: 100%; }
+        .fc-actions { justify-content: center; }
+        .fc-right { max-width: 380px; margin: 0 auto; }
+        .fc-title { font-size: 30px; }
+        .tp-main-title { font-size: 28px; }
+        .cg-section-title { font-size: 28px; }
+    }
+    @media (max-width: 767px) { 
+        .course-header-title { font-size: 28px; } 
+        .course-header-subtitle { font-size: 17px; } 
+        .course-filters-wrapper { flex-direction: column; align-items: stretch; } 
+        .search-input-wrapper { max-width: 100%; } 
+        .courses-images { height: 200px; } 
+        .fc-section { padding: 50px 0; }
+        .fc-title { font-size: 24px; }
+        .fc-meta-grid { grid-template-columns: 1fr; gap: 10px; }
+        .fc-stats-row { flex-wrap: wrap; gap: 12px; }
+        .fc-stat-divider { display: none; }
+        .fc-actions { flex-direction: column; }
+        .fc-btn-primary, .fc-btn-outline { width: 100%; text-align: center; justify-content: center; }
+        .fc-right { max-width: 280px; }
+        .fc-float-card { display: none; }
+        .tp-main-title { font-size: 24px; }
+        .cg-section-title { font-size: 24px; }
+    }
+    @media (max-width: 480px) { 
+        .courses-images { height: 180px; } 
+        .course-search-section { padding: 30px 0 40px 0; } 
+        .fc-title { font-size: 21px; }
+        .tp-main-title { font-size: 22px; }
+        .cg-section-title { font-size: 22px; }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
+
+<!-- ===================== SEARCH & FILTER SECTION ===================== -->
 <div class="course-search-section">
     <div class="container">
         <div class="course-category-nav">
@@ -102,9 +204,9 @@
 
         <div class="course-filters-wrapper">
             <div class="license-filter">
-                <a href="{% url 'frontend:courses' %}{% if current_category %}?category={{ current_category }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}" class="{% if not current_price %}active{% endif %}">All</a>
+                {% comment %} <a href="{% url 'frontend:courses' %}{% if current_category %}?category={{ current_category }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}" class="{% if not current_price %}active{% endif %}">All</a>
                 <a href="{% url 'frontend:courses' %}?price=free{% if current_category %}&category={{ current_category }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}" class="{% if current_price == 'free' %}active{% endif %}">Free</a>
-                <a href="{% url 'frontend:courses' %}?price=paid{% if current_category %}&category={{ current_category }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}" class="{% if current_price == 'paid' %}active{% endif %}">Paid</a>
+                <a href="{% url 'frontend:courses' %}?price=paid{% if current_category %}&category={{ current_category }}{% endif %}{% if current_search %}&search={{ current_search }}{% endif %}" class="{% if current_price == 'paid' %}active{% endif %}">Paid</a> {% endcomment %}
             </div>
 
             <div class="search-input-wrapper">
@@ -119,10 +221,162 @@
     </div>
 </div>
 
+<!-- ===================== FEATURED COURSE OF THE MONTH ===================== -->
+<section class="fc-section">
+    <div class="fc-bg-shape fc-bg-shape-top"></div>
+    <div class="fc-bg-shape fc-bg-shape-bottom"></div>
+    <div class="container">
+        <div class="fc-row">
+            <div class="fc-left">
+                <span class="fc-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    Featured Course of the Month
+                </span>
+                {% if featured_course %}
+                    <h2 class="fc-title">{{ featured_course.title }}</h2>
+                    <p class="fc-desc">{{ featured_course.short_description|default:featured_course.description|truncatechars:200 }}</p>
+                    <div class="fc-meta-grid">
+                        <div class="fc-meta-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            <div class="fc-meta-text"><span class="fc-meta-value">{{ featured_course.instructor.get_full_name|default:"Expert Instructor" }}</span><span class="fc-meta-label">Instructor</span></div>
+                        </div>
+                        <div class="fc-meta-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            <div class="fc-meta-text"><span class="fc-meta-value">{{ featured_course.duration|default:"Self-paced" }}</span><span class="fc-meta-label">Duration</span></div>
+                        </div>
+                        <div class="fc-meta-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                            <div class="fc-meta-text"><span class="fc-meta-value">{{ featured_course.get_level_display }}</span><span class="fc-meta-label">Level</span></div>
+                        </div>
+                        <div class="fc-meta-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            <div class="fc-meta-text"><span class="fc-meta-value">{{ featured_course.total_students }}+</span><span class="fc-meta-label">Students</span></div>
+                        </div>
+                    </div>
+                    <div class="fc-stats-row">
+                        <div class="fc-stat"><span class="fc-stat-number">{{ featured_course.total_lessons }}+</span><span class="fc-stat-label">Lessons</span></div>
+                        <div class="fc-stat-divider"></div>
+                        <div class="fc-stat"><span class="fc-stat-number">{{ featured_course.average_rating }}</span><span class="fc-stat-label">Rating ({{ featured_course.review_count }})</span></div>
+                        <div class="fc-stat-divider"></div>
+                        <div class="fc-stat"><span class="fc-stat-number">{% if featured_course.is_free %}Free{% elif featured_course.discount_price %}${{ featured_course.discount_price }}{% else %}${{ featured_course.price }}{% endif %}</span><span class="fc-stat-label">{% if featured_course.discount_price %}<s>${{ featured_course.price }}</s>{% endif %}</span></div>
+                    </div>
+                    <div class="fc-actions">
+                        <a href="{% url 'frontend:course_detail' slug=featured_course.slug %}" class="fc-btn-primary">Enroll Now →</a>
+                        <a href="{% url 'frontend:course_detail' slug=featured_course.slug %}" class="fc-btn-outline">View Details</a>
+                    </div>
+                {% else %}
+                    <h2 class="fc-title">AI Ethics & Governance Masterclass</h2>
+                    <p class="fc-desc">Master the principles of responsible AI development, governance frameworks, and ethical decision-making.</p>
+                    <div class="fc-meta-grid">
+                        <div class="fc-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><div class="fc-meta-text"><span class="fc-meta-value">Dr. Sarah Mitchell</span><span class="fc-meta-label">Instructor</span></div></div>
+                        <div class="fc-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><div class="fc-meta-text"><span class="fc-meta-value">12 Weeks</span><span class="fc-meta-label">Duration</span></div></div>
+                        <div class="fc-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg><div class="fc-meta-text"><span class="fc-meta-value">Intermediate</span><span class="fc-meta-label">Level</span></div></div>
+                        <div class="fc-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><div class="fc-meta-text"><span class="fc-meta-value">2,450+</span><span class="fc-meta-label">Students</span></div></div>
+                    </div>
+                    <div class="fc-stats-row">
+                        <div class="fc-stat"><span class="fc-stat-number">48+</span><span class="fc-stat-label">Lessons</span></div>
+                        <div class="fc-stat-divider"></div>
+                        <div class="fc-stat"><span class="fc-stat-number">4.8</span><span class="fc-stat-label">Rating (326)</span></div>
+                        <div class="fc-stat-divider"></div>
+                        <div class="fc-stat"><span class="fc-stat-number">$299</span><span class="fc-stat-label"><s>$499</s> 40% off</span></div>
+                    </div>
+                    <div class="fc-actions">
+                        <a href="#" class="fc-btn-primary">Enroll Now →</a>
+                        <a href="#" class="fc-btn-outline">View Details</a>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="fc-right">
+                <div class="fc-image-frame">
+                    {% if featured_course and featured_course.featured_image %}
+                        <img src="{{ featured_course.featured_image.url }}" alt="{{ featured_course.title }}" class="fc-image">
+                    {% else %}
+                        <img src="https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=600&h=400&fit=crop" alt="AI Ethics Course" class="fc-image">
+                    {% endif %}
+                    <div class="fc-image-glow"></div>
+                </div>
+                <div class="fc-float-card fc-float-card-1"><span>📚</span><span>48+ Lessons</span></div>
+                <div class="fc-float-card fc-float-card-2"><span>⭐</span><span>4.8 Rating</span></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% if top_picks %}
+<!-- ===================== TOP PICKS OF THE MONTH ===================== -->
+<section class="tp-section">
+    <div class="container">
+        <div class="tp-header">
+            <span class="tp-header-badge"><i class="fas fa-star"></i> Editor's Choice</span>
+            <h2 class="tp-main-title">Top Picks of the Month</h2>
+            <p class="tp-subtitle">Handpicked courses by our experts to accelerate your career in AI governance and ethics</p>
+        </div>
+        <div class="row">
+            {% for course in top_picks %}
+            <div class="col-lg-4 col-md-6">
+                <div class="single-courses">
+                    <div class="courses-images">
+                        <a href="{% url 'frontend:course_detail' slug=course.slug %}">
+                            {% if course.featured_image %}
+                            <img src="{{ course.featured_image.url }}" alt="{{ course.title }}" loading="lazy">
+                            {% else %}
+                            <img src="{% static 'assets/images/courses/courses-01.jpg' %}" alt="{{ course.title }}" loading="lazy">
+                            {% endif %}
+                        </a>
+                        {% if course.badge and course.badge != 'none' %}
+                        <span class="course-badge badge-{{ course.badge }}">
+                            {% if course.badge == 'bestseller' %}🔥 Bestseller
+                            {% elif course.badge == 'trending' %}📈 Trending
+                            {% elif course.badge == 'new' %}✨ New
+                            {% elif course.badge == 'featured' %}⭐ Featured
+                            {% endif %}
+                        </span>
+                        {% endif %}
+                    </div>
+                    <div class="courses-content">
+                        <span class="course-category-label">{{ course.category.name|default:"AI Governance" }}</span>
+                        <h4 class="title"><a href="{% url 'frontend:course_detail' slug=course.slug %}">{{ course.title }}</a></h4>
+                        <p class="text-lead">{{ course.short_description|default:course.description|truncatechars:80 }}</p>
+                        <div class="courses-meta">
+                            <span><i class="icofont-clock-time"></i> {{ course.duration|default:"8 Weeks" }}</span>
+                        </div>
+                        <div class="courses-price-review">
+                            <div class="courses-price">
+                                {% if course.is_free %}
+                                <span class="sale-parice" style="color: #10b981;">Free</span>
+                                {% elif course.discount_price %}
+                                <span class="sale-parice">${{ course.discount_price }}</span>
+                                <span class="old-parice">${{ course.price }}</span>
+                                {% else %}
+                                <span class="sale-parice">${{ course.price }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="courses-review">
+                                <span class="rating-count">{{ course.average_rating|default:"0.0" }}</span>
+                                <span class="rating-star">
+                                    <span class="rating-bar" style="width: {% widthratio course.average_rating|default:0 5 100 %}%;"></span>
+                                </span>
+                                <span class="review-count">({{ course.review_count|default:"0" }})</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- ===================== ALL COURSES ===================== -->
 <div class="section section-padding-02">
     <div class="container">
         {% if courses %}
-            <div class="results-count">Showing <strong>{{ courses|length }}</strong> of <strong>{{ total_courses }}</strong> courses{% if current_category %} in <strong>{% for cat in categories %}{% if cat.slug == current_category %}{{ cat.name }}{% endif %}{% endfor %}</strong>{% endif %}{% if current_search %} matching "<strong>{{ current_search }}</strong>"{% endif %}</div>
+            <div class="cg-section-header">
+                <h2 class="cg-section-title">All Courses</h2>
+                <p class="cg-section-subtitle">Browse our complete library of AI governance and ethics courses</p>
+            </div>
+            <div class="results-count">Showing <strong>{{ page_obj.paginator.count }}</strong> of <strong>{{ total_courses }}</strong> courses{% if current_category %} in <strong>{% for cat in categories %}{% if cat.slug == current_category %}{{ cat.name }}{% endif %}{% endfor %}</strong>{% endif %}{% if current_search %} matching "<strong>{{ current_search }}</strong>"{% endif %}</div>
 
             <div class="row">
                 {% for course in courses %}
@@ -133,8 +387,18 @@
                                 {% if course.featured_image %}<img src="{{ course.featured_image.url }}" alt="{{ course.title }}" loading="lazy">
                                 {% else %}<img src="{% static 'assets/images/courses/courses-01.jpg' %}" alt="{{ course.title }}" loading="lazy">{% endif %}
                             </a>
+                            {% if course.badge and course.badge != 'none' %}
+                            <span class="course-badge badge-{{ course.badge }}">
+                                {% if course.badge == 'bestseller' %}🔥 Bestseller
+                                {% elif course.badge == 'trending' %}📈 Trending
+                                {% elif course.badge == 'new' %}✨ New
+                                {% elif course.badge == 'featured' %}⭐ Featured
+                                {% endif %}
+                            </span>
+                            {% endif %}
                         </div>
                         <div class="courses-content">
+                            <span class="course-category-label">{{ course.category.name|default:"AI Governance" }}</span>
                             <h4 class="title"><a href="{% url 'frontend:course_detail' slug=course.slug %}">{{ course.title }}</a></h4>
                             <p class="text-lead">{{ course.short_description|default:course.description|truncatechars:80 }}</p>
                             <div class="courses-meta"><span><i class="icofont-clock-time"></i> {{ course.duration|default:"Self-paced" }}</span></div>

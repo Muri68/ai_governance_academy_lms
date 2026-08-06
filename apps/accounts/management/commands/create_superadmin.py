@@ -6,7 +6,7 @@ class Command(BaseCommand):
     help = 'Create superadmin with all required fields'
 
     def handle(self, *args, **kwargs):
-        email = 'admin@aiga.com'
+        email = 'admin@aiga.ac'
         password = 'Admin@123456'
         
         if CustomUser.objects.filter(email=email).exists():

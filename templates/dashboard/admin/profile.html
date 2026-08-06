@@ -170,6 +170,121 @@
         font-size: 0.8rem;
     }
 
+    /* ===== SIGNATURE STYLES ===== */
+    .signature-section {
+        margin-top: 8px;
+    }
+    
+    .signature-preview-container { 
+        background: #f8fafc; 
+        border: 2px dashed #d1d5db; 
+        border-radius: 12px; 
+        padding: 20px; 
+        margin-bottom: 12px;
+        min-height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        transition: all 0.2s;
+    }
+    
+    .signature-preview-container.has-signature {
+        border-style: solid;
+        border-color: #10b981;
+        background: white;
+    }
+    
+    .signature-preview { 
+        max-width: 250px; 
+        max-height: 100px; 
+        object-fit: contain;
+    }
+    
+    .signature-placeholder {
+        color: #94a3b8;
+        font-size: 0.85rem;
+        text-align: center;
+    }
+    
+    .signature-placeholder i {
+        font-size: 2rem;
+        display: block;
+        margin-bottom: 8px;
+        opacity: 0.5;
+    }
+    
+    .signature-actions { 
+        display: flex; 
+        gap: 8px; 
+        flex-wrap: wrap;
+    }
+    
+    .btn-upload-signature {
+        padding: 8px 16px;
+        background: #f0fdf4;
+        color: #10b981;
+        border: 1px solid #10b981;
+        border-radius: 8px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-family: inherit;
+    }
+    
+    .btn-upload-signature:hover {
+        background: #10b981;
+        color: white;
+    }
+    
+    .btn-remove-signature {
+        padding: 8px 16px;
+        background: #fef2f2;
+        color: #ef4444;
+        border: 1px solid #fecaca;
+        border-radius: 8px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-family: inherit;
+    }
+    
+    .btn-remove-signature:hover {
+        background: #ef4444;
+        color: white;
+    }
+    
+    .signature-tips {
+        background: #fffbeb;
+        border: 1px solid #fbbf24;
+        border-radius: 8px;
+        padding: 12px;
+        font-size: 0.75rem;
+        color: #92400e;
+        margin-top: 12px;
+    }
+    
+    .signature-tips i {
+        margin-right: 4px;
+    }
+    
+    .signature-tips ul {
+        margin: 8px 0 0 16px;
+        padding: 0;
+    }
+    
+    .signature-tips li {
+        margin-bottom: 4px;
+    }
+
     /* ===== INFO ITEMS ===== */
     .info-item {
         display: flex;
@@ -268,46 +383,93 @@
 <!-- Profile Details Grid -->
 <div class="profile-details-grid">
     <!-- Edit Profile Form -->
-    <div class="profile-card">
-        <h3 class="card-title">
-            <i class="fas fa-edit" style="color: var(--accent-blue);"></i> Edit Profile
-        </h3>
-        <form method="POST" enctype="multipart/form-data">
-            {% csrf_token %}
+    <div>
+        <div class="profile-card" style="margin-bottom: 20px;">
+            <h3 class="card-title">
+                <i class="fas fa-edit" style="color: var(--accent-blue);"></i> Edit Profile
+            </h3>
+            <form method="POST" enctype="multipart/form-data" id="profileForm">
+                {% csrf_token %}
+                <input type="hidden" name="remove_signature" id="removeSignatureInput" value="false">
+                
+                <div class="form-group">
+                    <label class="form-label">Profile Picture</label>
+                    <div class="file-input-wrapper">
+                        <input type="file" name="profile_picture" class="form-control" accept="image/*">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">First Name</label>
+                        <input type="text" name="first_name" class="form-control" value="{{ user.first_name }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Last Name</label>
+                        <input type="text" name="last_name" class="form-control" value="{{ user.last_name }}" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" class="form-control" value="{{ user.email }}" disabled>
+                    <small style="color: var(--text-muted); font-size: 0.7rem;">Email cannot be changed. Contact super admin for changes.</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Bio</label>
+                    <textarea name="bio" class="form-control" rows="3" placeholder="Write something about yourself...">{{ user.bio }}</textarea>
+                </div>
+
+                <button type="submit" class="btn-save">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+            </form>
+        </div>
+
+        <!-- Program Director Signature Card -->
+        <div class="profile-card">
+            <h3 class="card-title">
+                <i class="fas fa-signature" style="color: #10b981;"></i> Program Director's Signature
+            </h3>
             
-            <div class="form-group">
-                <label class="form-label">Profile Picture</label>
-                <div class="file-input-wrapper">
-                    <input type="file" name="profile_picture" class="form-control" accept="image/*">
+            <div class="signature-section">
+                <div class="signature-preview-container {% if profile.signature %}has-signature{% endif %}" id="signaturePreviewContainer">
+                    {% if profile.signature %}
+                    <img src="{{ profile.signature.url }}" alt="Program Director Signature" class="signature-preview" id="signaturePreviewImg">
+                    {% else %}
+                    <div class="signature-placeholder" id="signaturePlaceholder">
+                        <i class="fas fa-signature"></i>
+                        <span>No signature uploaded yet</span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="signature-actions">
+                    <label class="btn-upload-signature" for="signatureInput">
+                        <i class="fas fa-upload"></i> 
+                        {% if profile.signature %}Change Signature{% else %}Upload Signature{% endif %}
+                    </label>
+                    <input type="file" name="signature" id="signatureInput" accept="image/png,image/jpeg,image/webp" style="display:none;" onchange="previewSignature(this)" form="profileForm">
+                    
+                    {% if profile.signature %}
+                    <button type="button" class="btn-remove-signature" onclick="removeSignature()">
+                        <i class="fas fa-trash"></i> Remove
+                    </button>
+                    {% endif %}
+                </div>
+                
+                <div class="signature-tips">
+                    <i class="fas fa-lightbulb"></i> <strong>Important:</strong> This signature will appear on all student certificates as the Program Director's authorization.
+                    <ul>
+                        <li>Use a <strong>PNG with transparent background</strong> for professional results</li>
+                        <li>Sign on a white paper and scan/photograph it clearly</li>
+                        <li>Recommended size: <strong>400×150 pixels</strong></li>
+                        <li>Keep the signature centered and legible</li>
+                    </ul>
                 </div>
             </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label class="form-label">First Name</label>
-                    <input type="text" name="first_name" class="form-control" value="{{ user.first_name }}" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Last Name</label>
-                    <input type="text" name="last_name" class="form-control" value="{{ user.last_name }}" required>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Email Address</label>
-                <input type="email" class="form-control" value="{{ user.email }}" disabled>
-                <small style="color: var(--text-muted); font-size: 0.7rem;">Email cannot be changed. Contact super admin for changes.</small>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Bio</label>
-                <textarea name="bio" class="form-control" rows="3" placeholder="Write something about yourself...">{{ user.bio }}</textarea>
-            </div>
-
-            <button type="submit" class="btn-save">
-                <i class="fas fa-save"></i> Save Changes
-            </button>
-        </form>
+        </div>
     </div>
 
     <!-- Account Information -->
@@ -348,6 +510,20 @@
                     <div class="info-value">Level {{ user.admin_profile.access_level|default:"1" }} - Full Access</div>
                 </div>
             </div>
+            
+            <div class="info-item">
+                <div class="info-icon green"><i class="fas fa-signature"></i></div>
+                <div>
+                    <div class="info-label">Certificate Signature</div>
+                    <div class="info-value">
+                        {% if profile.signature %}
+                        <span style="color: #10b981;">✓ Uploaded</span>
+                        {% else %}
+                        <span style="color: #ef4444;">✗ Not uploaded</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="profile-card">
@@ -360,4 +536,93 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function previewSignature(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const container = document.getElementById('signaturePreviewContainer');
+                const placeholder = document.getElementById('signaturePlaceholder');
+                
+                // Hide placeholder
+                if (placeholder) placeholder.style.display = 'none';
+                
+                // Add has-signature class
+                container.classList.add('has-signature');
+                
+                // Update or create preview image
+                let previewImg = document.getElementById('signaturePreviewImg');
+                if (!previewImg) {
+                    previewImg = document.createElement('img');
+                    previewImg.id = 'signaturePreviewImg';
+                    previewImg.className = 'signature-preview';
+                    container.appendChild(previewImg);
+                }
+                previewImg.src = e.target.result;
+                previewImg.style.display = 'block';
+                
+                // Reset remove signature flag
+                document.getElementById('removeSignatureInput').value = 'false';
+                
+                // Show remove button if not exists
+                let removeBtn = document.querySelector('.btn-remove-signature');
+                if (!removeBtn) {
+                    removeBtn = document.createElement('button');
+                    removeBtn.type = 'button';
+                    removeBtn.className = 'btn-remove-signature';
+                    removeBtn.onclick = removeSignature;
+                    removeBtn.innerHTML = '<i class="fas fa-trash"></i> Remove';
+                    document.querySelector('.signature-actions').appendChild(removeBtn);
+                } else {
+                    removeBtn.style.display = 'inline-flex';
+                }
+                
+                // Update upload button text
+                const uploadLabel = document.querySelector('label[for="signatureInput"]');
+                if (uploadLabel) uploadLabel.innerHTML = '<i class="fas fa-upload"></i> Change Signature';
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+    
+    function removeSignature() {
+        if (confirm('Are you sure you want to remove your Program Director signature? It will no longer appear on student certificates.')) {
+            // Set hidden input to trigger removal
+            document.getElementById('removeSignatureInput').value = 'true';
+            
+            // Clear file input
+            document.getElementById('signatureInput').value = '';
+            
+            // Hide preview image
+            const previewImg = document.getElementById('signaturePreviewImg');
+            if (previewImg) previewImg.style.display = 'none';
+            
+            // Show placeholder
+            const placeholder = document.getElementById('signaturePlaceholder');
+            if (placeholder) placeholder.style.display = 'block';
+            
+            // Remove has-signature class
+            const container = document.getElementById('signaturePreviewContainer');
+            if (container) container.classList.remove('has-signature');
+            
+            // Hide remove button
+            const removeBtn = document.querySelector('.btn-remove-signature');
+            if (removeBtn) removeBtn.style.display = 'none';
+            
+            // Reset upload button text
+            const uploadLabel = document.querySelector('label[for="signatureInput"]');
+            if (uploadLabel) uploadLabel.innerHTML = '<i class="fas fa-upload"></i> Upload Signature';
+            
+            // Update signature status in account info
+            const signatureStatus = document.querySelector('.info-item .info-value span');
+            if (signatureStatus) {
+                signatureStatus.textContent = '✗ Not uploaded';
+                signatureStatus.style.color = '#ef4444';
+            }
+        }
+    }
+</script>
 {% endblock %}

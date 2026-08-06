@@ -143,7 +143,12 @@ class InstructorProfile(models.Model):
     expertise = models.TextField(blank=True)
     qualification = models.CharField(max_length=200, blank=True)
     years_of_experience = models.IntegerField(default=0)
-    signature = models.ImageField(upload_to='signatures/', blank=True, null=True, help_text="Instructor's digital signature for certificates")
+    signature = models.ImageField(
+        upload_to='instructor_signatures/', 
+        blank=True, 
+        null=True, 
+        help_text="Upload your digital signature for certificates (PNG with transparent background recommended)"
+    )
     is_approved = models.BooleanField(default=False)
     
     class Meta:
@@ -152,6 +157,13 @@ class InstructorProfile(models.Model):
     
     def __str__(self):
         return f"Instructor: {self.user.email}"
+    
+    @property
+    def signature_preview(self):
+        """Return signature URL or None"""
+        if self.signature:
+            return self.signature.url
+        return None
 
 
 class AdminProfile(models.Model):
@@ -164,10 +176,10 @@ class AdminProfile(models.Model):
     department = models.CharField(max_length=100, blank=True)
     access_level = models.IntegerField(default=1, help_text="1=Basic, 2=Manager, 3=Super Admin")
     signature = models.ImageField(
-        upload_to='signatures/', 
+        upload_to='admin_signatures/', 
         blank=True, 
         null=True, 
-        help_text="Program Director's digital signature for certificates"
+        help_text="Program Director's digital signature for certificates (PNG with transparent background recommended)"
     )
     
     class Meta:
@@ -189,3 +201,10 @@ class AdminProfile(models.Model):
             else:
                 self.admin_id = 'ADM-0001'
         super().save(*args, **kwargs)
+    
+    @property
+    def signature_preview(self):
+        """Return signature URL or None"""
+        if self.signature:
+            return self.signature.url
+        return None

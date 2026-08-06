@@ -1,0 +1,485 @@
+{% extends "dashboard/admin/admin_base.html" %}
+{% load static %}
+
+{% block title %}Manage Featured Courses{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+    
+    .featured-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+    }
+    
+    .section-card {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+        border: 1px solid #e5e7eb;
+    }
+    
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 2px solid #f3f4f6;
+    }
+    
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1f2937;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .section-title i {
+        font-size: 1.3rem;
+    }
+    
+    .current-featured-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        padding: 20px;
+        color: white;
+        margin-bottom: 20px;
+    }
+    
+    .current-featured-card.empty {
+        background: #f9fafb;
+        color: #6b7280;
+        border: 2px dashed #d1d5db;
+        text-align: center;
+        padding: 40px 20px;
+    }
+    
+    .course-list {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .course-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        border-radius: 8px;
+        transition: all 0.2s;
+        cursor: pointer;
+        border: 1px solid transparent;
+    }
+    
+    .course-item:hover {
+        background: #f9fafb;
+        border-color: #e5e7eb;
+    }
+    
+    .course-item.selected {
+        background: #eff6ff;
+        border-color: #3b82f6;
+    }
+    
+    .course-thumb {
+        width: 60px;
+        height: 45px;
+        border-radius: 6px;
+        object-fit: cover;
+        background: #e5e7eb;
+    }
+    
+    .course-info {
+        flex: 1;
+    }
+    
+    .course-info .name {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #1f2937;
+    }
+    
+    .course-info .meta {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin-top: 2px;
+    }
+    
+    .top-pick-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        background: #f9fafb;
+        border-radius: 8px;
+        margin-bottom: 8px;
+    }
+    
+    .drag-handle {
+        cursor: move;
+        color: #9ca3af;
+        font-size: 1.1rem;
+    }
+    
+    .btn {
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: 'Poppins', sans-serif;
+    }
+    
+    .btn-primary {
+        background: #3b82f6;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: #2563eb;
+    }
+    
+    .btn-danger {
+        background: #ef4444;
+        color: white;
+    }
+    
+    .btn-danger:hover {
+        background: #dc2626;
+    }
+    
+    .btn-success {
+        background: #10b981;
+        color: white;
+    }
+    
+    .search-box {
+        position: relative;
+        margin-bottom: 16px;
+    }
+    
+    .search-box input {
+        width: 100%;
+        padding: 10px 14px 10px 40px;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 0.85rem;
+    }
+    
+    .search-box i {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #9ca3af;
+    }
+    
+    .badge {
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    
+    .badge-active {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .badge-draft {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .history-item {
+        padding: 10px 0;
+        border-bottom: 1px solid #f3f4f6;
+        font-size: 0.85rem;
+    }
+    
+    .history-item:last-child {
+        border-bottom: none;
+    }
+    
+    @media (max-width: 1024px) {
+        .featured-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 style="font-size: 1.5rem; font-weight: 700; color: #1f2937;">Manage Featured Courses</h1>
+        <p style="color: #6b7280; font-size: 0.9rem; margin-top: 4px;">
+            Control which courses appear as "Featured Course of the Month" and "Top Picks"
+        </p>
+    </div>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}" style="border-radius: 12px; margin-bottom: 16px; padding: 14px 20px; font-size: 0.9rem;">
+        {{ message }}
+    </div>
+    {% endfor %}
+{% endif %}
+
+<div class="featured-grid">
+    <!-- Featured Course of the Month -->
+    <div class="section-card">
+        <div class="section-header">
+            <div class="section-title">
+                <i class="fas fa-star" style="color: #f59e0b;"></i>
+                Featured Course of the Month
+            </div>
+            {% if current_featured %}
+            <span class="badge badge-active">Active</span>
+            {% endif %}
+        </div>
+        
+        {% if current_featured %}
+        <div class="current-featured-card">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                {% if current_featured.course.featured_image %}
+                <img src="{{ current_featured.course.featured_image.url }}" 
+                     style="width: 80px; height: 60px; border-radius: 8px; object-fit: cover;">
+                {% endif %}
+                <div>
+                    <h3 style="font-weight: 700; margin-bottom: 4px;">{{ current_featured.course.title }}</h3>
+                    <p style="font-size: 0.85rem; opacity: 0.9;">
+                        Featured since {{ current_featured.start_date|date:"F j, Y" }}
+                    </p>
+                    {% if current_featured.end_date %}
+                    <p style="font-size: 0.85rem; opacity: 0.9;">
+                        Until {{ current_featured.end_date|date:"F j, Y" }}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+            <form method="POST" style="margin-top: 16px;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="remove_featured">
+                <button type="submit" class="btn btn-danger" style="width: 100%;">
+                    <i class="fas fa-times-circle"></i> Remove Featured Status
+                </button>
+            </form>
+        </div>
+        {% else %}
+        <div class="current-featured-card empty">
+            <i class="fas fa-star" style="font-size: 3rem; opacity: 0.3;"></i>
+            <p style="margin-top: 12px; font-weight: 500;">No course is currently featured</p>
+            <p style="font-size: 0.85rem; opacity: 0.7;">Select a course below to feature it</p>
+        </div>
+        {% endif %}
+        
+        <h4 style="font-weight: 600; margin-bottom: 12px; color: #374151;">Available Courses</h4>
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Search courses..." onkeyup="filterCourses('featured-course-list', this.value)">
+        </div>
+        
+        <div class="course-list" id="featured-course-list">
+            {% for course in available_courses %}
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="set_featured">
+                <input type="hidden" name="course_id" value="{{ course.id }}">
+                <div class="course-item" onclick="this.closest('form').submit()">
+                    {% if course.featured_image %}
+                    <img src="{{ course.featured_image.url }}" class="course-thumb">
+                    {% else %}
+                    <div class="course-thumb" style="display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-book" style="color: #9ca3af;"></i>
+                    </div>
+                    {% endif %}
+                    <div class="course-info">
+                        <div class="name">{{ course.title }}</div>
+                        <div class="meta">
+                            {{ course.instructor.get_full_name }} • 
+                            {{ course.total_students }} students
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right" style="color: #9ca3af;"></i>
+                </div>
+            </form>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Top Picks of the Month -->
+    <div class="section-card">
+        <div class="section-header">
+            <div class="section-title">
+                <i class="fas fa-thumbs-up" style="color: #3b82f6;"></i>
+                Top Picks of the Month
+            </div>
+            <span style="font-size: 0.85rem; color: #6b7280;">
+                {{ current_top_picks|length }}/6 slots used
+            </span>
+        </div>
+        
+        <!-- Current Top Picks (Sortable) -->
+        <div id="top-picks-list" style="margin-bottom: 24px;">
+            {% for pick in current_top_picks %}
+            <div class="top-pick-item" data-id="{{ pick.id }}">
+                <i class="fas fa-grip-lines drag-handle"></i>
+                <span style="font-weight: 700; color: #3b82f6; min-width: 24px;">#{{ forloop.counter }}</span>
+                {% if pick.course.featured_image %}
+                <img src="{{ pick.course.featured_image.url }}" class="course-thumb">
+                {% endif %}
+                <div class="course-info">
+                    <div class="name">{{ pick.course.title }}</div>
+                    <div class="meta">{{ pick.course.instructor.get_full_name }}</div>
+                </div>
+                <form method="POST" style="margin-left: auto;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="remove_top_pick">
+                    <input type="hidden" name="pick_id" value="{{ pick.id }}">
+                    <button type="submit" style="background: none; border: none; color: #ef4444; cursor: pointer;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </form>
+            </div>
+            {% empty %}
+            <div style="text-align: center; padding: 40px 20px; color: #6b7280;">
+                <i class="fas fa-thumbs-up" style="font-size: 3rem; opacity: 0.3; margin-bottom: 12px;"></i>
+                <p>No top picks selected yet</p>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Add New Top Pick -->
+        {% if current_top_picks|length < 6 %}
+        <h4 style="font-weight: 600; margin-bottom: 12px; color: #374151;">Add to Top Picks</h4>
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Search courses..." onkeyup="filterCourses('top-pick-course-list', this.value)">
+        </div>
+        
+        <div class="course-list" id="top-pick-course-list">
+            {% for course in available_courses %}
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_top_pick">
+                <input type="hidden" name="course_id" value="{{ course.id }}">
+                <input type="hidden" name="position" value="{{ current_top_picks|length }}">
+                <div class="course-item" onclick="this.closest('form').submit()">
+                    {% if course.featured_image %}
+                    <img src="{{ course.featured_image.url }}" class="course-thumb">
+                    {% else %}
+                    <div class="course-thumb" style="display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-book" style="color: #9ca3af;"></i>
+                    </div>
+                    {% endif %}
+                    <div class="course-info">
+                        <div class="name">{{ course.title }}</div>
+                        <div class="meta">{{ course.instructor.get_full_name }}</div>
+                    </div>
+                    <i class="fas fa-plus-circle" style="color: #10b981;"></i>
+                </div>
+            </form>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <!-- Save Order Button -->
+        {% if current_top_picks %}
+        <form method="POST" id="reorder-form" style="margin-top: 16px;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="reorder_top_picks">
+            <div id="order-inputs"></div>
+            <button type="submit" class="btn btn-primary" style="width: 100%;" onclick="saveOrder()">
+                <i class="fas fa-save"></i> Save Order
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Featured Course History -->
+<div class="section-card" style="margin-top: 24px;">
+    <div class="section-header">
+        <div class="section-title">
+            <i class="fas fa-history" style="color: #6b7280;"></i>
+            Featured Course History
+        </div>
+    </div>
+    
+    <div style="max-height: 300px; overflow-y: auto;">
+        {% for entry in featured_history %}
+        <div class="history-item">
+            <div style="display: flex; justify-content: space-between;">
+                <span style="font-weight: 600;">{{ entry.course.title }}</span>
+                <span style="color: #6b7280; font-size: 0.85rem;">
+                    {{ entry.start_date|date:"M d, Y" }}
+                    {% if entry.end_date %}
+                    - {{ entry.end_date|date:"M d, Y" }}
+                    {% endif %}
+                </span>
+            </div>
+            <span class="badge {% if entry.is_active %}badge-active{% else %}badge-draft{% endif %}">
+                {{ entry.is_active|yesno:"Active,Expired" }}
+            </span>
+        </div>
+        {% empty %}
+        <p style="text-align: center; color: #6b7280; padding: 20px;">No history available</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+    // Initialize drag and drop for Top Picks
+    const topPicksList = document.getElementById('top-picks-list');
+    if (topPicksList) {
+        new Sortable(topPicksList, {
+            animation: 150,
+            handle: '.drag-handle',
+            ghostClass: 'sortable-ghost'
+        });
+    }
+    
+    function saveOrder() {
+        const orderInputs = document.getElementById('order-inputs');
+        orderInputs.innerHTML = '';
+        
+        document.querySelectorAll('#top-picks-list .top-pick-item').forEach((item, index) => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'order[]';
+            input.value = item.dataset.id;
+            orderInputs.appendChild(input);
+        });
+    }
+    
+    function filterCourses(containerId, query) {
+        const container = document.getElementById(containerId);
+        const items = container.querySelectorAll('.course-item');
+        
+        items.forEach(item => {
+            const title = item.querySelector('.name').textContent.toLowerCase();
+            if (title.includes(query.toLowerCase())) {
+                item.style.display = '';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    }
+</script>
+{% endblock %}

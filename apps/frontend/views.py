@@ -35,9 +35,9 @@ class IndexView(TemplateView):
         for cat in context['categories']:
             print(f"Category: {cat.name}, ID: {cat.id}, Slug: {cat.slug}")
         
-        # Featured courses
+        # FIXED: Featured courses - use badge='featured' instead of is_featured=True
         context['featured_courses'] = Course.objects.filter(
-            status='published', is_featured=True
+            status='published', badge='featured'
         ).select_related('instructor', 'category')[:6]
         
         # Free courses
@@ -110,23 +110,88 @@ class CoursesView(ListView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        
+        # Categories
         context['categories'] = CourseCategory.objects.filter(is_active=True)
         context['total_courses'] = Course.objects.filter(status='published').count()
         context['current_category'] = self.request.GET.get('category', '')
         context['current_search'] = self.request.GET.get('search', '')
         context['current_price'] = self.request.GET.get('price', '')
+        
+        # ===================== FEATURED COURSE =====================
+        # Get featured course of the month using badge field (replaces is_featured)
+        featured_course = Course.objects.filter(
+            status='published',
+            badge='featured'  # Use badge instead of is_featured
+        ).select_related('instructor', 'category').first()
+        
+        # If no featured badge set, fallback to most recent published course
+        if not featured_course:
+            featured_course = Course.objects.filter(
+                status='published'
+            ).select_related('instructor', 'category').order_by('-created_at').first()
+        
+        context['featured_course'] = featured_course
+        
+        # ===================== TOP PICKS =====================
+        # Get top picks (up to 3 courses with bestseller/trending/new badges)
+        # Exclude the featured course from top picks
+        exclude_ids = [featured_course.id] if featured_course else []
+        
+        # First, try to get courses with badges
+        badge_courses = list(Course.objects.filter(
+            status='published',
+            badge__in=['bestseller', 'trending', 'new']
+        ).exclude(
+            id__in=exclude_ids
+        ).select_related('instructor', 'category').order_by('-created_at')[:3])
+        
+        # Add badge course IDs to exclude list
+        exclude_ids.extend([c.id for c in badge_courses])
+        
+        # If not enough badge courses, fill with recent published courses
+        if len(badge_courses) < 3:
+            # Get additional courses (excluding already selected ones)
+            additional_needed = 3 - len(badge_courses)
+            additional_courses = list(Course.objects.filter(
+                status='published'
+            ).exclude(
+                id__in=exclude_ids
+            ).select_related('instructor', 'category').order_by('-created_at')[:additional_needed])
+            
+            # Combine badge courses with additional courses
+            top_picks = badge_courses + additional_courses
+        else:
+            top_picks = badge_courses
+        
+        context['top_picks'] = top_picks[:3]
+        
+        # ===================== ALL COURSES (for main listing) =====================
+        # Exclude featured and top picks from the main course listing
+        # so they don't appear twice
+        featured_and_pick_ids = exclude_ids  # Already contains featured + badge course IDs
+        # Also add additional course IDs that were used as top picks
+        featured_and_pick_ids.extend([c.id for c in top_picks if c.id not in featured_and_pick_ids])
+        
+        # Store the filtered queryset for the template (optional)
+        context['main_courses'] = self.get_queryset().exclude(
+            id__in=featured_and_pick_ids
+        ) if featured_and_pick_ids else self.get_queryset()
+        
         return context
 
 
 class CourseDetailView(DetailView):
-    """Course detail page"""
+    """Individual course detail page"""
     model = Course
     template_name = 'frontend/course_detail.html'
     context_object_name = 'course'
     slug_url_kwarg = 'slug'
     
     def get_queryset(self):
-        return Course.objects.filter(status='published').select_related(
+        return Course.objects.filter(
+            status='published'
+        ).select_related(
             'instructor', 'category'
         ).prefetch_related(
             'lessons__contents',
@@ -138,28 +203,194 @@ class CourseDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         course = self.object
         
-        context['lessons'] = course.lessons.filter(is_published=True).prefetch_related('contents').order_by('order')
-        context['reviews'] = course.reviews.select_related('student').order_by('-created_at')[:10]
+        # Check if user is enrolled
+        if self.request.user.is_authenticated:
+            context['is_enrolled'] = Enrollment.objects.filter(
+                student=self.request.user,
+                course=course,
+                status__in=['active', 'completed']
+            ).exists()
+            
+            # Get user's progress
+            if context['is_enrolled']:
+                enrollment = Enrollment.objects.get(
+                    student=self.request.user,
+                    course=course
+                )
+                context['enrollment'] = enrollment
+                context['progress_percentage'] = enrollment.progress_percentage
+        else:
+            context['is_enrolled'] = False
+        
+        # Get reviews
+        context['reviews'] = course.reviews.filter(
+            is_approved=True
+        ).select_related('student').order_by('-created_at')[:10]
+        
         context['review_count'] = course.review_count
         context['average_rating'] = course.average_rating
         
+        # Get lessons with content
+        context['lessons'] = course.lessons.filter(
+            is_published=True
+        ).prefetch_related('contents').order_by('order')
+        
+        # Related courses (same category)
         if course.category:
             context['related_courses'] = Course.objects.filter(
-                status='published', category=course.category
-            ).exclude(id=course.id).select_related('instructor', 'category')[:4]
-        else:
-            context['related_courses'] = Course.objects.filter(
-                status='published'
-            ).exclude(id=course.id).select_related('instructor', 'category')[:4]
+                status='published',
+                category=course.category
+            ).exclude(
+                id=course.id
+            ).select_related('instructor').order_by('-created_at')[:4]
         
-        if self.request.user.is_authenticated:
+        # Check if featured
+        context['is_featured'] = course.is_featured  # Uses the property
+        
+        return context
+
+
+
+class CourseDetailView(DetailView):
+    """Course detail page with access control, preview, and related courses"""
+    model = Course
+    template_name = 'frontend/course_detail.html'
+    context_object_name = 'course'
+    slug_url_kwarg = 'slug'
+    
+    def get_queryset(self):
+        return Course.objects.filter(status='published').select_related(
+            'instructor', 'instructor__instructor_profile', 'category'
+        ).prefetch_related(
+            'lessons__contents',
+            'reviews__student',
+            'enrollments'
+        )
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        course = self.object
+        user = self.request.user
+        
+        # ===================== LESSONS & PREVIEW =====================
+        context['lessons'] = course.lessons.filter(
+            is_published=True
+        ).prefetch_related('contents').order_by('order')
+        
+        # Get preview/intro content (first few lessons or marked as preview)
+        context['preview_lessons'] = course.lessons.filter(
+            is_published=True,
+            is_free_preview=True  # You need this field in Lesson model
+        ).prefetch_related('contents').order_by('order')[:3]
+        
+        # If no preview lessons marked, take first 2 lessons as preview
+        if not context['preview_lessons']:
+            context['preview_lessons'] = course.lessons.filter(
+                is_published=True
+            ).prefetch_related('contents').order_by('order')[:2]
+        
+        # Get individual preview contents
+        context['preview_contents'] = LessonContent.objects.filter(
+            lesson__course=course,
+            lesson__is_published=True,
+            is_preview=True
+        ).select_related('lesson').order_by('lesson__order', 'order')[:5]
+        
+        # ===================== ACCESS CONTROL =====================
+        context['is_instructor_or_admin'] = (
+            user.is_authenticated and 
+            (
+                user == course.instructor or 
+                getattr(user, 'user_type', None) == 'ADMIN' or 
+                user.is_superuser or 
+                user.is_staff
+            )
+        )
+        
+        if user.is_authenticated:
             context['is_enrolled'] = Enrollment.objects.filter(
-                student=self.request.user, course=course,
+                student=user, 
+                course=course,
                 status__in=['active', 'completed']
             ).exists()
         else:
             context['is_enrolled'] = False
         
+        # IMPORTANT: Only enrolled users or instructor/admin can access content
+        # No preview access for non-enrolled users
+        context['can_access_content'] = (
+            context['is_enrolled'] or 
+            context['is_instructor_or_admin']
+        )
+        
+        # ===================== COURSE INTRO / PREVIEW VIDEO =====================
+        # Use trailer_url if available, otherwise first preview video
+        context['intro_video_url'] = course.trailer_url
+        if not context['intro_video_url']:
+            # Try to find first preview video content
+            first_preview = LessonContent.objects.filter(
+                lesson__course=course,
+                lesson__is_published=True,
+                is_preview=True,
+                content_type='video'
+            ).first()
+            if first_preview and first_preview.video_url:
+                context['intro_video_url'] = first_preview.video_url
+        
+        # ===================== REVIEWS =====================
+        context['reviews'] = course.reviews.select_related(
+            'student'
+        ).order_by('-created_at')[:10]
+        context['review_count'] = course.review_count
+        context['average_rating'] = course.average_rating
+        
+        # ===================== RELATED COURSES =====================
+        # First try: same category
+        if course.category:
+            context['related_courses'] = Course.objects.filter(
+                status='published',
+                category=course.category
+            ).exclude(id=course.id).select_related(
+                'instructor', 'category'
+            ).order_by('-created_at')[:4]
+        
+        # If no category courses, try: same instructor
+        if not context.get('related_courses') and course.instructor:
+            context['related_courses'] = Course.objects.filter(
+                status='published',
+                instructor=course.instructor
+            ).exclude(id=course.id).select_related(
+                'instructor', 'category'
+            ).order_by('-created_at')[:4]
+        
+        # If still no courses, try: similar level
+        if not context.get('related_courses'):
+            context['related_courses'] = Course.objects.filter(
+                status='published',
+                level=course.level
+            ).exclude(id=course.id).select_related(
+                'instructor', 'category'
+            ).order_by('-created_at')[:4]
+        
+        # Final fallback: recent published courses
+        if not context.get('related_courses'):
+            context['related_courses'] = Course.objects.filter(
+                status='published'
+            ).exclude(id=course.id).select_related(
+                'instructor', 'category'
+            ).order_by('-created_at')[:4]
+        
+        context['related_courses'] = context.get('related_courses', [])
+        
+        # Section title based on what we found
+        if course.category and context['related_courses'] and context['related_courses'][0].category == course.category:
+            context['related_title'] = f'More Courses in {course.category.name}'
+        elif course.instructor and context['related_courses'] and context['related_courses'][0].instructor == course.instructor:
+            context['related_title'] = f'More from {course.instructor.get_full_name()}'
+        else:
+            context['related_title'] = 'Similar Courses You Might Like'
+        
+        # ===================== LEARNING OUTCOMES =====================
         if course.what_you_learn:
             context['learning_outcomes'] = [
                 line.strip('• -') for line in course.what_you_learn.split('\n') if line.strip()
@@ -173,9 +404,11 @@ class CourseDetailView(DetailView):
                 "Prepare for relevant certifications",
             ]
         
+        # ===================== INSTRUCTOR COURSES =====================
         if course.instructor:
             context['instructor_courses'] = Course.objects.filter(
-                instructor=course.instructor, status='published'
+                instructor=course.instructor, 
+                status='published'
             ).exclude(id=course.id)[:4]
         
         return context

@@ -54,6 +54,8 @@ urlpatterns = [
     path('admin/instructor/<uuid:user_id>/', admin_views.instructor_detail, name='instructor_detail'),
     path('admin/student/<uuid:user_id>/', admin_views.student_detail, name='student_detail'),
     
+    path('admin/manage-featured/', admin_views.manage_featured_courses, name='manage_featured'),
+    
     path('admin/payments/', admin_views.admin_payments, name='admin_payments'),
     path('admin/enrollments/', admin_views.admin_enrollments, name='admin_enrollments'),
     path('admin/enrollment/<int:enrollment_id>/update-status/', admin_views.update_enrollment_status, name='update_enrollment_status'),

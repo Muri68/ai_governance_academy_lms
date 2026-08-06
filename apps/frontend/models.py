@@ -112,21 +112,195 @@ class NewsletterCampaign(models.Model):
         return f"{self.subject} - {self.created_at.strftime('%b %d, %Y')}"
   
     
+from django.db import models
+from django.conf import settings
+from django.core.exceptions import ValidationError
+
+
 class SiteReview(models.Model):
-    """Site reviews from users who have used the platform"""
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='site_reviews')
-    rating = models.PositiveIntegerField(default=5, choices=[(i, i) for i in range(1, 6)])
+    """Site reviews - can be created by admin or by logged-in users"""
+    
+    # Make user optional for admin-created reviews
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.SET_NULL, 
+        related_name='site_reviews',
+        null=True,
+        blank=True,
+        help_text="Leave empty if creating a review on behalf of someone (admin only)"
+    )
+    
+    # For admin-created reviews without a user account
+    reviewer_name = models.CharField(
+        max_length=150, 
+        blank=True, 
+        null=True,
+        help_text="Required if no user is selected (for non-registered reviewers)"
+    )
+    reviewer_email = models.EmailField(
+        blank=True, 
+        null=True,
+        help_text="Optional email for non-registered reviewers"
+    )
+    
+    # Reviewer details
+    designation = models.CharField(
+        max_length=200, 
+        blank=True, 
+        null=True, 
+        help_text="e.g., Product Designer, USA"
+    )
+    company = models.CharField(
+        max_length=200, 
+        blank=True, 
+        null=True,
+        help_text="Company or organization name"
+    )
+    
+    # Avatar for non-registered users
+    avatar = models.ImageField(
+        upload_to='site_reviews/avatars/', 
+        blank=True, 
+        null=True,
+        help_text="Upload avatar for non-registered reviewers"
+    )
+    
+    # Rating
+    rating = models.PositiveIntegerField(
+        default=5, 
+        choices=[(i, i) for i in range(1, 6)]
+    )
+    
+    # Review content
     review_text = models.TextField()
-    designation = models.CharField(max_length=200, blank=True, null=True, help_text="e.g., Product Designer, USA")
-    is_approved = models.BooleanField(default=False, help_text="Admin must approve before displaying")
+    review_title = models.CharField(
+        max_length=200, 
+        blank=True, 
+        null=True,
+        help_text="Optional title for the review"
+    )
+    
+    # Approval status
+    is_approved = models.BooleanField(
+        default=False, 
+        help_text="Admin must approve before displaying"
+    )
+    
+    # Featured review
+    is_featured = models.BooleanField(
+        default=False,
+        help_text="Show this review prominently"
+    )
+    
+    # Source tracking
+    SOURCE_CHOICES = [
+        ('user', 'Submitted by User'),
+        ('admin', 'Created by Admin'),
+        ('imported', 'Imported'),
+    ]
+    source = models.CharField(
+        max_length=20, 
+        choices=SOURCE_CHOICES, 
+        default='user',
+        help_text="How this review was created"
+    )
+    
+    # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         verbose_name = 'Site Review'
         verbose_name_plural = 'Site Reviews'
-        ordering = ['-created_at']
-        unique_together = ['user']  # One review per user
+        ordering = ['-is_featured', '-created_at']
+        indexes = [
+            models.Index(fields=['is_approved']),
+            models.Index(fields=['is_featured']),
+            models.Index(fields=['source']),
+        ]
     
     def __str__(self):
-        return f"{self.user.get_full_name()} - {self.rating}★"
+        name = self.get_reviewer_name()
+        return f"{name} - {self.rating}★"
+    
+    def clean(self):
+        """Validate that either user or reviewer_name is provided"""
+        super().clean()
+        if not self.user and not self.reviewer_name:
+            raise ValidationError({
+                'reviewer_name': 'Either select a user or provide a reviewer name.',
+                'user': 'Either select a user or provide a reviewer name.'
+            })
+        
+        # Ensure user-created reviews are unique per user
+        if self.user and self.source == 'user':
+            existing = SiteReview.objects.filter(
+                user=self.user,
+                source='user'
+            ).exclude(pk=self.pk).first()
+            if existing:
+                raise ValidationError({
+                    'user': f'This user has already submitted a review. One review per user is allowed.'
+                })
+    
+    def save(self, *args, **kwargs):
+        # Auto-set source based on user
+        if self.user and not self.source:
+            self.source = 'user'
+        elif not self.user:
+            self.source = 'admin'
+        
+        # Auto-approve admin-created reviews
+        if self.source == 'admin' and not self.is_approved:
+            self.is_approved = True
+        
+        self.full_clean()
+        super().save(*args, **kwargs)
+    
+    def get_reviewer_name(self):
+        """Returns the best available name for the reviewer"""
+        if self.user:
+            return self.user.get_full_name() or self.user.username
+        return self.reviewer_name or "Anonymous"
+    
+    def get_reviewer_email(self):
+        """Returns the best available email for the reviewer"""
+        if self.user:
+            return self.user.email
+        return self.reviewer_email or ""
+    
+    def get_avatar_url(self):
+        """Returns the avatar URL if available"""
+        if self.user and hasattr(self.user, 'profile_picture') and self.user.profile_picture:
+            return self.user.profile_picture.url
+        if self.avatar:
+            return self.avatar.url
+        return None
+    
+    def get_initials(self):
+        """Returns initials for avatar placeholder"""
+        name = self.get_reviewer_name()
+        if name and name != "Anonymous":
+            parts = name.split()
+            if len(parts) >= 2:
+                return f"{parts[0][0]}{parts[1][0]}".upper()
+            return parts[0][0].upper()
+        return "?"
+    
+    @property
+    def rating_stars(self):
+        """Returns filled and empty stars for display"""
+        return list(range(self.rating)), list(range(5 - self.rating))
+    
+    @classmethod
+    def get_approved_reviews(cls):
+        """Get all approved reviews for display"""
+        return cls.objects.filter(is_approved=True).select_related('user')
+    
+    @classmethod
+    def get_featured_reviews(cls):
+        """Get featured reviews for homepage"""
+        return cls.objects.filter(
+            is_approved=True, 
+            is_featured=True
+        ).select_related('user')[:3]

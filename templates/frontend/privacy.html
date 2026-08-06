@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Terms & Conditions - {{ block.super }}{% endblock %}
+{% block title %}Privacy Policy - {{ block.super }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -86,6 +86,10 @@
         color: var(--text-muted);
     }
 
+    .last-updated p {
+        margin-bottom: 5px;
+    }
+
     .default-content {
         text-align: center;
         padding: 40px;
@@ -103,8 +107,8 @@
 {% block content %}
 <section class="page-header-section">
     <div class="container">
-        <h1 class="page-header-title">Terms & Conditions</h1>
-        <p class="page-header-subtitle">Please read these terms carefully before using our platform</p>
+        <h1 class="page-header-title">Privacy Policy</h1>
+        <p class="page-header-subtitle">How we collect, use, and protect your personal information</p>
     </div>
 </section>
 
@@ -112,25 +116,25 @@
     <div class="container">
         <div class="content-wrapper">
             <div class="highlight-box">
-                <p>By accessing and using the AI Governance Academy platform, you agree to be bound by these Terms and Conditions. If you do not agree with any part of these terms, please do not use our services.</p>
+                <p><strong>Your Privacy Matters:</strong> At AI Governance Academy, we are committed to protecting your personal data and respecting your privacy rights. This policy explains how we handle your information.</p>
             </div>
             
-            {% if terms_content %}
-                {{ terms_content|safe }}
+            {% if privacy_policy %}
+                {{ privacy_policy|safe }}
             {% else %}
                 <div class="default-content">
-                    <i class="fas fa-file-contract"></i>
-                    <h3>Terms & Conditions Coming Soon</h3>
-                    <p>We are currently updating our terms and conditions. Please check back later.</p>
+                    <i class="fas fa-shield-alt"></i>
+                    <h3>Privacy Policy Coming Soon</h3>
+                    <p>We are currently updating our privacy policy. Please check back later.</p>
                 </div>
             {% endif %}
             
-            {% if last_updated %}
             <div class="last-updated">
-                <p>Last updated: {{ last_updated.updated_at|date:"F d, Y" }}</p>
-                <p>© {% now "Y" %} AI Governance Academy. All rights reserved.</p>
+                {% if privacy_last_updated %}
+                <p>Last updated: {{ privacy_last_updated|date:"F d, Y" }}</p>
+                {% endif %}
+                <p>&copy; {% now "Y" %} AI Governance Academy. All rights reserved.</p>
             </div>
-            {% endif %}
         </div>
     </div>
 </section>

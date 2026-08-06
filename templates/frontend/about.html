@@ -4,2034 +4,1692 @@
 {% block title %}About Us - {{ block.super }}{% endblock %}
 
 {% block extra_css %}
-
 <style>
-        :root {
-            --navy: #0c1e2e;
-            --navy-light: #142a3e;
-            --gold: #ad7a49;
-            --gold-dark: #b07d55;
-            --gold-light: #d4a77d;
-            --cream: #e8e4df;
-            --text-light: #a0b0c0;
-            --white: #ffffff;
-        }
-
-        /* ===================== TOP BAR ===================== */
-
-
-        /* ===================== NAVBAR ===================== */
-        .main-navbar {
-            background-color: var(--cream) !important;
-            padding: 12px 0;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        }
-
-        .main-navbar .navbar-brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 0;
-        }
-
-        .logo-icon {
-            width: 48px;
-            height: 48px;
-            background: var(--white);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            flex-shrink: 0;
-        }
-
-        .logo-icon svg {
-            width: 34px;
-            height: 34px;
-        }
-
-        .logo-text {
-            display: flex;
-            flex-direction: column;
-            line-height: 1.2;
-        }
-
-        .logo-text .main-title {
-            font-size: 15px;
-            font-weight: 700;
-            color: var(--navy);
-            letter-spacing: 0.3px;
-        }
-
-        .logo-text .sub-title {
-            font-size: 8.5px;
-            color: #888;
-            letter-spacing: 0.8px;
-            text-transform: uppercase;
-            font-weight: 500;
-        }
-
-        .main-navbar .nav-link {
-            color: var(--navy) !important;
-            font-size: 15px;
-            font-weight: 500;
-            padding: 8px 20px !important;
-            transition: color 0.3s ease;
-            position: relative;
-        }
-
-        .main-navbar .nav-link:hover,
-        .main-navbar .nav-link.active {
-            color: var(--gold) !important;
-        }
-
-        .main-navbar .nav-link.active::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 20px;
-            right: 20px;
-            height: 2px;
-            background-color: var(--gold);
-            border-radius: 1px;
-        }
-
-        .auth-buttons {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
-
-        .btn-sign-in {
-            color: var(--navy) !important;
-            font-size: 15px;
-            font-weight: 500;
-            padding: 8px 20px;
-            text-decoration: none;
-            transition: color 0.3s ease;
-            background: none;
-            border: none;
-        }
-
-        .btn-sign-in:hover {
-            color: var(--gold) !important;
-        }
-
-        .btn-sign-up {
-            background-color: var(--gold);
-            color: var(--white) !important;
-            font-size: 15px;
-            font-weight: 500;
-            padding: 10px 26px;
-            border-radius: 6px;
-            text-decoration: none;
-            border: none;
-            transition: all 0.3s ease;
-        }
-
-        .btn-sign-up:hover {
-            background-color: var(--gold-dark);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 15px rgba(200, 149, 109, 0.3);
-        }
-
-        .navbar-toggler {
-            border: none;
-            padding: 8px;
-        }
-
-        .navbar-toggler:focus {
-            box-shadow: none;
-        }
-
-        .navbar-toggler-icon {
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%2812, 30, 46, 1%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
-        }
-
-        /* ===================== HERO SECTION ===================== */
-        .hero-section {
-            background-color: var(--navy);
-            min-height: calc(100vh - 130px);
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-        }
-
-        .hero-content {
-            padding: 60px 0;
-            position: relative;
-            z-index: 10;
-        }
-
-        .hero-subtitle {
-            color: var(--gold);
-            font-size: 16px;
-            font-weight: 400;
-            margin-bottom: 15px;
-            letter-spacing: 0.5px;
-        }
-
-        .hero-title {
-            color: var(--white);
-            font-size: 45px;
-            font-weight: 600;
-            line-height: 1.15;
-            margin-bottom: 25px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .hero-title .highlight {
-            color: var(--gold);
-        }
-
-        .hero-description {
-            color: var(--text-light);
-            font-size: 17px;
-            line-height: 1.7;
-            max-width: 480px;
-            margin-bottom: 40px;
-            font-weight: 300;
-        }
-
-        .btn-cta {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            background-color: var(--gold);
-            color: var(--white) !important;
-            text-decoration: none;
-            padding: 14px 32px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-        }
-
-        .btn-cta:hover {
-            background-color: var(--gold-dark);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(200, 149, 109, 0.3);
-            color: var(--white) !important;
-        }
-
-        .btn-cta i {
-            font-size: 14px;
-        }
-
-        /* ===================== HERO IMAGE AREA ===================== */
-        .hero-image-area {
-            position: relative;
-            height: 100%;
-            min-height: 500px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* Gold ellipse background using uploaded image */
-        .gold-ellipse-bg {
-            position: absolute;
-            right: -26%;
-            top: -15%;
-            transform: translateY(-50%);
-            width: 100%;
-            height: 125%;
-            z-index: 1;
-            pointer-events: none;
-        }
-
-        .gold-ellipse-bg img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            object-position: right center;
-        }
-
-        /* Woman image */
-        .woman-image {
-            position: relative;
-            z-index: 3;
-            max-height: 620px;
-            width: auto;
-            right: -160px;
-            object-fit: contain;
-            filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.2));
-        }
-
-        /* Badge Circle */
-        .badge-circle {
-            position: absolute;
-            left: -5%;
-            top: 50%;
-            transform: translateY(-50%);
-            z-index: 5;
-            width: 170px;
-            height: 170px;
-        }
-
-        .badge-inner {
-            width: 100%;
-            height: 100%;
-            background-color: var(--gold);
-            border-radius: 50%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            /* box-shadow: 0 8px 30px rgba(200, 149, 109, 0.4); */
-        }
-
-        .badge-book-icon {
-            width: 100%;
-            height: 50%;
-            margin-bottom: 6px;
-        }
-
-        .badge-book-icon svg {
-            width: 100%;
-            height: 100%;
-        }
-
-        .badge-count {
-            color: var(--white);
-            font-size: 26px;
-            font-weight: 700;
-            line-height: 1;
-        }
-
-        .badge-label {
-            color: var(--white);
-            font-size: 15px;
-            font-weight: 500;
-            margin-top: 2px;
-        }
-
-        /* Curve decorations using uploaded images */
-        .curve-top {
-            position: absolute;
-            top: -20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 130px;
-            z-index: 6;
-        }
-
-        .curve-top img {
-            width: 100%;
-            height: auto;
-        }
-
-        .curve-bottom {
-            position: absolute;
-            bottom: -20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 130px;
-            z-index: 6;
-        }
-
-        .curve-bottom img {
-            width: 100%;
-            height: auto;
-        }
-
-        /* Floating animation for badge */
-        @keyframes float {
-
-            0%,
-            100% {
-                transform: translateY(-50%) translateY(0);
-            }
-
-            50% {
-                transform: translateY(-50%) translateY(-10px);
-            }
-        }
-
-        .badge-circle {
-            animation: float 4s ease-in-out infinite;
-        }
-
-        /* ===================== ANIMATIONS ===================== */
-        .fade-in-up {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: all 0.8s ease;
-        }
-
-        .fade-in-up.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .fade-in-left {
-            opacity: 0;
-            transform: translateX(-30px);
-            transition: all 0.8s ease;
-        }
-
-        .fade-in-left.visible {
-            opacity: 1;
-            transform: translateX(0);
-        }
-
-        .fade-in-right {
-            opacity: 0;
-            transform: translateX(30px);
-            transition: all 0.8s ease;
-        }
-
-        .fade-in-right.visible {
-            opacity: 1;
-            /* transform: translateX(0); */
-        }
-
-        .scale-in {
-            opacity: 0;
-            transform: scale(0.8);
-            transition: all 0.8s ease;
-        }
-
-        .scale-in.visible {
-            opacity: 1;
-            transform: scale(1);
-        }
-
-        /* ===================== RESPONSIVE ===================== */
-        @media (max-width: 1199px) {
-            .hero-title {
-                font-size: 42px;
-            }
-
-            .badge-circle {
-                width: 150px;
-                height: 150px;
-                left: 0;
-            }
-
-            .badge-count {
-                font-size: 22px;
-            }
-        }
-
-        @media (max-width: 991px) {
-            .hero-section {
-                flex-direction: column;
-                padding: 40px 0;
-            }
-
-            .hero-content {
-                text-align: center;
-                padding: 40px 20px;
-            }
-
-            .hero-description {
-                max-width: 100%;
-                margin-left: auto;
-                margin-right: auto;
-            }
-
-            .hero-image-area {
-                min-height: 400px;
-                width: 100%;
-            }
-
-            .gold-ellipse-bg {
-                right: -20%;
-                width: 100%;
-            }
-
-            .woman-image {
-                max-height: 400px;
-            }
-
-            .badge-circle {
-                left: 15%;
-                top: 30%;
-            }
-        }
-
-        @media (max-width: 767px) {
-            .top-bar .contact-info {
-                justify-content: center;
-                margin-bottom: 10px;
-            }
-
-            .top-bar .social-icons {
-                justify-content: center;
-            }
-
-            .hero-title {
-                font-size: 32px;
-            }
-
-            .hero-subtitle {
-                font-size: 14px;
-            }
-
-            .hero-description {
-                font-size: 15px;
-            }
-
-            .badge-circle {
-                width: 120px;
-                height: 120px;
-                left: 10%;
-            }
-
-            .badge-count {
-                font-size: 18px;
-            }
-
-            .badge-label {
-                font-size: 12px;
-            }
-
-            .badge-book-icon {
-                width: 35px;
-                height: 30px;
-            }
-
-            .curve-top,
-            .curve-bottom {
-                width: 100px;
-            }
-        }
-
-        @media (max-width: 575px) {
-            .hero-title {
-                font-size: 26px;
-            }
-
-            .btn-cta {
-                padding: 12px 24px;
-                font-size: 14px;
-            }
-
-            .woman-image {
-                max-height: 320px;
-            }
-        }
-
-
-
-
-
-        /* ===================== ABOUT HERO SECTION ===================== */
-        .about-hero {
-            position: relative;
-            height: 75vh;
-            width: 100%;
-            background-color: #FFFFFF;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-        }
-
-        /* Subtle pattern overlay on background */
-        .about-hero::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-image:
-                radial-gradient(circle at 15% 20%, rgba(200, 149, 109, 0.04) 0%, transparent 40%),
-                radial-gradient(circle at 85% 80%, rgba(200, 149, 109, 0.03) 0%, transparent 40%);
-            z-index: 1;
-            pointer-events: none;
-        }
-
-        .about-hero .container,
-        .about-hero .row {
-            height: 100%;
-        }
-
-        /* Bottom wave decoration using uploaded image */
-        .about-hero .bottom-wave {
-            position: absolute;
-            left: 0;
-            bottom: 0;
-
-            width: 100%;
-
-            z-index: 99;
-
-            pointer-events: none;
-        }
-
-        .bottom-wave img {
-            display: block;
-            width: 100%;
-        }
-
-        /* ===================== LEFT CONTENT ===================== */
-        .about-content {
-            position: relative;
-            z-index: 20;
-            height: 100%;
-
-            display: flex;
-            align-items: center;
-        }
-
+    :root {
+        --navy: #0c1e2e;
+        --navy-light: #142a3e;
+        --gold: #ad7a49;
+        --gold-dark: #b07d55;
+        --gold-light: #d4a77d;
+        --cream: #e8e4df;
+        --text-light: #a0b0c0;
+        --white: #ffffff;
+        --text-dark: #1e293b;
+        --text-muted: #64748b;
+        --light-bg: #f8fafc;
+    }
+
+    /* ===================== MAIN NAVBAR ===================== */
+    .main-navbar {
+        background-color: var(--cream) !important;
+        padding: 12px 0;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .main-navbar .navbar-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0;
+    }
+
+    .logo-icon {
+        width: 48px;
+        height: 48px;
+        background: var(--white);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        flex-shrink: 0;
+    }
+
+    .logo-icon svg {
+        width: 34px;
+        height: 34px;
+    }
+
+    .logo-text {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.2;
+    }
+
+    .logo-text .main-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--navy);
+        letter-spacing: 0.3px;
+    }
+
+    .logo-text .sub-title {
+        font-size: 8.5px;
+        color: #888;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        font-weight: 500;
+    }
+
+    .main-navbar .nav-link {
+        color: var(--navy) !important;
+        font-size: 15px;
+        font-weight: 500;
+        padding: 8px 20px !important;
+        transition: color 0.3s ease;
+        position: relative;
+    }
+
+    .main-navbar .nav-link:hover,
+    .main-navbar .nav-link.active {
+        color: var(--gold) !important;
+    }
+
+    .main-navbar .nav-link.active::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 20px;
+        right: 20px;
+        height: 2px;
+        background-color: var(--gold);
+        border-radius: 1px;
+    }
+
+    .auth-buttons {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .btn-sign-in {
+        color: var(--navy) !important;
+        font-size: 15px;
+        font-weight: 500;
+        padding: 8px 20px;
+        text-decoration: none;
+        transition: color 0.3s ease;
+        background: none;
+        border: none;
+    }
+
+    .btn-sign-in:hover {
+        color: var(--gold) !important;
+    }
+
+    .btn-sign-up {
+        background-color: var(--gold);
+        color: var(--white) !important;
+        font-size: 15px;
+        font-weight: 500;
+        padding: 10px 26px;
+        border-radius: 6px;
+        text-decoration: none;
+        border: none;
+        transition: all 0.3s ease;
+    }
+
+    .btn-sign-up:hover {
+        background-color: var(--gold-dark);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(200, 149, 109, 0.3);
+    }
+
+    .navbar-toggler {
+        border: none;
+        padding: 8px;
+    }
+
+    .navbar-toggler:focus {
+        box-shadow: none;
+    }
+
+    .navbar-toggler-icon {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%2812, 30, 46, 1%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    }
+
+    /* ===================== ABOUT HERO SECTION ===================== */
+    .about-hero {
+        position: relative;
+        min-height: 75vh;
+        width: 100%;
+        background-color: #FFFFFF;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+    }
+
+    .about-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image:
+            radial-gradient(circle at 15% 20%, rgba(173, 122, 73, 0.04) 0%, transparent 40%),
+            radial-gradient(circle at 85% 80%, rgba(173, 122, 73, 0.03) 0%, transparent 40%);
+        z-index: 1;
+        pointer-events: none;
+    }
+
+    .about-hero .container,
+    .about-hero .row {
+        height: 100%;
+    }
+
+    .about-hero .bottom-wave {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        z-index: 99;
+        pointer-events: none;
+    }
+
+    .bottom-wave img {
+        display: block;
+        width: 100%;
+    }
+
+    .about-content {
+        position: relative;
+        z-index: 20;
+        height: 100%;
+        display: flex;
+        align-items: center;
+    }
+
+    .about-title {
+        font-size: clamp(2.5rem, 3.5vw, 4.2rem);
+        font-weight: 700;
+        line-height: 1.08;
+        letter-spacing: 0.1px;
+        color: #0E1A2B;
+        text-transform: uppercase;
+        margin: 0;
+        max-width: 700px;
+    }
+
+    .about-title span {
+        display: block;
+    }
+
+    .about-title span:first-child {
+        white-space: nowrap;
+    }
+
+    .about-title span:last-child {
+        margin-top: 10px;
+        color: var(--gold);
+    }
+
+    .about-image-area {
+        position: relative;
+        height: 100%;
+        display: flex;
+        justify-content: flex-end;
+        align-items: flex-end;
+    }
+
+    .about-woman {
+        position: relative;
+        z-index: 4;
+        max-height: 580px;
+        width: auto;
+        object-fit: contain;
+        filter: drop-shadow(0 15px 40px rgba(0, 0, 0, 0.12));
+    }
+
+    /* ===================== STAT CARDS ===================== */
+    .stat-card {
+        position: absolute;
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 16px;
+        padding: 16px 24px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        z-index: 10;
+        transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+        background: rgba(255, 255, 255, 0.95);
+        transform: translateY(-6px);
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
+    }
+
+    .stat-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .stat-icon svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    .stat-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .stat-count {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-dark);
+        line-height: 1.2;
+    }
+
+    .stat-label {
+        font-size: 12px;
+        color: var(--text-muted);
+        font-weight: 400;
+        line-height: 1.3;
+    }
+
+    .stat-card-learners {
+        top: 25%;
+        left: -5%;
+    }
+
+    .stat-card-learners .stat-icon {
+        background-color: #f4e6d9;
+    }
+
+    .stat-card-learners .stat-icon svg {
+        fill: var(--gold);
+    }
+
+    .stat-card-courses {
+        top: 42%;
+        right: 5%;
+    }
+
+    .stat-card-courses .stat-icon {
+        background-color: #fce8e8;
+    }
+
+    .stat-card-courses .stat-icon svg {
+        fill: #e74c3c;
+    }
+
+    .stat-card-enrollments {
+        bottom: 18%;
+        left: 0%;
+    }
+
+    .stat-card-enrollments .stat-icon {
+        background-color: #e8e0f4;
+    }
+
+    .stat-card-enrollments .stat-icon svg {
+        fill: #8e44ad;
+    }
+
+    /* Floating animation for stat cards */
+    @keyframes floatCard {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-8px); }
+    }
+
+    .stat-card {
+        animation: floatCard 4s ease-in-out infinite;
+    }
+
+    .stat-card-learners { animation-delay: 0s; }
+    .stat-card-courses { animation-delay: 1.3s; }
+    .stat-card-enrollments { animation-delay: 2.6s; }
+
+    /* ===================== EMPOWERING SECTION (LIGHT) ===================== */
+    .empowering-section {
+        background-color: var(--light-bg);
+        padding: 165px 0 135px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .empowering-section .gold-shape {
+        position: absolute;
+        right: -33px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 479px;
+        height: auto;
+        z-index: 1;
+        pointer-events: none;
+        opacity: 0.9;
+    }
+
+    .empowering-section .gold-shape img {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+
+    .empowering-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        max-width: 758px;
+        margin: 0 auto;
+    }
+
+    .empowering-title {
+        font-size: 45px;
+        font-weight: 600;
+        margin-bottom: 24px;
+        line-height: 1.2;
+        color: var(--navy);
+    }
+
+    .empowering-text {
+        font-size: 19px;
+        color: var(--text-muted);
+        line-height: 1.7;
+        font-weight: 400;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    /* ===================== ABOUT US CONTENT SECTION ===================== */
+    .about-content-section {
+        background-color: var(--white);
+        padding: 120px 0;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Gold decorative shape on left side */
+    .about-content-section .gold-shape-left {
+        position: absolute;
+        left: -80px;
+        top: 50%;
+        transform: translateY(-50%) rotate(180deg);
+        width: 400px;
+        height: auto;
+        z-index: 1;
+        pointer-events: none;
+        opacity: 0.7;
+    }
+
+    .about-content-section .gold-shape-left img {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+
+    /* Gold decorative shape on right side */
+    .about-content-section .gold-shape-right {
+        position: absolute;
+        right: -80px;
+        bottom: -100px;
+        width: 350px;
+        height: auto;
+        z-index: 1;
+        pointer-events: none;
+        opacity: 0.5;
+    }
+
+    .about-content-section .gold-shape-right img {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+
+    .about-content-section .section-label {
+        color: var(--gold);    
+        font-size: 28px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 12px;
+    }
+
+    .about-content-section .section-title {
+        font-size: 42px;
+        font-weight: 700;
+        color: var(--navy);
+        margin-bottom: 24px;
+        line-height: 1.2;
+        position: relative;
+        z-index: 2;
+    }
+
+    .about-content-section .section-description {
+        font-size: 17px;
+        color: #4a5568;
+        line-height: 1.8;
+        margin-bottom: 20px;
+        position: relative;
+        z-index: 2;
+    }
+
+    /* ===================== IMAGE COLLAGE ===================== */
+    .image-collage-wrapper {
+        position: relative;
+        z-index: 2;
+    }
+
+    .image-collage {
+        position: relative;
+        width: 100%;
+        max-width: 560px;
+        height: 470px;
+    }
+
+    .collage-img {
+        position: absolute;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        transition: transform 0.4s ease, box-shadow 0.4s ease;
+    }
+
+    .collage-img:hover {
+        transform: translateY(-5px) scale(1.02);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.18);
+        z-index: 10;
+    }
+
+    .collage-img img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .collage-img-top {
+        top: 0;
+        left: 15px;
+        width: 255px;
+        height: 180px;
+        z-index: 3;
+    }
+
+    .collage-img-middle {
+        top: 25px;
+        right: 20px;
+        width: 245px;
+        height: 380px;
+        z-index: 2;
+    }
+
+    .collage-img-bottom {
+        bottom: 15px;
+        left: 55px;
+        width: 220px;
+        height: 160px;
+        z-index: 4;
+    }
+
+    .collage-watermark {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        z-index: 1;
+        opacity: 0.08;
+        user-select: none;
+        pointer-events: none;
+    }
+
+    .wm-logo img {
+        width: 70px;
+        height: 70px;
+        object-fit: contain;
+    }
+
+    .wm-text {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .wm-text .main-title {
+        font-size: 24px;
+        font-weight: 800;
+        line-height: 1;
+        color: #0c1e2e;
+        letter-spacing: 1px;
+    }
+
+    .wm-text .sub-title {
+        margin-top: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #0c1e2e;
+        letter-spacing: 0.5px;
+    }
+
+    /* ===================== MISSION & VALUES SECTION ===================== */
+    .mission-section {
+        background-color: var(--navy);
+        padding: 100px 0;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .mission-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(173, 122, 73, 0.1) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .mission-block {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 40px 30px;
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+
+    .mission-block:hover {
+        background: rgba(255, 255, 255, 0.08);
+        transform: translateY(-5px);
+    }
+
+    .mission-block .mission-icon {
+        width: 56px;
+        height: 56px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(173, 122, 73, 0.15);
+        border-radius: 12px;
+    }
+
+    .mission-block .mission-icon svg {
+        width: 28px;
+        height: 28px;
+        stroke: var(--gold);
+        fill: none;
+        stroke-width: 1.5;
+    }
+
+    .mission-block h3 {
+        color: var(--white);
+        font-size: 20px;
+        font-weight: 600;
+        margin-bottom: 12px;
+    }
+
+    .mission-block p {
+        color: #94a3b8;
+        font-size: 15px;
+        line-height: 1.7;
+        margin-bottom: 0;
+    }
+
+    /* ===================== WHY IT MATTERS SECTION ===================== */
+    .why-matters-section {
+        background-color: var(--light-bg);
+        padding: 100px 0;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Subtle gold shape in background */
+    .why-matters-section .gold-shape-subtle {
+        position: absolute;
+        left: -60px;
+        bottom: -80px;
+        width: 300px;
+        height: auto;
+        z-index: 1;
+        pointer-events: none;
+        opacity: 0.3;
+    }
+
+    .why-matters-section .gold-shape-subtle img {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+
+    .why-matters-section .section-label {
+        color: var(--gold);
+        font-size: 14px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 12px;
+        position: relative;
+        z-index: 2;
+    }
+
+    .why-matters-section .section-title {
+        font-size: 38px;
+        font-weight: 700;
+        color: var(--navy);
+        margin-bottom: 24px;
+        line-height: 1.2;
+        position: relative;
+        z-index: 2;
+    }
+
+    .why-matters-section .section-description {
+        font-size: 17px;
+        color: #4a5568;
+        line-height: 1.8;
+        position: relative;
+        z-index: 2;
+    }
+
+    .case-card {
+        background: var(--white);
+        border-radius: 12px;
+        padding: 30px;
+        height: 100%;
+        border-left: 4px solid var(--gold);
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        position: relative;
+        z-index: 2;
+    }
+
+    .case-card:hover {
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+        transform: translateY(-3px);
+    }
+
+    .case-card .case-icon {
+        font-size: 32px;
+        margin-bottom: 16px;
+    }
+
+    .case-card h4 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--navy);
+        margin-bottom: 8px;
+    }
+
+    .case-card .case-amount {
+        font-size: 24px;
+        font-weight: 700;
+        color: #e74c3c;
+        margin-bottom: 12px;
+    }
+
+    .case-card p {
+        color: #64748b;
+        font-size: 14px;
+        line-height: 1.7;
+        margin-bottom: 0;
+    }
+
+    /* ===================== CTA SECTION (ORIGINAL STYLING) ===================== */
+    .section-padding-02 {
+        padding: 80px 0 40px;
+    }
+
+    .call-to-action-wrapper {
+        background-color: var(--navy);
+        border-radius: 12px;
+        padding: 60px 50px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .call-to-action-wrapper::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(173, 122, 73, 0.15) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .section-title.shape-02 .sub-title {
+        font-size: 18px;
+        font-weight: 500;
+        color: var(--gold);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 50px;
+    }
+
+    .section-title.shape-02 .sub-title span {
+        color: var(--white);
+    }
+
+    .section-title.shape-02 .main-title {
+        font-size: 36px;
+        font-weight: 700;
+        color: var(--white);
+        line-height: 1.3;
+    }
+
+    .section-title.shape-02 .main-title span {
+        color: var(--gold);
+    }
+
+    .call-to-action-btn {
+        display: flex;
+        gap: 16px;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+    }
+
+    .call-to-action-btn .btn {
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: inline-block;
+    }
+
+    .btn-hover-primary {
+        color: #ffffff !important;
+        border: 1px solid #ad7a49;
+        background: transparent;
+    }
+
+    .btn-hover-primary:hover {
+        background-color: #ad7a49;
+        color: #ffffff !important;
+        transform: translateY(-2px);
+    }
+
+    .btn-hover-dark {
+        background-color: #ad7a49;
+        color: #ffffff !important;
+        border: 1px solid #ad7a49;
+    }
+
+    .btn-hover-dark:hover {
+        background-color: #b07d55;
+        border-color: #b07d55;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(173, 122, 73, 0.3);
+    }
+
+    /* ===================== ANIMATIONS ===================== */
+    .fade-in-up {
+        opacity: 0;
+        transform: translateY(40px);
+        transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .fade-in-up.visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .fade-in-left {
+        opacity: 0;
+        transform: translateX(-40px);
+        transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .fade-in-left.visible {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    .fade-in-right {
+        opacity: 0;
+        transform: translateX(40px);
+        transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .fade-in-right.visible {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    .scale-in {
+        opacity: 0;
+        transform: scale(0.85);
+        transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .scale-in.visible {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    .delay-1 { transition-delay: 0.1s; }
+    .delay-2 { transition-delay: 0.2s; }
+    .delay-3 { transition-delay: 0.3s; }
+    .delay-4 { transition-delay: 0.4s; }
+    .delay-5 { transition-delay: 0.5s; }
+    .delay-6 { transition-delay: 0.6s; }
+
+    /* ===================== ABOUT SECTION DYNAMIC CONTENT ===================== */
+    .about-text-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .about-section-text {
+        color: var(--text-dark);
+        line-height: 1.8;
+        font-size: 0.95rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .about-section-text p {
+        margin-bottom: 1rem;
+    }
+
+    .about-section-text p:last-child {
+        margin-bottom: 0;
+    }
+
+    .about-section-text ul,
+    .about-section-text ol {
+        margin-bottom: 1rem;
+        padding-left: 1.5rem;
+    }
+
+    .about-section-text li {
+        margin-bottom: 0.5rem;
+    }
+
+    .about-section-text h3,
+    .about-section-text h4,
+    .about-section-text h5 {
+        margin-top: 1.5rem;
+        margin-bottom: 0.75rem;
+        color: var(--navy);
+        font-weight: 600;
+    }
+
+    .about-section-text img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        margin: 1rem 0;
+    }
+
+    .about-section-text a {
+        color: var(--gold);
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .about-section-text a:hover {
+        color: var(--gold-dark);
+        text-decoration: underline;
+    }
+
+    .about-section-text blockquote {
+        border-left: 4px solid var(--gold);
+        padding-left: 1rem;
+        margin: 1rem 0;
+        color: #64748b;
+        font-style: italic;
+        background: var(--light-bg);
+        padding: 1rem 1.5rem;
+        border-radius: 0 8px 8px 0;
+    }
+
+    .about-section-text strong {
+        font-weight: 600;
+        color: var(--text-dark);
+    }
+
+    /* ===================== RESPONSIVE ===================== */
+    @media (max-width: 1199px) {
         .about-title {
-            font-size: clamp(3rem, 3vw, 4.6rem);
-            font-weight: 700;
-            line-height: 1.08;
-            letter-spacing: 0.1px;
-            color: #0E1A2B;
-            text-transform: uppercase;
-            margin: 0;
-            max-width: 700px;
+            font-size: 46px;
         }
 
-        .about-title span {
-            display: block;
-        }
-
-        .about-title span:first-child {
-            white-space: nowrap;
-            /* Keeps "WELCOME TO A WORLD OF" on one line */
-        }
-
-        .about-title span:last-child {
-            margin-top: 10px;
-        }
-
-        /* ===================== RIGHT IMAGE AREA ===================== */
-        .about-image-area {
-            position: relative;
-            height: 100%;
-            display: flex;
-            justify-content: flex-end;
-            align-items: flex-end;
-        }
-
-        /* Woman image */
         .about-woman {
-            position: relative;
-            z-index: 4;
-            max-height: 580px;
-            width: auto;
-            object-fit: contain;
-            filter: drop-shadow(0 15px 40px rgba(0, 0, 0, 0.12));
-        }
-
-        /* ===================== FLOATING STAT CARDS ===================== */
-        .stat-card {
-            position: absolute;
-            background: rgba(255, 255, 255, 0.55);
-            /* 75% opacity */
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-
-            border: 1px solid rgba(255, 255, 255, 0.3);
-
-            border-radius: 16px;
-            padding: 16px 50px;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-            z-index: 10;
-
-            transition: all 0.3s ease;
-        }
-
-        .stat-card:hover {
-            background: rgba(255, 255, 255, 0.9);
-            transform: translateY(-6px);
-            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
-        }
-
-        .stat-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .stat-icon svg {
-            width: 24px;
-            height: 24px;
-        }
-
-        .stat-info {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .stat-count {
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--text-dark);
-            line-height: 1.2;
-        }
-
-        .stat-label {
-            font-size: 13px;
-            color: var(--text-muted);
-            font-weight: 400;
-            line-height: 1.3;
-        }
-
-        /* Card 1 - Learners (top-left area) */
-        .stat-card-learners {
-            top: 25%;
-            left: -5%;
-        }
-
-        .stat-card-learners .stat-icon {
-            background-color: #f4e6d9;
-        }
-
-        .stat-card-learners .stat-icon svg {
-            fill: var(--gold);
-        }
-
-        /* Card 2 - Courses (right side, middle) */
-        .stat-card-courses {
-            top: 42%;
-            right: 5%;
-        }
-
-        .stat-card-courses .stat-icon {
-            background-color: #fce8e8;
-        }
-
-        .stat-card-courses .stat-icon svg {
-            fill: #e74c3c;
-        }
-
-        /* Card 3 - Enrollments (bottom-left area) */
-        .stat-card-enrollments {
-            bottom: 18%;
-            left: 0%;
-        }
-
-        .stat-card-enrollments .stat-icon {
-            background-color: #e8e0f4;
-        }
-
-        .stat-card-enrollments .stat-icon svg {
-            fill: #8e44ad;
-        }
-
-        /* ===================== ANIMATIONS ===================== */
-        .fade-in-up {
-            opacity: 0;
-            transform: translateY(40px);
-            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .fade-in-up.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .fade-in-left {
-            opacity: 0;
-            transform: translateX(-40px);
-            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .fade-in-left.visible {
-            opacity: 1;
-            transform: translateX(0);
-        }
-
-        .fade-in-right {
-            opacity: 0;
-            transform: translateX(40px);
-            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .fade-in-right.visible {
-            opacity: 1;
-            transform: translateX(0);
-        }
-
-        .scale-in {
-            opacity: 0;
-            transform: scale(0.8);
-            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .scale-in.visible {
-            opacity: 1;
-            transform: scale(1);
-        }
-
-        .delay-1 {
-            transition-delay: 0.1s;
-        }
-
-        .delay-2 {
-            transition-delay: 0.2s;
-        }
-
-        .delay-3 {
-            transition-delay: 0.3s;
-        }
-
-        .delay-4 {
-            transition-delay: 0.4s;
-        }
-
-        .delay-5 {
-            transition-delay: 0.5s;
-        }
-
-        .delay-6 {
-            transition-delay: 0.6s;
-        }
-
-        /* Floating animation for stat cards */
-        @keyframes floatCard {
-
-            0%,
-            100% {
-                transform: translateY(0);
-            }
-
-            50% {
-                transform: translateY(-8px);
-            }
-        }
-
-        .stat-card {
-            animation: floatCard 4s ease-in-out infinite;
+            max-height: 480px;
         }
 
         .stat-card-learners {
-            animation-delay: 0s;
+            top: 12%;
+            left: -2%;
         }
 
         .stat-card-courses {
-            animation-delay: 1.3s;
+            top: 38%;
+            right: 2%;
         }
 
         .stat-card-enrollments {
-            animation-delay: 2.6s;
+            bottom: 15%;
+            left: -2%;
         }
 
-        /* ===================== RESPONSIVE ===================== */
-        @media (max-width: 1199px) {
-            .about-title {
-                font-size: 46px;
-            }
-
-            .about-woman {
-                max-height: 480px;
-            }
-
-            .stat-card-learners {
-                top: 12%;
-                left: -2%;
-            }
-
-            .stat-card-courses {
-                top: 38%;
-                right: 2%;
-            }
-
-            .stat-card-enrollments {
-                bottom: 15%;
-                left: -2%;
-            }
+        .image-collage {
+            max-width: 480px;
+            height: 440px;
         }
 
-        @media (max-width: 991px) {
-            .about-hero {
-                min-height: auto;
-                padding: 60px 0 0;
-            }
-
-            .about-content {
-                text-align: center;
-                padding: 40px 20px;
-            }
-
-            .about-title {
-                font-size: 38px;
-            }
-
-            .about-image-area {
-                min-height: 400px;
-                justify-content: center;
-                padding-bottom: 80px;
-            }
-
-            .about-woman {
-                max-height: 400px;
-            }
-
-            .stat-card-learners {
-                top: 5%;
-                left: 5%;
-            }
-
-            .stat-card-courses {
-                top: 30%;
-                right: 5%;
-            }
-
-            .stat-card-enrollments {
-                bottom: 10%;
-                left: 5%;
-            }
+        .collage-img-top {
+            width: 230px;
+            height: 160px;
         }
 
-        @media (max-width: 767px) {
-            .about-title {
-                font-size: 30px;
-            }
-
-            .about-woman {
-                max-height: 370px;
-            }
-
-            .stat-card {
-                padding: 12px 16px;
-                gap: 10px;
-            }
-
-            .stat-icon {
-                width: 36px;
-                height: 36px;
-            }
-
-            .stat-icon svg {
-                width: 20px;
-                height: 20px;
-            }
-
-            .stat-count {
-                font-size: 16px;
-            }
-
-            .stat-label {
-                font-size: 11px;
-            }
-
-            .stat-card-learners,
-            .stat-card-courses,
-            .stat-card-enrollments {
-                left: 5%;
-                right: auto;
-            }
-
-            .stat-card-learners {
-                top: 5%;
-            }
-
-            .stat-card-courses {
-                top: 35%;
-            }
-
-            .stat-card-enrollments {
-                bottom: 8%;
-            }
+        .collage-img-middle {
+            width: 210px;
+            height: 340px;
         }
 
-        @media (max-width: 575px) {
-            .about-title {
-                font-size: 22px;
-            }
-
-            .stat-card {
-                padding: 10px 14px;
-            }
-
-            .stat-count {
-                font-size: 14px;
-            }
-
-            .stat-label {
-                font-size: 10px;
-            }
-
-            .stat-card-enrollments {
-                bottom: 22%;
-            }
+        .collage-img-bottom {
+            width: 190px;
+            height: 140px;
         }
 
-
-
-
-        /* ===================== EMPOWERING SECTION (LIGHT) ===================== */
-        .empowering-section {
-            background-color: var(--light-bg);
-            padding: 165px 0 135px;
-            position: relative;
-            overflow: hidden;
+        .about-content-section .section-title {
+            font-size: 36px;
         }
 
-        /* Gold decorative shape on right side */
         .empowering-section .gold-shape {
-            position: absolute;
-            right: -33px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 479px;
-            height: auto;
-            z-index: 1;
-            pointer-events: none;
-            opacity: 0.9;
-        }
-
-        .empowering-section .gold-shape img {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-
-        .empowering-content {
-            position: relative;
-            z-index: 2;
-            text-align: center;
-            max-width: 758px;
-            margin: 0 auto;
+            width: 300px;
+            right: -60px;
         }
 
         .empowering-title {
-            font-size: 45px;
-            font-weight: 600;
-            margin-bottom: 24px;
-            line-height: 1.2;
+            font-size: 36px;
+        }
+
+        .about-content-section .gold-shape-left {
+            width: 280px;
+            left: -60px;
+        }
+
+        .about-content-section .gold-shape-right {
+            width: 250px;
+            right: -60px;
+        }
+
+        .section-title.shape-02 .main-title {
+            font-size: 30px;
+        }
+    }
+
+    @media (max-width: 991px) {
+        .about-hero {
+            min-height: auto;
+            padding: 60px 0 0;
+        }
+
+        .about-content {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .about-title {
+            font-size: 38px;
+        }
+
+        .about-image-area {
+            min-height: 400px;
+            justify-content: center;
+            padding-bottom: 80px;
+        }
+
+        .about-woman {
+            max-height: 400px;
+        }
+
+        .stat-card-learners {
+            top: 5%;
+            left: 5%;
+        }
+
+        .stat-card-courses {
+            top: 30%;
+            right: 5%;
+        }
+
+        .stat-card-enrollments {
+            bottom: 10%;
+            left: 5%;
+        }
+
+        .empowering-section {
+            padding: 80px 0 100px;
+        }
+
+        .empowering-section .gold-shape {
+            width: 250px;
+            right: -50px;
+            opacity: 0.6;
+        }
+
+        .empowering-title {
+            font-size: 32px;
+        }
+
+        .about-content-section {
+            padding: 80px 0;
+        }
+
+        .about-content-section .gold-shape-left {
+            width: 200px;
+            left: -50px;
+            opacity: 0.4;
+        }
+
+        .about-content-section .gold-shape-right {
+            width: 180px;
+            right: -50px;
+            opacity: 0.3;
+        }
+
+        .image-collage {
+            max-width: 500px;
+            height: 420px;
+            margin-bottom: 50px;
+        }
+
+        .about-content-section .section-title {
+            font-size: 32px;
+        }
+
+        .mission-section {
+            padding: 80px 0;
+        }
+
+        .why-matters-section {
+            padding: 80px 0;
+        }
+
+        .why-matters-section .section-title {
+            font-size: 32px;
+        }
+
+        .why-matters-section .gold-shape-subtle {
+            width: 200px;
+            left: -40px;
+            bottom: -60px;
+        }
+
+        .call-to-action-wrapper {
+            padding: 40px 30px;
+        }
+
+        .call-to-action-btn {
+            justify-content: flex-start;
+            margin-top: 20px;
+        }
+
+        .section-title.shape-02 .main-title {
+            font-size: 28px;
+        }
+    }
+
+    @media (max-width: 767px) {
+        .about-title {
+            font-size: 30px;
+        }
+
+        .about-woman {
+            max-height: 370px;
+        }
+
+        .stat-card {
+            padding: 12px 16px;
+            gap: 10px;
+        }
+
+        .stat-icon {
+            width: 36px;
+            height: 36px;
+        }
+
+        .stat-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .stat-count {
+            font-size: 14px;
+        }
+
+        .stat-label {
+            font-size: 10px;
+        }
+
+        .stat-card-learners,
+        .stat-card-courses,
+        .stat-card-enrollments {
+            left: 5%;
+            right: auto;
+        }
+
+        .stat-card-learners { top: 5%; }
+        .stat-card-courses { top: 35%; }
+        .stat-card-enrollments { bottom: 8%; }
+
+        .empowering-section {
+            padding: 60px 0 80px;
+        }
+
+        .empowering-section .gold-shape {
+            width: 200px;
+            right: -40px;
+            opacity: 0.4;
+        }
+
+        .empowering-title {
+            font-size: 28px;
         }
 
         .empowering-text {
-            font-size: 19px;
-            color: var(--text-muted);
-            line-height: 1.7;
-            font-weight: 400;
-            max-width: 600px;
-            margin: 0 auto;
+            font-size: 15px;
         }
 
-        /* ===================== DRIVING SECTION (DARK) ===================== */
-        .driving-section {
-            background-color: var(--navy);
-            padding: 100px 0 80px;
-            position: relative;
-            overflow: hidden;
+        .about-content-section {
+            padding: 60px 0;
         }
 
-        .driving-content {
-            text-align: center;
-            max-width: 800px;
-            margin: 0 auto 25px;
-        }
-
-        .driving-title {
-            font-size: 40px;
-            font-weight: 700;
-            color: #FFFFFF;
-            margin-bottom: 20px;
-            line-height: 1.2;
-        }
-
-        .driving-text {
-            font-size: 18px;
-            color: #FFFFFF;
-            line-height: 1.7;
-            font-weight: 400;
-            max-width: 700px;
-            margin: 0 auto;
-        }
-
-        /* ===================== FEATURE CARDS ===================== */
-        .feature-card {
-            text-align: center;
-            padding: 20px 15px;
-            transition: transform 0.3s ease;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .feature-icon {
-            width: 56px;
-            height: 56px;
-            margin: 0 auto 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #FFFFFF;
-        }
-
-        .feature-icon svg {
-            width: 100%;
-            height: 100%;
-            stroke: var(--white);
-            stroke-width: 1.5;
-            fill: none;
-        }
-
-        .feature-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--white);
-            margin-bottom: 12px;
-        }
-
-        .feature-desc {
-            font-size: 14px;
-            color: #8899aa;
-            line-height: 1.6;
-            font-weight: 400;
-            max-width: 260px;
-            margin: 0 auto;
-        }
-
-        /* ===================== ANIMATIONS ===================== */
-        .fade-in-up {
-            opacity: 0;
-            transform: translateY(40px);
-            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .fade-in-up.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .fade-in-left {
-            opacity: 0;
-            transform: translateX(-40px);
-            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .fade-in-left.visible {
-            opacity: 1;
-            transform: translateX(0);
-        }
-
-        .fade-in-right {
-            opacity: 0;
-            transform: translateX(40px);
-            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .fade-in-right.visible {
-            opacity: 1;
-            transform: translateX(0);
-        }
-
-        .scale-in {
-            opacity: 0;
-            transform: scale(0.85);
-            transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .scale-in.visible {
-            opacity: 1;
-            transform: scale(1);
-        }
-
-        .delay-1 {
-            transition-delay: 0.1s;
-        }
-
-        .delay-2 {
-            transition-delay: 0.2s;
-        }
-
-        .delay-3 {
-            transition-delay: 0.3s;
-        }
-
-        .delay-4 {
-            transition-delay: 0.4s;
-        }
-
-        .delay-5 {
-            transition-delay: 0.5s;
-        }
-
-        /* ===================== RESPONSIVE ===================== */
-        @media (max-width: 1199px) {
-            .empowering-section .gold-shape {
-                width: 300px;
-                right: -60px;
-            }
-
-            .empowering-title {
-                font-size: 36px;
-            }
-
-            .driving-title {
-                font-size: 32px;
-            }
-        }
-
-        @media (max-width: 991px) {
-            .empowering-section {
-                padding: 80px 0 100px;
-            }
-
-            .empowering-section .gold-shape {
-                width: 250px;
-                right: -50px;
-                opacity: 0.6;
-            }
-
-            .empowering-title {
-                font-size: 32px;
-            }
-
-            .driving-section {
-                padding: 50px 0 50px;
-            }
-
-            .driving-title {
-                font-size: 28px;
-            }
-
-            .feature-card {
-                margin-bottom: 30px;
-            }
-        }
-
-        @media (max-width: 767px) {
-            .empowering-section {
-                padding: 60px 0 80px;
-            }
-
-            .empowering-section .gold-shape {
-                width: 200px;
-                right: -40px;
-                opacity: 0.4;
-            }
-
-            .empowering-title {
-                font-size: 28px;
-            }
-
-            .empowering-text {
-                font-size: 15px;
-            }
-
-            .driving-section {
-                padding: 60px 0 40px;
-            }
-
-            .driving-title {
-                font-size: 24px;
-            }
-
-            .driving-text {
-                font-size: 14px;
-            }
-
-            .feature-icon {
-                width: 48px;
-                height: 48px;
-            }
-
-            .feature-title {
-                font-size: 16px;
-            }
-
-            .feature-desc {
-                font-size: 13px;
-            }
-        }
-
-        @media (max-width: 575px) {
-            .empowering-title {
-                font-size: 24px;
-            }
-
-            .driving-title {
-                font-size: 22px;
-            }
-
-            .empowering-section .gold-shape {
-                display: none;
-            }
-        }
-
-
-
-        /* ===================== ABOUT US SECTION ===================== */
-        .about-us-section {
-            background-color: var(--light-bg);
-            padding: 100px 0;
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* Image Collage Layout */
-        .image-collage{
-            position:relative;
-            width:100%;
-            max-width:560px;
-            height:470px;
-        }
-
-        .collage-img {
-            position: absolute;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-            transition: transform 0.4s ease, box-shadow 0.4s ease;
-        }
-
-        .collage-img:hover {
-            transform: translateY(-5px) scale(1.02);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.18);
-            z-index: 10;
-        }
-
-        .collage-img img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        /* Top-left image: Team hands */
-        .collage-img-top{
-            top:0;
-            left:15px;
-            width:255px;
-            height:180px;
-            z-index:3;
-        }
-
-        /* Middle-right image: Office workspace (tall) */
-        .collage-img-middle{
-            top:25px;
-            right:20px;
-            width:245px;
-            height:380px;
-            z-index:2;
-        }
-
-        /* Bottom-left image: Team Work text */
-        .collage-img-bottom{
-            bottom:15px;
-            left:55px;
-            width:220px;
-            height:160px;
-            z-index:4;
-        }
-
-        /* Watermark logo in center */
-        .collage-watermark{
-    position:absolute;
-    top:50%;
-    left:50%;
-    transform:translate(-50%,-50%);
-
-    display:flex;
-    align-items:center;
-    gap:15px;
-
-    z-index:1;
-
-    opacity:.08;
-
-    user-select:none;
-    pointer-events:none;
-}
-
-.wm-logo img{
-    width:70px;
-    height:70px;
-    object-fit:contain;
-}
-
-.wm-text{
-    display:flex;
-    flex-direction:column;
-}
-
-.wm-text .main-title{
-    font-size:24px;
-    font-weight:800;
-    line-height:1;
-    color:#0c1e2e;
-    letter-spacing:1px;
-}
-
-.wm-text .sub-title{
-    margin-top:6px;
-    font-size:12px;
-    font-weight:600;
-    color:#0c1e2e;
-    letter-spacing:.5px;
-}
-
-        /* Right side text content */
-        .about-text-content {
-            padding-left: 20px;
-        }
-
-        .about-section-title {
-            font-size: 48px;
-            font-weight: 700;
-            color: var(--text-dark);
-            margin-bottom: 28px;
-            line-height: 1.2;
-        }
-
-        .about-section-text {
-            font-size: 16px;
-            color: #4a5568;
-            line-height: 1.8;
-            font-weight: 400;
-            text-align: justify;
-        }
-
-        /* Animation classes for this section */
-        .about-us-section .fade-in-right {
-            opacity: 0;
-            transform: translateX(40px);
-            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .about-us-section .fade-in-right.visible {
-            opacity: 1;
-            transform: translateX(0);
-        }
-
-        .about-us-section .scale-in {
-            opacity: 0;
-            transform: scale(0.9);
-            transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .about-us-section .scale-in.visible {
-            opacity: 1;
-            transform: scale(1);
-        }
-
-        .about-us-section .delay-1 { transition-delay: 0.1s; }
-        .about-us-section .delay-2 { transition-delay: 0.3s; }
-        .about-us-section .delay-3 { transition-delay: 0.5s; }
-
-        /* ===================== RESPONSIVE FOR ABOUT US ===================== */
-        @media (max-width: 1199px) {
-            .image-collage {
-                max-width: 480px;
-                height: 440px;
-            }
-
-            .collage-img-top {
-                width: 230px;
-                height: 160px;
-            }
-
-            .collage-img-middle {
-                width: 210px;
-                height: 340px;
-            }
-
-            .collage-img-bottom {
-                width: 190px;
-                height: 140px;
-            }
-
-            .about-section-title {
-                font-size: 40px;
-            }
-        }
-
-        @media (max-width: 991px) {
-            .about-us-section {
-                padding: 80px 0;
-            }
-
-            .image-collage {
-                max-width: 500px;
-                height: 420px;
-                margin-bottom: 50px;
-            }
-
-            .about-text-content {
-                padding-left: 0;
-                text-align: center;
-            }
-
-            .about-section-title {
-                font-size: 36px;
-            }
-
-            .about-section-text {
-                text-align: left;
-                font-size: 15px;
-            }
-        }
-
-        @media (max-width: 767px) {
-            .about-us-section {
-                padding: 60px 0;
-            }
-
-            .image-collage {
-                max-width: 100%;
-                height: 380px;
-            }
-
-            .collage-img-top {
-                width: 200px;
-                height: 140px;
-            }
-
-            .collage-img-middle {
-                width: 180px;
-                height: 300px;
-                top: 30px;
-            }
-
-            .collage-img-bottom {
-                width: 170px;
-                height: 120px;
-                left: 10px;
-            }
-
-            .collage-watermark {
-                width: 140px;
-                height: 140px;
-            }
-
-            .collage-watermark svg {
-                width: 80px;
-                height: 80px;
-            }
-
-            .about-section-title {
-                font-size: 32px;
-            }
-
-            .about-section-text {
-                font-size: 14px;
-                line-height: 1.7;
-            }
-        }
-
-        @media (max-width: 575px) {
-            .image-collage {
-                height: 320px;
-            }
-
-            .collage-img-top {
-                width: 170px;
-                height: 120px;
-            }
-
-            .collage-img-middle {
-                width: 150px;
-                height: 260px;
-                top: 20px;
-            }
-
-            .collage-img-bottom {
-                width: 150px;
-                height: 100px;
-                left: 5px;
-            }
-
-            .about-section-title {
-                font-size: 28px;
-            }
-        }
-    </style>
-
-
-    <style>
-
-        /* About Section Dynamic Content Styles */
-        .about-section-text {
-            color: var(--text-dark, #1e293b);
-            line-height: 1.8;
-            font-size: 0.95rem;
-        }
-
-        /* Style TinyMCE content properly */
-        .about-section-text p {
-            margin-bottom: 1rem;
-        }
-
-        .about-section-text p:last-child {
-            margin-bottom: 0;
-        }
-
-        .about-section-text ul,
-        .about-section-text ol {
-            margin-bottom: 1rem;
-            padding-left: 1.5rem;
-        }
-
-        .about-section-text li {
-            margin-bottom: 0.5rem;
-        }
-
-        .about-section-text h3,
-        .about-section-text h4,
-        .about-section-text h5 {
-            margin-top: 1.5rem;
-            margin-bottom: 0.75rem;
-            color: var(--primary-color, #3b82f6);
-            font-weight: 600;
-        }
-
-        .about-section-text img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 8px;
-            margin: 1rem 0;
-        }
-
-        .about-section-text a {
-            color: #3b82f6;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-
-        .about-section-text a:hover {
-            color: #2563eb;
-            text-decoration: underline;
-        }
-
-        .about-section-text blockquote {
-            border-left: 4px solid var(--primary-color, #3b82f6);
-            padding-left: 1rem;
-            margin: 1rem 0;
-            color: #64748b;
-            font-style: italic;
-            background: #f8fafc;
-            padding: 1rem 1.5rem;
-            border-radius: 0 8px 8px 0;
-        }
-
-        .about-section-text strong {
-            font-weight: 600;
-            color: var(--text-dark, #1e293b);
-        }
-
-        .about-section-text em {
-            font-style: italic;
-        }
-
-        /* Truncated content styles */
-        .truncated-content {
-            max-height: 200px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .truncated-content::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 60px;
-            background: linear-gradient(transparent, white);
-        }
-
-        .truncated-content.expanded {
-            max-height: none;
-        }
-
-        .truncated-content.expanded::after {
+        .about-content-section .gold-shape-left,
+        .about-content-section .gold-shape-right {
             display: none;
         }
 
-        .read-more-btn {
-            color: var(--primary-color, #3b82f6);
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 0.9rem;
-            padding: 0.5rem 0;
-            border: none;
-            background: none;
-            cursor: pointer;
-            transition: all 0.3s ease;
+        .image-collage {
+            max-width: 100%;
+            height: 380px;
         }
 
-        .read-more-btn:hover {
-            color: #2563eb;
+        .collage-img-top {
+            width: 200px;
+            height: 140px;
         }
 
-        .read-more-btn i {
-            transition: transform 0.3s ease;
-            margin-left: 4px;
+        .collage-img-middle {
+            width: 180px;
+            height: 300px;
+            top: 30px;
         }
 
-        .read-more-btn.expanded i {
-            transform: rotate(180deg);
+        .collage-img-bottom {
+            width: 170px;
+            height: 120px;
+            left: 10px;
         }
-    </style>
 
+        .about-content-section .section-title {
+            font-size: 28px;
+        }
+
+        .mission-block {
+            margin-bottom: 20px;
+        }
+
+        .why-matters-section .section-title {
+            font-size: 26px;
+        }
+
+        .case-card {
+            margin-bottom: 20px;
+        }
+
+        .section-title.shape-02 .main-title {
+            font-size: 24px;
+        }
+
+        .section-title.shape-02 .sub-title {
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        .call-to-action-btn .btn {
+            padding: 12px 24px;
+            font-size: 14px;
+        }
+    }
+
+    @media (max-width: 575px) {
+        .about-title {
+            font-size: 22px;
+        }
+
+        .stat-card {
+            padding: 10px 14px;
+        }
+
+        .stat-count {
+            font-size: 12px;
+        }
+
+        .stat-label {
+            font-size: 9px;
+        }
+
+        .stat-card-enrollments {
+            bottom: 22%;
+        }
+
+        .empowering-title {
+            font-size: 24px;
+        }
+
+        .empowering-section .gold-shape {
+            display: none;
+        }
+
+        .image-collage {
+            height: 320px;
+        }
+
+        .collage-img-top {
+            width: 170px;
+            height: 120px;
+        }
+
+        .collage-img-middle {
+            width: 150px;
+            height: 260px;
+            top: 20px;
+        }
+
+        .collage-img-bottom {
+            width: 150px;
+            height: 100px;
+            left: 5px;
+        }
+
+        .about-content-section .section-title {
+            font-size: 24px;
+        }
+
+        .call-to-action-wrapper {
+            padding: 30px 20px;
+        }
+
+        .section-title.shape-02 .main-title {
+            font-size: 22px;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
 
 <!-- ===================== ABOUT HERO SECTION ===================== -->
-        <section class="about-hero">
-            <div class="container-lg">
-                <div class="row align-items-center">
-                    <!-- Left Content -->
-                    <div class="col-lg-6">
-                        <div class="about-content">
-                            <h3 class="about-title fade-in-left delay-1">
-                                <span>WELCOME TO A WORLD OF</span>
-                                <span>ENDLESS POSSIBILITIES</span>
-                            </h3>
-                        </div>
-                    </div>
-
-                    <!-- Right Image Area -->
-                    <div class="col-lg-6">
-                        <div class="about-image-area">
-                            <!-- Stat Card: Learners -->
-                            <div class="stat-card stat-card-learners scale-in delay-3">
-                                <div class="stat-icon">
-                                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path
-                                            d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
-                                    </svg>
-                                </div>
-                                <div class="stat-info">
-                                    <span class="stat-count">250k+</span>
-                                    <span class="stat-label">Learners</span>
-                                </div>
-                            </div>
-
-                            <!-- Stat Card: Courses -->
-                            <div class="stat-card stat-card-courses scale-in delay-4">
-                                <div class="stat-icon">
-                                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path
-                                            d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.41.21.75-.19.75-.65V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z" />
-                                    </svg>
-                                </div>
-                                <div class="stat-info">
-                                    <span class="stat-count">750k+</span>
-                                    <span class="stat-label">Courses</span>
-                                </div>
-                            </div>
-
-                            <!-- Stat Card: Enrollments -->
-                            <div class="stat-card stat-card-enrollments scale-in delay-5">
-                                <div class="stat-icon">
-                                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path
-                                            d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" />
-                                    </svg>
-                                </div>
-                                <div class="stat-info">
-                                    <span class="stat-count">500k+</span>
-                                    <span class="stat-label">Course enrollments</span>
-                                </div>
-                            </div>
-
-                            <!-- Woman Image -->
-                            <img src="{% static 'images/about-woman.png' %}" alt="Professional educator"
-                                class="about-woman fade-in-right delay-2">
-                        </div>
-                    </div>
+<section class="about-hero">
+    <div class="container-lg">
+        <div class="row align-items-center">
+            <!-- Left Content -->
+            <div class="col-lg-6">
+                <div class="about-content">
+                    <h1 class="about-title fade-in-left delay-1">
+                        <span>From Governance</span>
+                        <span>to Education</span>
+                    </h1>
                 </div>
             </div>
 
-            <!-- Bottom Wave Decoration -->
-            <div class="bottom-wave">
-                <img src="{% static 'images/about-bg.png' %}" alt="">
-            </div>
-        </section>
-
-        <!-- ===================== EMPOWERING SECTION ===================== -->
-        <section class="empowering-section">
-            <!-- Gold Decorative Shape -->
-            <div class="gold-shape">
-                <img src="{% static 'images/empowering-shape.png' %}" alt="">
-            </div>
-
-            <div class="container">
-                <div class="row">
-                    <div class="col-12">
-                        <div class="empowering-content">
-                            <h2 class="empowering-title fade-in-up delay-1">Empowering Learners Everywhere</h2>
-                            <p class="empowering-text fade-in-up delay-2">
-                                With A Wide Range Of Industry-Relevant Courses, We Help Individuals And Organizations
-                                Build Skills, Embrace Innovation, And Succeed In A Rapidly Evolving World.
-                            </p>
+            <!-- Right Image Area -->
+            <div class="col-lg-6">
+                <div class="about-image-area">
+                    <!-- Stat Card: Industry Leaders -->
+                    <div class="stat-card stat-card-learners scale-in delay-3">
+                        <div class="stat-icon">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-count">Trusted by Industry Leaders</span>
+                            <span class="stat-label">Global technology organisations</span>
                         </div>
                     </div>
+
+                    <!-- Stat Card: Practical Courses -->
+                    <div class="stat-card stat-card-courses scale-in delay-4">
+                        <div class="stat-icon">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.41.21.75-.19.75-.65V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-count">Practical, Assessed Courses</span>
+                            <span class="stat-label">Introductory to specialist pathways</span>
+                        </div>
+                    </div>
+
+                    <!-- Stat Card: Certified Learning -->
+                    <div class="stat-card stat-card-enrollments scale-in delay-5">
+                        <div class="stat-icon">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-count">Certified Learning</span>
+                            <span class="stat-label">Consistent standards across programmes</span>
+                        </div>
+                    </div>
+
+                    <!-- Woman Image -->
+                    <img src="{% static 'images/about-woman.png' %}" alt="Professional educator" class="about-woman fade-in-right delay-2">
                 </div>
-            </div>
-        </section>
-
-        <!-- ===================== DRIVING SECTION ===================== -->
-        <section class="driving-section">
-            <div class="container">
-                <div class="row">
-                    <div class="col-12">
-                        <div class="driving-content">
-                            <h2 class="driving-title fade-in-up delay-1">Driving Global Growth Through Learning</h2>
-                            <p class="driving-text fade-in-up delay-2">
-                                Our Diverse Range Of Courses Equips People And Organizations With The Knowledge And
-                                Skills Needed To Embrace Change And Achieve Their Goals.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Feature Cards -->
-                <div class="row justify-content-center">
-                    <!-- Global Reach -->
-                    <div class="col-6 col-lg-3">
-                        <div class="feature-card fade-in-up delay-3">
-                            <div class="feature-icon">
-                                <svg viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg">
-                                    <circle cx="28" cy="28" r="26" stroke="currentColor" stroke-width="1.5"
-                                        fill="none" />
-                                    <ellipse cx="28" cy="28" rx="12" ry="26" stroke="currentColor" stroke-width="1.5"
-                                        fill="none" />
-                                    <line x1="2" y1="28" x2="54" y2="28" stroke="currentColor" stroke-width="1.5" />
-                                    <path d="M6 16 Q28 20 50 16" stroke="currentColor" stroke-width="1.5" fill="none" />
-                                    <path d="M6 40 Q28 36 50 40" stroke="currentColor" stroke-width="1.5" fill="none" />
-                                </svg>
-                            </div>
-                            <h3 class="feature-title">Global Reach</h3>
-                            <p class="feature-desc">Connecting learners and organizations worldwide through accessible,
-                                high quality education.</p>
-                        </div>
-                    </div>
-
-                    <!-- Career Growth -->
-                    <div class="col-6 col-lg-3">
-                        <div class="feature-card fade-in-up delay-4">
-                            <div class="feature-icon">
-                                <svg viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg">
-                                    <polyline points="8,44 20,32 28,38 40,24 48,16" stroke="currentColor"
-                                        stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
-                                    <polyline points="38,16 48,16 48,26" stroke="currentColor" stroke-width="1.5"
-                                        fill="none" stroke-linecap="round" stroke-linejoin="round" />
-                                    <line x1="8" y1="8" x2="8" y2="48" stroke="currentColor" stroke-width="1.5" />
-                                    <line x1="4" y1="44" x2="52" y2="44" stroke="currentColor" stroke-width="1.5" />
-                                </svg>
-                            </div>
-                            <h3 class="feature-title">Career Growth</h3>
-                            <p class="feature-desc">Helping individuals advance their careers, achieve goals, and unlock
-                                new opportunities.</p>
-                        </div>
-                    </div>
-
-                    <!-- Organizational Success -->
-                    <div class="col-6 col-lg-3">
-                        <div class="feature-card fade-in-up delay-5">
-                            <div class="feature-icon">
-                                <svg viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg">
-                                    <rect x="12" y="8" width="32" height="40" rx="3" stroke="currentColor"
-                                        stroke-width="1.5" fill="none" />
-                                    <line x1="20" y1="18" x2="36" y2="18" stroke="currentColor" stroke-width="1.5" />
-                                    <line x1="20" y1="26" x2="36" y2="26" stroke="currentColor" stroke-width="1.5" />
-                                    <line x1="20" y1="34" x2="30" y2="34" stroke="currentColor" stroke-width="1.5" />
-                                    <circle cx="42" cy="42" r="8" stroke="currentColor" stroke-width="1.5"
-                                        fill="none" />
-                                    <polyline points="39,42 41,44 45,40" stroke="currentColor" stroke-width="1.5"
-                                        fill="none" stroke-linecap="round" stroke-linejoin="round" />
-                                </svg>
-                            </div>
-                            <h3 class="feature-title">Organizational Success</h3>
-                            <p class="feature-desc">Empowering businesses and teams with the knowledge needed to
-                                innovate, adapt, and thrive.</p>
-                        </div>
-                    </div>
-
-                    <!-- Future-Ready Skills -->
-                    <div class="col-6 col-lg-3">
-                        <div class="feature-card fade-in-up delay-6">
-                            <div class="feature-icon">
-                                <svg viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M28 4 L32 16 L44 16 L34 24 L38 36 L28 28 L18 36 L22 24 L12 16 L24 16 Z"
-                                        stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round" />
-                                    <line x1="28" y1="36" x2="28" y2="48" stroke="currentColor" stroke-width="1.5" />
-                                    <line x1="22" y1="48" x2="34" y2="48" stroke="currentColor" stroke-width="1.5" />
-                                </svg>
-                            </div>
-                            <h3 class="feature-title">Future-Ready Skills</h3>
-                            <p class="feature-desc">Providing training in the latest technologies, trends, and industry
-                                demanded competencies.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-
-        <!-- ===================== ABOUT US SECTION ===================== -->
-        <section class="about-us-section">
-            <div class="container">
-                <div class="row align-items-center">
-                    <!-- Left: Image Collage -->
-                    <div class="col-lg-6">
-                        <div class="image-collage">
-                            <!-- Top-left image: Team hands -->
-                            <div class="collage-img collage-img-top">
-                                <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400&h=300&fit=crop" alt="Team collaboration">
-                            </div>
-
-                            <!-- Middle-right image: Office workspace -->
-                            <div class="collage-img collage-img-middle">
-                                <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&h=500&fit=crop" alt="Modern office">
-                            </div>
-
-                            <!-- Bottom-left image: Team Work text -->
-                            <div class="collage-img collage-img-bottom">
-                                <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=350&h=250&fit=crop" alt="Team work">
-                            </div>
-
-                            <!-- Watermark logo -->
-                            <div class="collage-watermark">
-                                <div class="wm-logo">
-                                    <img src="images/logo.png" alt="Logo">
-                                </div>
-
-                                <div class="wm-text">
-                                    <span class="main-title">AI GOVERNANCE</span>
-                                    <span class="main-title">ACADEMY</span>
-                                    <span class="sub-title">
-                                        AI Ethics &amp; Compliance Platform
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Right: Text Content -->
-                    <div class="col-lg-6">
-                        <div class="about-text-content">
-                            <h2 class="about-section-title fade-in-right delay-1">About Us</h2>
-                            
-                            {% if about_us %}
-                                <!-- Dynamic content from admin settings -->
-                                <div class="about-section-text fade-in-right delay-2" id="aboutContent">
-                                    {% if about_us|length > 600 %}
-                                        <!-- Show truncated version initially -->
-                                        <div id="aboutTruncated">
-                                            {{ about_us|truncatechars_html:600|safe }}
-                                        </div>
-                                        <!-- Full content (hidden) -->
-                                        <div id="aboutFull" style="display: none;">
-                                            {{ about_us|safe }}
-                                        </div>
-                                        
-                                        <div class="text-center mt-3">
-                                            <button class="read-more-btn" onclick="toggleAboutContent()" id="readMoreBtn">
-                                                <span id="btnText">Read More</span>
-                                                <i class="fas fa-chevron-down" id="btnIcon"></i>
-                                            </button>
-                                        </div>
-                                    {% else %}
-                                        {{ about_us|safe }}
-                                    {% endif %}
-                                </div>
-                            {% else %}
-                                <!-- Default content -->
-                                <p class="about-section-text fade-in-right delay-2">
-                                    <strong>Empowering professionals with cutting-edge knowledge in AI governance, cybersecurity, and ethical technology practices.</strong>
-                                </p>
-                                <p class="about-section-text fade-in-right delay-2">
-                                    At AI Governance Academy, we are at the forefront of shaping the future of responsible artificial intelligence. We provide comprehensive education and training programs designed for today's digital leaders.
-                                </p>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-
-        <!-- Call to Action Start -->
-        <div class="section section-padding-02 mb-5">
-            <div class="container">
-
-                <!-- Call to Action Wrapper Start -->
-                <div class="call-to-action-wrapper">
-
-                    <div class="row align-items-center">
-                        <div class="col-md-6">
-
-                            <!-- Section Title Start -->
-                            <div class="section-title shape-02">
-                                <h5 class="sub-title" style="margin-bottom: 50px;">Join The  <span>Community.</span>
-                                </h5>
-                                <h2 class="main-title">Connect, Learn and Grow <span>Together.</span>
-                                </h2>
-                            </div>
-                            <!-- Section Title End -->
-
-                        </div>
-                        <div class="col-md-6">
-                            <div class="call-to-action-btn">
-                                <a style="color:#ffffff;border: 1px solid #ad7a49;"
-                                    class="btn btn-hover-primary" href="contact.html">Meet our Team</a>
-                                <a style="background-color: #ad7a49; color:#ffffff;border: 1px solid #ad7a49;"
-                                    class="btn btn-hover-dark" href="contact.html">Start a Course</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Call to Action Wrapper End -->
-
             </div>
         </div>
-        <!-- Call to Action End -->
-{% endblock %}
+    </div>
 
+    <!-- Bottom Wave Decoration -->
+    <div class="bottom-wave">
+        <img src="{% static 'images/about-bg.png' %}" alt="">
+    </div>
+</section>
+
+<!-- ===================== EMPOWERING SECTION ===================== -->
+<section class="empowering-section">
+    <!-- Gold Decorative Shape -->
+    <div class="gold-shape">
+        <img src="{% static 'images/empowering-shape.png' %}" alt="">
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="empowering-content">
+                    <h2 class="empowering-title fade-in-up delay-1">Empowering Learners Everywhere</h2>
+                    <p class="empowering-text fade-in-up delay-2">
+                        With A Wide Range Of Industry-Relevant Courses, We Help Individuals And Organizations
+                        Build Skills, Embrace Innovation, And Succeed In A Rapidly Evolving World.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===================== ABOUT US CONTENT SECTION ===================== -->
+<section class="about-content-section">
+    <!-- Gold Decorative Shape Left -->
+    <div class="gold-shape-left">
+        <img src="{% static 'images/empowering-shape.png' %}" alt="">
+    </div>
+
+    <!-- Gold Decorative Shape Right (subtle) -->
+    <div class="gold-shape-right">
+        <img src="{% static 'images/empowering-shape.png' %}" alt="">
+    </div>
+
+    <div class="container">
+        <div class="row align-items-center">
+            <!-- Left: Image Collage -->
+            <div class="col-lg-6">
+                <div class="image-collage-wrapper scale-in delay-1">
+                    <div class="image-collage">
+                        <!-- Top-left image -->
+                        <div class="collage-img collage-img-top">
+                            <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400&h=300&fit=crop" alt="Team collaboration">
+                        </div>
+
+                        <!-- Middle-right image -->
+                        <div class="collage-img collage-img-middle">
+                            <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&h=500&fit=crop" alt="Modern office">
+                        </div>
+
+                        <!-- Bottom-left image -->
+                        <div class="collage-img collage-img-bottom">
+                            <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=350&h=250&fit=crop" alt="Team work">
+                        </div>
+
+                        <!-- Watermark logo -->
+                        <div class="collage-watermark">
+                            <div class="wm-logo">
+                                <img src="{% static 'images/logo.png' %}" alt="Logo">
+                            </div>
+                            <div class="wm-text">
+                                <span class="main-title">AI GOVERNANCE</span>
+                                <span class="main-title">ACADEMY</span>
+                                <span class="sub-title">AI Ethics & Compliance Platform</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Text Content -->
+            <div class="col-lg-6">
+                <div class="about-text-content fade-in-right delay-2">
+                    <span class="section-label">About Us</span>
+                    
+                    {% if about_us %}
+                        <!-- Dynamic content from admin settings -->
+                        <div class="about-section-text mt-2" id="aboutContent">
+                            {{ about_us|safe }}
+                        </div>
+                    {% else %}
+                        <!-- Default content -->
+                        <p class="section-description mt-2">
+                            Artificial intelligence is transforming the workplace at extraordinary speed. Organisations are adopting AI to work more efficiently, make better decisions and unlock new opportunities. But while investment in AI has accelerated, investment in understanding how to use it responsibly hasn't always kept pace.
+                        </p>
+                        <p class="section-description">
+                            The consequences are becoming increasingly clear. Organisations around the world are facing regulatory action, financial penalties and reputational damage because AI has been implemented without the right governance, oversight or expertise.
+                        </p>
+                        <p class="section-description">
+                            <strong>AI Governance Academy was born from that challenge.</strong>
+                        </p>
+                        <p class="section-description">
+                            We began by helping organisations strengthen their AI governance, reduce regulatory risk and build more responsible ways of developing and deploying AI. Through that work, we recognised something important: responsible AI isn't created by policies alone. It's created by the people making decisions every day.
+                        </p>
+                        <p class="section-description">
+                            That's why we launched AI Governance Academy. Knowing how to use AI is rapidly becoming an expected workplace skill. Knowing how to use it responsibly is what will distinguish tomorrow's professionals.
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===================== MISSION & VALUES SECTION ===================== -->
+<section class="mission-section">
+    <div class="container">
+        <div class="row">
+            <!-- Our Mission -->
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="mission-block fade-in-up delay-1">
+                    <div class="mission-icon">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 6v6l4 2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h3>{{ mission_title|default:"Our Mission" }}</h3>
+                    <p>{{ mission_description|default:"To make AI ethics and governance education practical, accessible and relevant, equipping individuals to build rewarding careers while helping organisations adopt AI with greater confidence, accountability and trust." }}</p>
+                </div>
+            </div>
+
+            <!-- Why Learn With Us -->
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="mission-block fade-in-up delay-2">
+                    <div class="mission-icon">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                            <path d="M6 12v5c0 2 3 3 6 3s6-1 6-3v-5"/>
+                        </svg>
+                    </div>
+                    <h3>{{ why_learn_title|default:"Why Learn With Us" }}</h3>
+                    <p>{{ why_learn_description|default:"Our courses are built on experience working with world-leading technology organisations developing AI at the forefront of the industry. Every programme is developed with input from experienced educators, software engineers and specialists in ethics, law and governance." }}</p>
+                </div>
+            </div>
+
+            <!-- Our Vision -->
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="mission-block fade-in-up delay-3">
+                    <div class="mission-icon">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </div>
+                    <h3>{{ vision_title|default:"Our Vision" }}</h3>
+                    <p>{{ vision_description|default:"We believe responsible AI should become a core professional skill, not specialist knowledge reserved for a small number of experts. The future won't belong simply to the people who know how to use AI — it will belong to the people who know how to use it responsibly." }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Why Learn With Us Features (Optional - displayed if available) -->
+        {% if why_learn_feature_1_title and why_learn_feature_2_title and why_learn_feature_3_title %}
+        <div class="row mt-4">
+            <div class="col-12 text-center mb-4">
+                <h3 style="color: var(--white); font-size: 24px; font-weight: 600;">What Sets Us Apart</h3>
+            </div>
+            <!-- Feature 1 -->
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="mission-block fade-in-up delay-4" style="text-align: center;">
+                    <div style="font-size: 40px; margin-bottom: 12px;">{{ why_learn_feature_1_icon|default:"🏢" }}</div>
+                    <h4 style="color: var(--white); font-size: 18px; margin-bottom: 8px;">{{ why_learn_feature_1_title|default:"Industry Expertise" }}</h4>
+                    <p style="color: #94a3b8; font-size: 14px; line-height: 1.6;">{{ why_learn_feature_1_desc|default:"Learn from professionals working at the forefront of AI governance and ethics." }}</p>
+                </div>
+            </div>
+            <!-- Feature 2 -->
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="mission-block fade-in-up delay-5" style="text-align: center;">
+                    <div style="font-size: 40px; margin-bottom: 12px;">{{ why_learn_feature_2_icon|default:"💡" }}</div>
+                    <h4 style="color: var(--white); font-size: 18px; margin-bottom: 8px;">{{ why_learn_feature_2_title|default:"Practical Learning" }}</h4>
+                    <p style="color: #94a3b8; font-size: 14px; line-height: 1.6;">{{ why_learn_feature_2_desc|default:"Real-world case studies and hands-on exercises that prepare you for actual challenges." }}</p>
+                </div>
+            </div>
+            <!-- Feature 3 -->
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="mission-block fade-in-up delay-6" style="text-align: center;">
+                    <div style="font-size: 40px; margin-bottom: 12px;">{{ why_learn_feature_3_icon|default:"👨‍🏫" }}</div>
+                    <h4 style="color: var(--white); font-size: 18px; margin-bottom: 8px;">{{ why_learn_feature_3_title|default:"Expert Instructors" }}</h4>
+                    <p style="color: #94a3b8; font-size: 14px; line-height: 1.6;">{{ why_learn_feature_3_desc|default:"Courses developed with input from experienced educators, software engineers and specialists." }}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- ===================== WHY IT MATTERS SECTION ===================== -->
+<section class="why-matters-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center">
+                <span class="section-label fade-in-up delay-1">Why It Matters</span>
+                <h2 class="section-title fade-in-up delay-2">Learning That Goes Beyond Compliance</h2>
+                <p class="section-description text-center mb-5 fade-in-up delay-3" style="max-width: 800px; margin-left: auto; margin-right: auto;">
+                    Responsible AI is about far more than understanding legislation or avoiding regulatory action. It's about recognising risks before they become problems, asking better questions, making informed decisions and building trust in the technology you use every day.
+                </p>
+            </div>
+        </div>
+
+        <!-- Case Studies -->
+        <div class="row">
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="case-card fade-in-up delay-4">
+                    <div class="case-icon">📊</div>
+                    <h4>Meta — GDPR Violation</h4>
+                    <div class="case-amount">€1.2 Billion Fine</div>
+                    <p>Unlawful transfers of personal data resulted in one of the largest GDPR fines in history, demonstrating the severe consequences of inadequate data governance.</p>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="case-card fade-in-up delay-5">
+                    <div class="case-icon">🤖</div>
+                    <h4>OpenAI — Data Protection</h4>
+                    <div class="case-amount">Regulatory Action</div>
+                    <p>Italy's data protection authority fined OpenAI over the collection and processing of personal data by ChatGPT, highlighting privacy concerns in AI systems.</p>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="case-card fade-in-up delay-6">
+                    <div class="case-icon">👥</div>
+                    <h4>iTutorGroup — AI Bias</h4>
+                    <div class="case-amount">Settlement Reached</div>
+                    <p>AI-powered recruitment software automatically rejected older job applicants, leading to an EEOC settlement and underscoring the risks of algorithmic bias.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-5">
+            <div class="col-12 text-center fade-in-up delay-4">
+                <p class="section-description" style="max-width: 800px; margin-left: auto; margin-right: auto; font-weight: 600; font-size: 19px; position: relative; z-index: 2;">
+                    Different organisations. Different technologies. <strong style="color: var(--gold);">The same lesson.</strong>
+                </p>
+                <p class="section-description mt-3" style="max-width: 800px; margin-left: auto; margin-right: auto; position: relative; z-index: 2;">
+                    Responsible AI starts long before a regulator becomes involved. It starts with the decisions people make every day. That's why organisations increasingly need professionals who understand not only how AI works, but how it should be used responsibly.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===================== CTA SECTION ===================== -->
+<div class="section section-padding-02 mb-5">
+    <div class="container">
+        <!-- Call to Action Wrapper Start -->
+        <div class="call-to-action-wrapper">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <!-- Section Title Start -->
+                    <div class="section-title shape-02">
+                        <h5 class="sub-title" style="margin-bottom: 50px;">Join The <span>Community.</span></h5>
+                        <h2 class="main-title">Connect, Learn and Grow <span>Together.</span></h2>
+                    </div>
+                    <!-- Section Title End -->
+                </div>
+                <div class="col-md-6">
+                    <div class="call-to-action-btn">
+                        <a style="color:#ffffff;border: 1px solid #ad7a49;" class="btn btn-hover-primary" href="{% url "frontend:contact" %}">Meet our Team</a>
+                        <a style="background-color: #ad7a49; color:#ffffff;border: 1px solid #ad7a49;" class="btn btn-hover-dark" href="{% url "frontend:courses" %}">Start a Course</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Call to Action Wrapper End -->
+    </div>
+</div>
+
+{% endblock %}
 
 {% block extra_js %}
 <script>
-    function toggleAboutContent() {
-        const truncated = document.getElementById('aboutTruncated');
-        const full = document.getElementById('aboutFull');
-        const btnText = document.getElementById('btnText');
-        const btnIcon = document.getElementById('btnIcon');
-        const btn = document.getElementById('readMoreBtn');
-        
-        if (truncated && full) {
-            if (full.style.display === 'none') {
-                // Show full content
-                truncated.style.display = 'none';
-                full.style.display = 'block';
-                btnText.textContent = 'Show Less';
-                btnIcon.className = 'fas fa-chevron-up';
-                btn.classList.add('expanded');
-            } else {
-                // Show truncated
-                truncated.style.display = 'block';
-                full.style.display = 'none';
-                btnText.textContent = 'Read More';
-                btnIcon.className = 'fas fa-chevron-down';
-                btn.classList.remove('expanded');
-                
-                // Scroll back to top
-                document.getElementById('aboutContent').scrollIntoView({ 
-                    behavior: 'smooth', 
-                    block: 'start' 
-                });
-            }
-        }
-    }
+    // Intersection Observer for scroll animations
+    document.addEventListener('DOMContentLoaded', function() {
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        // Observe all animated elements
+        document.querySelectorAll('.fade-in-up, .fade-in-left, .fade-in-right, .scale-in').forEach(el => {
+            observer.observe(el);
+        });
+    });
 </script>
 {% endblock %}

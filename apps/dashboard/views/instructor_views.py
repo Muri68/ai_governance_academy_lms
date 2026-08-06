@@ -216,13 +216,32 @@ def instructor_profile(request):
         user.last_name = request.POST.get('last_name', user.last_name)
         user.bio = request.POST.get('bio', user.bio)
         
+        # Handle profile picture
         if 'profile_picture' in request.FILES:
             user.profile_picture = request.FILES['profile_picture']
         user.save()
         
+        # Update instructor profile fields
         profile.department = request.POST.get('department', profile.department)
         profile.expertise = request.POST.get('expertise', profile.expertise)
         profile.qualification = request.POST.get('qualification', profile.qualification)
+        profile.years_of_experience = request.POST.get('years_of_experience', profile.years_of_experience)
+        
+        # Handle signature upload
+        if 'signature' in request.FILES:
+            # Delete old signature if exists
+            if profile.signature:
+                profile.signature.delete(save=False)
+            profile.signature = request.FILES['signature']
+            messages.success(request, 'Signature uploaded successfully!')
+        
+        # Handle signature removal
+        if request.POST.get('remove_signature') == 'true':
+            if profile.signature:
+                profile.signature.delete(save=False)
+                profile.signature = None
+                messages.info(request, 'Signature removed.')
+        
         profile.save()
         
         messages.success(request, 'Profile updated successfully!')

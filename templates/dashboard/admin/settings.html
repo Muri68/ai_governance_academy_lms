@@ -8,167 +8,45 @@
 <script src="{% static 'tinymce/tinymce.min.js' %}"></script>
 <style>
     .settings-layout { display: grid; grid-template-columns: 220px 1fr; gap: 24px; align-items: start; }
-    
-    .settings-sidebar { 
-        background: var(--bg-card); 
-        border-radius: 14px; 
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04); 
-        border: 1px solid var(--border-color); 
-        overflow: hidden;
-        position: sticky;
-        top: 20px;
-    }
-    
-    .settings-sidebar-header {
-        padding: 18px 20px;
-        font-weight: 600;
-        font-size: 0.9rem;
-        color: var(--text-dark);
-        border-bottom: 1px solid var(--border-color);
-        background: #f8fafc;
-    }
-    
+    .settings-sidebar { background: var(--bg-card); border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border: 1px solid var(--border-color); overflow: hidden; position: sticky; top: 20px; }
+    .settings-sidebar-header { padding: 18px 20px; font-weight: 600; font-size: 0.9rem; color: var(--text-dark); border-bottom: 1px solid var(--border-color); background: #f8fafc; }
     .settings-nav { list-style: none; padding: 8px; margin: 0; }
-    
-    .settings-nav li a {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 10px 14px;
-        border-radius: 8px;
-        color: var(--text-muted);
-        text-decoration: none;
-        font-size: 0.82rem;
-        font-weight: 500;
-        transition: all 0.2s;
-    }
-    
+    .settings-nav li a { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 8px; color: var(--text-muted); text-decoration: none; font-size: 0.82rem; font-weight: 500; transition: all 0.2s; }
     .settings-nav li a:hover { background: #f8fafc; color: var(--text-dark); }
     .settings-nav li a.active { background: #3b82f6; color: white; }
     .settings-nav li a i { width: 18px; text-align: center; font-size: 0.85rem; }
-    
-    .settings-content {
-        background: var(--bg-card);
-        border-radius: 14px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        border: 1px solid var(--border-color);
-        padding: 28px;
-    }
-    
-    .settings-content h2 {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: var(--text-dark);
-        margin-bottom: 8px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    
-    .settings-content .description {
-        font-size: 0.82rem;
-        color: var(--text-muted);
-        margin-bottom: 24px;
-        padding-bottom: 20px;
-        border-bottom: 1px solid var(--border-color);
-    }
-    
+    .settings-content { background: var(--bg-card); border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border: 1px solid var(--border-color); padding: 28px; }
+    .settings-content h2 { font-size: 1.1rem; font-weight: 700; color: var(--text-dark); margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+    .settings-content .description { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color); }
     .form-group { margin-bottom: 20px; }
     .form-group label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--text-dark); margin-bottom: 6px; }
     .form-group .help-text { font-size: 0.72rem; color: var(--text-muted); margin-bottom: 6px; }
-    .form-control { 
-        width: 100%; 
-        padding: 10px 14px; 
-        border: 1.5px solid var(--border-color); 
-        border-radius: 10px; 
-        font-size: 0.85rem; 
-        font-family: 'Poppins', sans-serif; 
-        color: var(--text-dark); 
-        background: #f8fafc; 
-        outline: none; 
-        transition: all 0.2s; 
-    }
+    .form-control { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border-color); border-radius: 10px; font-size: 0.85rem; font-family: 'Poppins', sans-serif; color: var(--text-dark); background: #f8fafc; outline: none; transition: all 0.2s; }
     .form-control:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); background: white; }
-    textarea.form-control { resize: vertical; min-height: 150px; }
-    
-    .logo-preview {
-        width: 180px;
-        height: 70px;
-        border: 2px dashed var(--border-color);
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 10px;
-        overflow: hidden;
-        background: #f8fafc;
-    }
+    textarea.form-control { resize: vertical; min-height: 100px; }
+    .logo-preview { width: 180px; height: 70px; border: 2px dashed var(--border-color); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; overflow: hidden; background: #f8fafc; }
     .logo-preview img { max-width: 100%; max-height: 100%; object-fit: contain; }
-    
-    .current-file {
-        font-size: 0.75rem;
-        color: var(--text-muted);
-        margin-bottom: 8px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-    
-    .current-file i {
-        color: #10b981;
-        font-size: 0.8rem;
-    }
-    
-    .btn-save {
-        padding: 10px 24px;
-        background: linear-gradient(135deg, #10b981, #059669);
-        color: white;
-        border: none;
-        border-radius: 10px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        cursor: pointer;
-        font-family: 'Poppins', sans-serif;
-        transition: all 0.2s;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-    }
+    .current-file { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+    .current-file i { color: #10b981; font-size: 0.8rem; }
+    .btn-save { padding: 10px 24px; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; border-radius: 10px; font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
     .btn-save:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(16,185,129,0.3); }
     .btn-save.blue { background: linear-gradient(135deg, #3b82f6, #2563eb); }
     .btn-save.blue:hover { box-shadow: 0 4px 16px rgba(59,130,246,0.3); }
     .btn-save.orange { background: linear-gradient(135deg, #f59e0b, #d97706); }
-    .btn-save.orange:hover { box-shadow: 0 4px 16px rgba(245,158,11,0.3); }
     .btn-save.red { background: linear-gradient(135deg, #ef4444, #dc2626); }
-    
-    .faq-item-card {
-        background: white;
-        border: 1px solid var(--border-color);
-        border-radius: 10px;
-        padding: 16px;
-        margin-bottom: 10px;
-        transition: all 0.2s;
-    }
-    .faq-item-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-    
-    .faq-form-card {
-        background: #f8fafc;
-        padding: 20px;
-        border-radius: 12px;
-        margin-bottom: 20px;
-        border: 2px dashed #3b82f6;
-    }
-    
-    @media (max-width: 768px) {
-        .settings-layout { grid-template-columns: 1fr; }
-        .settings-sidebar { position: static; }
-    }
+    .faq-item-card { background: white; border: 1px solid var(--border-color); border-radius: 10px; padding: 16px; margin-bottom: 10px; }
+    .faq-form-card { background: #f8fafc; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 2px dashed #3b82f6; }
+    .about-section-card { background: #ffffff; border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+    .about-section-header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #f1f5f9; }
+    .about-section-icon { font-size: 28px; flex-shrink: 0; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: #f8fafc; border-radius: 10px; }
+    .about-section-header h3 { font-size: 1rem; font-weight: 700; color: var(--text-dark); margin-bottom: 4px; }
+    .about-section-header p { font-size: 0.8rem; color: var(--text-muted); margin: 0; }
+    @media (max-width: 768px) { .settings-layout { grid-template-columns: 1fr; } .settings-sidebar { position: static; } }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="settings-layout">
-    <!-- Sidebar -->
     <div class="settings-sidebar">
         <div class="settings-sidebar-header"><i class="fas fa-cog" style="color:#3b82f6;margin-right:6px;"></i> Settings</div>
         <ul class="settings-nav">
@@ -178,6 +56,7 @@
                     {% if type.0 == 'general' %}<i class="fas fa-sliders-h"></i>
                     {% elif type.0 == 'branding' %}<i class="fas fa-palette"></i>
                     {% elif type.0 == 'content' %}<i class="fas fa-file-alt"></i>
+                    {% elif type.0 == 'about' %}<i class="fas fa-info-circle"></i>
                     {% elif type.0 == 'contact' %}<i class="fas fa-address-book"></i>
                     {% elif type.0 == 'social' %}<i class="fas fa-share-alt"></i>
                     {% elif type.0 == 'seo' %}<i class="fas fa-search"></i>
@@ -190,12 +69,12 @@
         </ul>
     </div>
     
-    <!-- Content -->
     <div class="settings-content">
         <h2>
             {% if setting_type == 'general' %}<i class="fas fa-sliders-h" style="color:#3b82f6;"></i>
             {% elif setting_type == 'branding' %}<i class="fas fa-palette" style="color:#8b5cf6;"></i>
             {% elif setting_type == 'content' %}<i class="fas fa-file-alt" style="color:#10b981;"></i>
+            {% elif setting_type == 'about' %}<i class="fas fa-info-circle" style="color:#f59e0b;"></i>
             {% elif setting_type == 'contact' %}<i class="fas fa-address-book" style="color:#f59e0b;"></i>
             {% elif setting_type == 'social' %}<i class="fas fa-share-alt" style="color:#ec4899;"></i>
             {% elif setting_type == 'seo' %}<i class="fas fa-search" style="color:#06b6d4;"></i>
@@ -209,214 +88,121 @@
             {% csrf_token %}
             <input type="hidden" name="setting_type" value="{{ setting_type }}">
             
-            <!-- GENERAL SETTINGS -->
+            <!-- GENERAL -->
             {% if setting_type == 'general' %}
-            <div class="form-group">
-                <label>Site Name</label>
-                <div class="help-text">The name of your website displayed in the browser title bar.</div>
-                <input type="text" name="site_name" class="form-control" value="{{ settings.site_name|default:'AI Governance Academy' }}" placeholder="AI Governance Academy">
-            </div>
-            <div class="form-group">
-                <label>Site Tagline</label>
-                <input type="text" name="site_tagline" class="form-control" value="{{ settings.site_tagline|default:'' }}" placeholder="AI Ethics & Compliance Platform">
-            </div>
-            <div class="form-group">
-                <label>Admin Email</label>
-                <input type="email" name="admin_email" class="form-control" value="{{ settings.admin_email|default:'' }}" placeholder="admin@aiga.com">
-            </div>
-            <div class="form-group">
-                <label>Footer Copyright Text</label>
-                <input type="text" name="footer_text" class="form-control" value="{{ settings.footer_text|default:'' }}" placeholder="© 2024 AI Governance Academy. All rights reserved.">
-            </div>
+            <div class="form-group"><label>Site Name</label><div class="help-text">The name of your website.</div><input type="text" name="site_name" class="form-control" value="{{ settings.site_name|default:'AI Governance Academy' }}"></div>
+            <div class="form-group"><label>Site Tagline</label><input type="text" name="site_tagline" class="form-control" value="{{ settings.site_tagline|default:'' }}" placeholder="AI Ethics & Compliance Platform"></div>
+            <div class="form-group"><label>Admin Email</label><input type="email" name="admin_email" class="form-control" value="{{ settings.admin_email|default:'' }}"></div>
+            <div class="form-group"><label>Footer Copyright Text</label><input type="text" name="footer_text" class="form-control" value="{{ settings.footer_text|default:'' }}"></div>
             
-            <!-- BRANDING SETTINGS -->
+            <!-- BRANDING -->
             {% elif setting_type == 'branding' %}
-            <div class="form-group">
-                <label>Site Logo</label>
-                <div class="help-text">Main logo displayed in the navigation bar (recommended: 160x60px)</div>
-                {% if settings.site_logo %}
-                <div class="current-file">
-                    <i class="fas fa-check-circle"></i> 
-                    Current file: {{ settings.site_logo.name }}
-                </div>
-                <div class="logo-preview">
-                    <img src="{{ settings.site_logo.url }}" alt="Site Logo">
-                </div>
-                {% endif %}
-                <input type="file" name="site_logo" class="form-control" accept="image/*">
-            </div>
+            <div class="form-group"><label>Site Logo</label><div class="help-text">Main logo (recommended: 160x60px)</div>{% if settings.site_logo %}<div class="current-file"><i class="fas fa-check-circle"></i> Current: {{ settings.site_logo.name }}</div><div class="logo-preview"><img src="{{ settings.site_logo.url }}" alt="Site Logo"></div>{% endif %}<input type="file" name="site_logo" class="form-control" accept="image/*"></div>
+            <div class="form-group"><label>Dashboard Logo</label>{% if settings.dashboard_logo %}<div class="current-file"><i class="fas fa-check-circle"></i> Current: {{ settings.dashboard_logo.name }}</div><div class="logo-preview"><img src="{{ settings.dashboard_logo.url }}" alt="Dashboard Logo"></div>{% endif %}<input type="file" name="dashboard_logo" class="form-control" accept="image/*"></div>
+            <div class="form-group"><label>Favicon</label><div class="help-text">32x32px, .ico or .png</div>{% if settings.favicon %}<div class="current-file"><i class="fas fa-check-circle"></i> Current: {{ settings.favicon.name }}</div><div class="logo-preview"><img src="{{ settings.favicon.url }}" alt="Favicon"></div>{% endif %}<input type="file" name="favicon" class="form-control" accept="image/*,.ico"></div>
+            <div class="form-group"><label>Primary Color</label><input type="color" name="primary_color" class="form-control" style="width:60px;height:40px;padding:4px;" value="{{ settings.primary_color|default:'#ad7a49' }}"></div>
             
-            <div class="form-group">
-                <label>Dashboard Logo</label>
-                <div class="help-text">Logo displayed in the admin dashboard sidebar</div>
-                {% if settings.dashboard_logo %}
-                <div class="current-file">
-                    <i class="fas fa-check-circle"></i> 
-                    Current file: {{ settings.dashboard_logo.name }}
-                </div>
-                <div class="logo-preview">
-                    <img src="{{ settings.dashboard_logo.url }}" alt="Dashboard Logo">
-                </div>
-                {% endif %}
-                <input type="file" name="dashboard_logo" class="form-control" accept="image/*">
-            </div>
-            
-            <div class="form-group">
-                <label>Favicon</label>
-                <div class="help-text">Small icon displayed in browser tabs (32x32px, .ico or .png)</div>
-                {% if settings.favicon %}
-                <div class="current-file">
-                    <i class="fas fa-check-circle"></i> 
-                    Current file: {{ settings.favicon.name }}
-                </div>
-                <div class="logo-preview">
-                    <img src="{{ settings.favicon.url }}" alt="Favicon">
-                </div>
-                {% endif %}
-                <input type="file" name="favicon" class="form-control" accept="image/*,.ico">
-            </div>
-            
-            <div class="form-group">
-                <label>Primary Color</label>
-                <input type="color" name="primary_color" class="form-control" style="width:60px;height:40px;padding:4px;" value="{{ settings.primary_color|default:'#ad7a49' }}">
-            </div>
-            
-            <!-- CONTENT PAGES SETTINGS -->
+            <!-- CONTENT PAGES -->
             {% elif setting_type == 'content' %}
-            <div class="form-group">
-                <label>About Us Page Content</label>
-                <div class="help-text">Content for the About Us page. You can use formatting, images, and links.</div>
-                <textarea name="about_us" id="about_us_editor" class="form-control tinymce-editor" rows="10">{{ settings.about_us|default:''|safe }}</textarea>
-            </div>
-            <div class="form-group">
-                <label>Privacy Policy</label>
-                <div class="help-text">Full privacy policy content with formatting.</div>
-                <textarea name="privacy_policy" id="privacy_editor" class="form-control tinymce-editor" rows="10">{{ settings.privacy_policy|default:''|safe }}</textarea>
-            </div>
-            <div class="form-group">
-                <label>Terms & Conditions</label>
-                <div class="help-text">Full terms and conditions with formatting.</div>
-                <textarea name="terms_conditions" id="terms_editor" class="form-control tinymce-editor" rows="10">{{ settings.terms_conditions|default:''|safe }}</textarea>
+            <div class="form-group"><label>About Us Page Content</label><textarea name="about_us" id="about_us_editor" class="form-control tinymce-editor" rows="10">{{ settings.about_us|default:''|safe }}</textarea></div>
+            <div class="form-group"><label>Privacy Policy</label><textarea name="privacy_policy" id="privacy_editor" class="form-control tinymce-editor" rows="10">{{ settings.privacy_policy|default:''|safe }}</textarea></div>
+            <div class="form-group"><label>Terms & Conditions</label><textarea name="terms_conditions" id="terms_editor" class="form-control tinymce-editor" rows="10">{{ settings.terms_conditions|default:''|safe }}</textarea></div>
+            
+            <!-- ABOUT US CONTENT -->
+            {% elif setting_type == 'about' %}
+            <div class="about-content-form">
+                <!-- Our Mission -->
+                <div class="about-section-card">
+                    <div class="about-section-header"><span class="about-section-icon">🎯</span><div><h3>Our Mission</h3><p>Define your academy's mission statement.</p></div></div>
+                    <div class="form-group"><label>Mission Title</label><input type="text" name="mission_title" class="form-control" value="{{ settings.mission_title|default:'Our Mission' }}"></div>
+                    <div class="form-group"><label>Mission Description</label><textarea name="mission_description" class="form-control" rows="4">{{ settings.mission_description|default:'' }}</textarea></div>
+                </div>
+
+                <!-- Why Learn With Us -->
+                <div class="about-section-card">
+                    <div class="about-section-header"><span class="about-section-icon">📚</span><div><h3>Why Learn With Us</h3><p>Highlight what makes your academy unique.</p></div></div>
+                    <div class="form-group"><label>Section Title</label><input type="text" name="why_learn_title" class="form-control" value="{{ settings.why_learn_title|default:'Why Learn With Us' }}"></div>
+                    <div class="form-group"><label>Section Description</label><textarea name="why_learn_description" class="form-control" rows="3">{{ settings.why_learn_description|default:'' }}</textarea></div>
+                    {% comment %} <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">
+                        <div class="form-group"><label>Feature 1 Title</label><input type="text" name="why_learn_feature_1_title" class="form-control" value="{{ settings.why_learn_feature_1_title|default:'Industry Expertise' }}"></div>
+                        <div class="form-group"><label>Feature 1 Icon (emoji)</label><input type="text" name="why_learn_feature_1_icon" class="form-control" value="{{ settings.why_learn_feature_1_icon|default:'🏢' }}"></div>
+                        <div class="form-group" style="grid-column:1/-1;"><label>Feature 1 Description</label><textarea name="why_learn_feature_1_desc" class="form-control" rows="2">{{ settings.why_learn_feature_1_desc|default:'' }}</textarea></div>
+                        <div class="form-group"><label>Feature 2 Title</label><input type="text" name="why_learn_feature_2_title" class="form-control" value="{{ settings.why_learn_feature_2_title|default:'Practical Learning' }}"></div>
+                        <div class="form-group"><label>Feature 2 Icon (emoji)</label><input type="text" name="why_learn_feature_2_icon" class="form-control" value="{{ settings.why_learn_feature_2_icon|default:'💡' }}"></div>
+                        <div class="form-group" style="grid-column:1/-1;"><label>Feature 2 Description</label><textarea name="why_learn_feature_2_desc" class="form-control" rows="2">{{ settings.why_learn_feature_2_desc|default:'' }}</textarea></div>
+                        <div class="form-group"><label>Feature 3 Title</label><input type="text" name="why_learn_feature_3_title" class="form-control" value="{{ settings.why_learn_feature_3_title|default:'Expert Instructors' }}"></div>
+                        <div class="form-group"><label>Feature 3 Icon (emoji)</label><input type="text" name="why_learn_feature_3_icon" class="form-control" value="{{ settings.why_learn_feature_3_icon|default:'👨‍🏫' }}"></div>
+                        <div class="form-group" style="grid-column:1/-1;"><label>Feature 3 Description</label><textarea name="why_learn_feature_3_desc" class="form-control" rows="2">{{ settings.why_learn_feature_3_desc|default:'' }}</textarea></div>
+                    </div> {% endcomment %}
+                </div>
+
+                <!-- Our Vision -->
+                <div class="about-section-card">
+                    <div class="about-section-header"><span class="about-section-icon">🔭</span><div><h3>Our Vision</h3><p>Share your long-term vision.</p></div></div>
+                    <div class="form-group"><label>Vision Title</label><input type="text" name="vision_title" class="form-control" value="{{ settings.vision_title|default:'Our Vision' }}"></div>
+                    <div class="form-group"><label>Vision Description</label><textarea name="vision_description" class="form-control" rows="4">{{ settings.vision_description|default:'' }}</textarea></div>
+                </div>
             </div>
             
-            <!-- CONTACT SETTINGS -->
+            <!-- CONTACT -->
             {% elif setting_type == 'contact' %}
-            <div class="form-group">
-                <label>Contact Email</label>
-                <input type="email" name="contact_email" class="form-control" value="{{ settings.contact_email|default:'' }}" placeholder="info@aiga.com">
-            </div>
-            <div class="form-group">
-                <label>Contact Phone</label>
-                <input type="text" name="contact_phone" class="form-control" value="{{ settings.contact_phone|default:'' }}" placeholder="+1 (223) 456-6000">
-            </div>
-            <div class="form-group">
-                <label>Office Address</label>
-                <textarea name="office_address" class="form-control" rows="3" placeholder="123 Innovation Drive, San Jose, CA 95113">{{ settings.office_address|default:'' }}</textarea>
-            </div>
-            <div class="form-group">
-                <label>Google Maps Embed URL</label>
-                <input type="text" name="map_embed_url" class="form-control" value="{{ settings.map_embed_url|default:'' }}" placeholder="https://www.google.com/maps/embed?pb=...">
-            </div>
+            <div class="form-group"><label>Contact Email</label><input type="email" name="contact_email" class="form-control" value="{{ settings.contact_email|default:'' }}"></div>
+            <div class="form-group"><label>Contact Phone</label><input type="text" name="contact_phone" class="form-control" value="{{ settings.contact_phone|default:'' }}"></div>
+            <div class="form-group"><label>Office Address</label><textarea name="office_address" class="form-control" rows="3">{{ settings.office_address|default:'' }}</textarea></div>
+            <div class="form-group"><label>Google Maps Embed URL</label><input type="text" name="map_embed_url" class="form-control" value="{{ settings.map_embed_url|default:'' }}"></div>
             
-            <!-- SOCIAL MEDIA SETTINGS -->
+            <!-- SOCIAL -->
             {% elif setting_type == 'social' %}
-            <div class="form-group"><label>Facebook URL</label><input type="url" name="facebook_url" class="form-control" value="{{ settings.facebook_url|default:'' }}" placeholder="https://facebook.com/..."></div>
-            <div class="form-group"><label>Twitter/X URL</label><input type="url" name="twitter_url" class="form-control" value="{{ settings.twitter_url|default:'' }}" placeholder="https://twitter.com/..."></div>
-            <div class="form-group"><label>LinkedIn URL</label><input type="url" name="linkedin_url" class="form-control" value="{{ settings.linkedin_url|default:'' }}" placeholder="https://linkedin.com/company/..."></div>
-            <div class="form-group"><label>Instagram URL</label><input type="url" name="instagram_url" class="form-control" value="{{ settings.instagram_url|default:'' }}" placeholder="https://instagram.com/..."></div>
-            <div class="form-group"><label>YouTube URL</label><input type="url" name="youtube_url" class="form-control" value="{{ settings.youtube_url|default:'' }}" placeholder="https://youtube.com/@..."></div>
+            <div class="form-group"><label>Facebook URL</label><input type="url" name="facebook_url" class="form-control" value="{{ settings.facebook_url|default:'' }}"></div>
+            <div class="form-group"><label>Twitter/X URL</label><input type="url" name="twitter_url" class="form-control" value="{{ settings.twitter_url|default:'' }}"></div>
+            <div class="form-group"><label>LinkedIn URL</label><input type="url" name="linkedin_url" class="form-control" value="{{ settings.linkedin_url|default:'' }}"></div>
+            <div class="form-group"><label>Instagram URL</label><input type="url" name="instagram_url" class="form-control" value="{{ settings.instagram_url|default:'' }}"></div>
+            <div class="form-group"><label>YouTube URL</label><input type="url" name="youtube_url" class="form-control" value="{{ settings.youtube_url|default:'' }}"></div>
             
-            <!-- SEO SETTINGS -->
+            <!-- SEO -->
             {% elif setting_type == 'seo' %}
-            <div class="form-group"><label>Meta Title</label><input type="text" name="meta_title" class="form-control" value="{{ settings.meta_title|default:'' }}" placeholder="AI Governance Academy - Online Learning Platform"></div>
-            <div class="form-group"><label>Meta Description</label><textarea name="meta_description" class="form-control" rows="3" placeholder="Learn AI governance, cybersecurity, and ethical technology...">{{ settings.meta_description|default:'' }}</textarea></div>
-            <div class="form-group"><label>Meta Keywords</label><input type="text" name="meta_keywords" class="form-control" value="{{ settings.meta_keywords|default:'' }}" placeholder="ai governance, cybersecurity, online courses"></div>
-            <div class="form-group"><label>Google Analytics ID</label><input type="text" name="google_analytics" class="form-control" value="{{ settings.google_analytics|default:'' }}" placeholder="G-XXXXXXXXXX"></div>
+            <div class="form-group"><label>Meta Title</label><input type="text" name="meta_title" class="form-control" value="{{ settings.meta_title|default:'' }}"></div>
+            <div class="form-group"><label>Meta Description</label><textarea name="meta_description" class="form-control" rows="3">{{ settings.meta_description|default:'' }}</textarea></div>
+            <div class="form-group"><label>Meta Keywords</label><input type="text" name="meta_keywords" class="form-control" value="{{ settings.meta_keywords|default:'' }}"></div>
+            <div class="form-group"><label>Google Analytics ID</label><input type="text" name="google_analytics" class="form-control" value="{{ settings.google_analytics|default:'' }}"></div>
             
-            <!-- FAQ MANAGEMENT -->
+            <!-- FAQ -->
             {% elif setting_type == 'faq' %}
-            <div style="margin-bottom:20px;">
-                <button type="button" class="btn-save blue" onclick="showAddFAQForm()">
-                    <i class="fas fa-plus"></i> Add New FAQ
-                </button>
-            </div>
-            
-            <!-- Add/Edit FAQ Form -->
+            <div style="margin-bottom:20px;"><button type="button" class="btn-save blue" onclick="showAddFAQForm()"><i class="fas fa-plus"></i> Add New FAQ</button></div>
             <div class="faq-form-card" id="faqForm" style="display:none;">
                 <h4 id="faqFormTitle" style="margin-bottom:16px;">Add New FAQ</h4>
-                <input type="hidden" name="action" id="faqAction" value="add_faq">
-                <input type="hidden" name="faq_id" id="faqId" value="">
-                <div class="form-group">
-                    <label>Category</label>
-                    <select name="faq_category" id="faqCategory" class="form-control">
-                        {% for cat in faq_categories %}
-                        <option value="{{ cat.0 }}">{{ cat.1 }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Question</label>
-                    <input type="text" name="question" id="faqQuestion" class="form-control" placeholder="Enter question...">
-                </div>
-                <div class="form-group">
-                    <label>Answer</label>
-                    <textarea name="answer" id="faqAnswer" class="form-control" rows="4" placeholder="Enter answer..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Order</label>
-                    <input type="number" name="order" id="faqOrder" class="form-control" value="0" style="width:100px;">
-                </div>
-                <div class="form-group">
-                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-                        <input type="checkbox" name="is_active" id="faqActive" checked style="width:16px;height:16px;"> Active
-                    </label>
-                </div>
-                <div style="display:flex;gap:10px;">
-                    <button type="submit" class="btn-save blue"><i class="fas fa-save"></i> Save FAQ</button>
-                    <button type="button" class="btn-save red" onclick="hideFAQForm()" style="background:#6b7280;"><i class="fas fa-times"></i> Cancel</button>
-                </div>
+                <input type="hidden" name="action" id="faqAction" value="add_faq"><input type="hidden" name="faq_id" id="faqId" value="">
+                <div class="form-group"><label>Category</label><select name="faq_category" id="faqCategory" class="form-control">{% for cat in faq_categories %}<option value="{{ cat.0 }}">{{ cat.1 }}</option>{% endfor %}</select></div>
+                <div class="form-group"><label>Question</label><input type="text" name="question" id="faqQuestion" class="form-control"></div>
+                <div class="form-group"><label>Answer</label><textarea name="answer" id="faqAnswer" class="form-control" rows="4"></textarea></div>
+                <div class="form-group"><label>Order</label><input type="number" name="order" id="faqOrder" class="form-control" value="0" style="width:100px;"></div>
+                <div class="form-group"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" name="is_active" id="faqActive" checked style="width:16px;height:16px;"> Active</label></div>
+                <div style="display:flex;gap:10px;"><button type="submit" class="btn-save blue"><i class="fas fa-save"></i> Save FAQ</button><button type="button" class="btn-save red" onclick="hideFAQForm()" style="background:#6b7280;"><i class="fas fa-times"></i> Cancel</button></div>
             </div>
-            
-            <!-- FAQs List -->
             <div class="faq-list">
                 {% for faq in faqs %}
                 <div class="faq-item-card">
                     <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:10px;">
                         <div style="flex:1;min-width:200px;">
                             <span style="background:#3b82f6;color:white;padding:3px 10px;border-radius:12px;font-size:0.7rem;font-weight:600;">{{ faq.get_category_display }}</span>
-                            <strong style="display:block;margin-top:8px;">Question: {{ faq.question }}</strong>
-                            <p style="color:var(--text-muted);font-size:0.85rem;margin-top:4px;"><strong style="color:000000;">Answer:</strong> {{ faq.answer }}</p>
-                            <span style="font-size:0.7rem;color:var(--text-muted);">Order: {{ faq.order }} | {% if faq.is_active %}✅ Active{% else %}❌ Inactive{% endif %}</span>
+                            <strong style="display:block;margin-top:8px;">Q: {{ faq.question }}</strong>
+                            <p style="color:var(--text-muted);font-size:0.85rem;margin-top:4px;"><strong>A:</strong> {{ faq.answer }}</p>
+                            <span style="font-size:0.7rem;">Order: {{ faq.order }} | {% if faq.is_active %}✅ Active{% else %}❌ Inactive{% endif %}</span>
                         </div>
                         <div style="display:flex;gap:6px;flex-shrink:0;">
-                            <button type="button" class="btn-save orange" style="padding:6px 14px;font-size:0.75rem;" onclick="editFAQ({{ faq.id }}, '{{ faq.question|escapejs }}', '{{ faq.answer|escapejs }}', '{{ faq.category }}', {{ faq.order }}, {{ faq.is_active|lower }})">
-                                <i class="fas fa-edit"></i> Edit
-                            </button>
-                            <form method="POST" style="display:inline;" onsubmit="return confirm('Delete this FAQ?');">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="delete_faq">
-                                <input type="hidden" name="faq_id" value="{{ faq.id }}">
-                                <button type="submit" class="btn-save red" style="padding:6px 14px;font-size:0.75rem;">
-                                    <i class="fas fa-trash"></i> Delete
-                                </button>
-                            </form>
+                            <button type="button" class="btn-save orange" style="padding:6px 14px;font-size:0.75rem;" onclick="editFAQ({{ faq.id }}, '{{ faq.question|escapejs }}', '{{ faq.answer|escapejs }}', '{{ faq.category }}', {{ faq.order }}, {{ faq.is_active|lower }})"><i class="fas fa-edit"></i> Edit</button>
+                            <form method="POST" style="display:inline;" onsubmit="return confirm('Delete this FAQ?');">{% csrf_token %}<input type="hidden" name="action" value="delete_faq"><input type="hidden" name="faq_id" value="{{ faq.id }}"><button type="submit" class="btn-save red" style="padding:6px 14px;font-size:0.75rem;"><i class="fas fa-trash"></i> Delete</button></form>
                         </div>
                     </div>
                 </div>
                 {% empty %}
-                <div style="text-align:center;padding:40px;color:var(--text-muted);">
-                    <i class="fas fa-question-circle" style="font-size:2rem;opacity:0.3;margin-bottom:8px;"></i>
-                    <p>No FAQs added yet. Click "Add New FAQ" to create one.</p>
-                </div>
+                <div style="text-align:center;padding:40px;color:var(--text-muted);"><i class="fas fa-question-circle" style="font-size:2rem;opacity:0.3;"></i><p>No FAQs added yet.</p></div>
                 {% endfor %}
             </div>
             {% endif %}
             
-            <!-- Save Button for non-FAQ sections -->
             {% if setting_type != 'faq' %}
-            <div style="margin-top:24px;">
-                <button type="submit" class="btn-save"><i class="fas fa-save"></i> Save Settings</button>
-            </div>
+            <div style="margin-top:24px;"><button type="submit" class="btn-save"><i class="fas fa-save"></i> Save Settings</button></div>
             {% endif %}
         </form>
     </div>
@@ -425,22 +211,15 @@
 
 {% block extra_js %}
 <script>
-    // Initialize TinyMCE for content editors
     if (typeof tinymce !== 'undefined') {
         tinymce.init({
-            selector: '.tinymce-editor',
-            height: 400,
-            menubar: false,
+            selector: '.tinymce-editor', height: 400, menubar: false,
             plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table codesample help wordcount',
-            toolbar: 'undo redo | formatselect | bold italic underline strikethrough | forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image | codesample | removeformat | code | help',
+            toolbar: 'undo redo | formatselect | bold italic underline strikethrough | forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image | removeformat | code | help',
             content_style: 'body { font-family: Poppins, sans-serif; font-size: 14px; color: #1e293b; }',
-            setup: function(editor) {
-                editor.on('change', function() { editor.save(); });
-            }
+            setup: function(editor) { editor.on('change', function() { editor.save(); }); }
         });
     }
-
-    // FAQ Form Functions
     function showAddFAQForm() {
         document.getElementById('faqForm').style.display = 'block';
         document.getElementById('faqFormTitle').textContent = 'Add New FAQ';
@@ -452,11 +231,7 @@
         document.getElementById('faqActive').checked = true;
         document.getElementById('faqForm').scrollIntoView({ behavior: 'smooth' });
     }
-
-    function hideFAQForm() {
-        document.getElementById('faqForm').style.display = 'none';
-    }
-
+    function hideFAQForm() { document.getElementById('faqForm').style.display = 'none'; }
     function editFAQ(id, question, answer, category, order, isActive) {
         document.getElementById('faqForm').style.display = 'block';
         document.getElementById('faqFormTitle').textContent = 'Edit FAQ';
@@ -469,36 +244,8 @@
         document.getElementById('faqActive').checked = isActive;
         document.getElementById('faqForm').scrollIntoView({ behavior: 'smooth' });
     }
-
-    // Show FAQ form if there was a validation error or edit action
     {% if request.POST.action == 'add_faq' or request.POST.action == 'update_faq' %}
     document.getElementById('faqForm').style.display = 'block';
     {% endif %}
-    
-    // Preview image before upload
-    function previewImage(input, previewId) {
-        if (input.files && input.files[0]) {
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                var preview = document.getElementById(previewId);
-                if (!preview) {
-                    // Create preview if it doesn't exist
-                    preview = document.createElement('div');
-                    preview.className = 'logo-preview';
-                    preview.id = previewId;
-                    input.parentNode.insertBefore(preview, input);
-                }
-                preview.innerHTML = '<img src="' + e.target.result + '" alt="Preview">';
-            };
-            reader.readAsDataURL(input.files[0]);
-        }
-    }
-    
-    // Add preview listeners for file inputs
-    document.querySelectorAll('input[type="file"]').forEach(function(input) {
-        input.addEventListener('change', function() {
-            previewImage(this, this.name + '_preview');
-        });
-    });
 </script>
 {% endblock %}

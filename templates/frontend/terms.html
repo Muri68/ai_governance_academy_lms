@@ -86,6 +86,10 @@
         color: var(--text-muted);
     }
 
+    .last-updated p {
+        margin-bottom: 5px;
+    }
+
     .default-content {
         text-align: center;
         padding: 40px;
@@ -103,7 +107,7 @@
 {% block content %}
 <section class="page-header-section">
     <div class="container">
-        <h1 class="page-header-title">Terms & Conditions</h1>
+        <h1 class="page-header-title">Terms &amp; Conditions</h1>
         <p class="page-header-subtitle">Please read these terms carefully before using our platform</p>
     </div>
 </section>
@@ -112,25 +116,25 @@
     <div class="container">
         <div class="content-wrapper">
             <div class="highlight-box">
-                <p>By accessing and using the AI Governance Academy platform, you agree to be bound by these Terms and Conditions. If you do not agree with any part of these terms, please do not use our services.</p>
+                <p><strong>Important:</strong> By accessing and using the AI Governance Academy platform, you agree to be bound by these Terms and Conditions. If you do not agree with any part of these terms, please do not use our services.</p>
             </div>
             
-            {% if terms_content %}
-                {{ terms_content|safe }}
+            {% if terms_conditions %}
+                {{ terms_conditions|safe }}
             {% else %}
                 <div class="default-content">
                     <i class="fas fa-file-contract"></i>
-                    <h3>Terms & Conditions Coming Soon</h3>
+                    <h3>Terms &amp; Conditions Coming Soon</h3>
                     <p>We are currently updating our terms and conditions. Please check back later.</p>
                 </div>
             {% endif %}
             
-            {% if last_updated %}
             <div class="last-updated">
-                <p>Last updated: {{ last_updated.updated_at|date:"F d, Y" }}</p>
-                <p>© {% now "Y" %} AI Governance Academy. All rights reserved.</p>
+                {% if terms_last_updated %}
+                <p>Last updated: {{ terms_last_updated|date:"F d, Y" }}</p>
+                {% endif %}
+                <p>&copy; {% now "Y" %} AI Governance Academy. All rights reserved.</p>
             </div>
-            {% endif %}
         </div>
     </div>
 </section>

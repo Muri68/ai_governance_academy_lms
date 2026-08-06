@@ -14,7 +14,7 @@ from apps.accounts.models import CustomUser, InstructorProfile, StudentProfile, 
 from apps.accounts.forms import InstructorCreationForm
 import string
 import json
-from apps.courses.models import Course, CourseCategory, Lesson, LessonContent, Enrollment, CourseReview
+from apps.courses.models import Course, FeaturedCourse, TopPick, CourseCategory, Lesson, LessonContent, Enrollment, CourseReview
 
 
 from django.db.models import Count, Avg, Sum, Q
@@ -250,6 +250,9 @@ def admin_dashboard(request):
 @login_required
 @admin_required
 def admin_profile(request):
+    # Get or create admin profile
+    profile, created = AdminProfile.objects.get_or_create(user=request.user)
+    
     if request.method == 'POST':
         user = request.user
         user.first_name = request.POST.get('first_name', user.first_name)
@@ -260,11 +263,30 @@ def admin_profile(request):
             user.profile_picture = request.FILES['profile_picture']
         
         user.save()
+        
+        # Handle signature upload
+        if 'signature' in request.FILES:
+            # Delete old signature if exists
+            if profile.signature:
+                profile.signature.delete(save=False)
+            profile.signature = request.FILES['signature']
+            messages.success(request, 'Program Director signature uploaded successfully!')
+        
+        # Handle signature removal
+        if request.POST.get('remove_signature') == 'true':
+            if profile.signature:
+                profile.signature.delete(save=False)
+                profile.signature = None
+                messages.info(request, 'Signature removed.')
+        
+        profile.save()
+        
         messages.success(request, 'Profile updated successfully!')
         return redirect('dashboard:admin_profile')
     
     context = {
         'user': request.user,
+        'profile': profile,
     }
     return render(request, 'dashboard/admin/profile.html', context)
 
@@ -1253,13 +1275,18 @@ def update_enrollment_status(request, enrollment_id):
 
 
 
+import os
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
+from apps.dashboard.models import SiteSetting, SiteFileSetting, FAQ
+
+
 @login_required
-@admin_required
+@staff_member_required
 def site_settings(request, setting_type='general'):
-    """Site settings page - super admin only"""
-    if not request.user.is_superuser:
-        messages.error(request, 'Only super administrators can access site settings.')
-        return redirect('dashboard:admin_dashboard')
+    """Site settings page - admin only"""
     
     setting_types = SiteSetting.SETTING_TYPES
     
@@ -1298,11 +1325,10 @@ def site_settings(request, setting_type='general'):
             
             return redirect('dashboard:site_settings_type', setting_type='faq')
         
-        # Handle file uploads for logos and other files
+        # Handle file uploads
         file_fields = ['site_logo', 'dashboard_logo', 'favicon']
         for file_key in file_fields:
             if file_key in request.FILES:
-                # Delete old file if exists
                 try:
                     old_file_setting = SiteFileSetting.objects.get(key=file_key)
                     if old_file_setting.file:
@@ -1311,24 +1337,20 @@ def site_settings(request, setting_type='general'):
                 except SiteFileSetting.DoesNotExist:
                     pass
                 
-                # Save new file
                 file_setting, created = SiteFileSetting.objects.update_or_create(
                     key=file_key,
-                    defaults={
-                        'description': file_key.replace('_', ' ').title()
-                    }
+                    defaults={'description': file_key.replace('_', ' ').title()}
                 )
                 file_setting.file = request.FILES[file_key]
                 file_setting.save()
         
-        # Handle text settings (excluding file keys and special fields)
+        # Handle text settings
         excluded_keys = ['csrfmiddlewaretoken', 'setting_type', 'action', 
                         'faq_category', 'faq_id', 'question', 'answer', 
                         'order', 'is_active'] + file_fields
         
         for key, value in request.POST.items():
             if key not in excluded_keys and value:
-                # For TinyMCE content, preserve HTML
                 SiteSetting.objects.update_or_create(
                     key=key,
                     defaults={
@@ -1338,7 +1360,6 @@ def site_settings(request, setting_type='general'):
                     }
                 )
         
-        # Get the display name for the setting type
         setting_type_display = dict(setting_types).get(setting_type, 'Settings')
         messages.success(request, f'{setting_type_display} updated successfully!')
         return redirect('dashboard:site_settings_type', setting_type=setting_type)
@@ -1636,6 +1657,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Avg
+from apps.frontend.models import SiteReview
 
 
 @login_required
@@ -1656,20 +1678,48 @@ def manage_reviews(request):
         action = request.POST.get('action')
         review_id = request.POST.get('review_id')
         
-        if review_id and action:
+        # Handle adding new review (admin-created)
+        if action == 'add_review':
+            rating = request.POST.get('rating', 5)
+            review_text = request.POST.get('review_text', '')
+            reviewer_name = request.POST.get('reviewer_name', '')
+            reviewer_email = request.POST.get('reviewer_email', '')
+            designation = request.POST.get('designation', '')
+            company = request.POST.get('company', '')
+            
+            if review_text and reviewer_name:
+                SiteReview.objects.create(
+                    reviewer_name=reviewer_name,
+                    reviewer_email=reviewer_email,
+                    designation=designation,
+                    company=company,
+                    rating=int(rating),
+                    review_text=review_text,
+                    is_approved=True,  # Auto-approve admin-created reviews
+                    source='admin',
+                )
+                messages.success(request, 'Review added successfully!')
+            else:
+                messages.error(request, 'Please fill in all required fields.')
+            
+            return redirect(f'/dashboard/reviews/?status={status_filter}')
+        
+        # Handle review actions (approve/unapprove/delete)
+        if review_id:
             review = get_object_or_404(SiteReview, id=review_id)
             
             if action == 'approve':
                 review.is_approved = True
                 review.save()
-                messages.success(request, f'Review approved successfully!')
+                messages.success(request, 'Review approved successfully!')
             elif action == 'unapprove':
                 review.is_approved = False
                 review.save()
-                messages.success(request, f'Review unapproved successfully!')
+                messages.success(request, 'Review unapproved successfully!')
             elif action == 'delete':
+                reviewer_name = review.get_reviewer_name()
                 review.delete()
-                messages.success(request, 'Review deleted successfully!')
+                messages.success(request, f'Review by {reviewer_name} deleted successfully!')
         
         return redirect(f'/dashboard/reviews/?status={status_filter}')
     
@@ -1692,3 +1742,123 @@ def manage_reviews(request):
         'avg_rating': round(avg_rating, 1),
     }
     return render(request, 'dashboard/admin/manage_reviews.html', context)
+
+
+
+
+
+# views.py
+from django.contrib.admin.views.decorators import staff_member_required
+from django.shortcuts import render, redirect
+from django.contrib import messages
+
+@staff_member_required
+def manage_featured_courses(request):
+    """Dedicated page for managing featured course and top picks"""
+    
+    # Get all published courses for selection
+    available_courses = Course.objects.filter(
+        status='published'
+    ).select_related('instructor')
+    
+    # Get current featured course
+    current_featured = FeaturedCourse.objects.filter(
+        is_active=True
+    ).select_related('course').first()
+    
+    # Get current top picks
+    current_top_picks = TopPick.objects.filter(
+        is_active=True
+    ).select_related('course').order_by('position')
+    
+    # Get recent featured history
+    featured_history = FeaturedCourse.objects.all().select_related(
+        'course'
+    )[:10]
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'set_featured':
+            course_id = request.POST.get('course_id')
+            end_date = request.POST.get('end_date')
+            
+            try:
+                course = Course.objects.get(id=course_id)
+                
+                # Deactivate current featured course
+                FeaturedCourse.objects.filter(
+                    is_active=True
+                ).update(is_active=False)
+                
+                # Create new featured course
+                featured = FeaturedCourse.objects.create(
+                    course=course,
+                    end_date=end_date if end_date else None,
+                    created_by=request.user
+                )
+                
+                # Update course badge
+                course.badge = 'featured'
+                course.save()
+                
+                messages.success(request, f'"{course.title}" is now featured!')
+                
+            except Course.DoesNotExist:
+                messages.error(request, 'Course not found.')
+        
+        elif action == 'remove_featured':
+            FeaturedCourse.objects.filter(
+                is_active=True
+            ).update(is_active=False)
+            
+            # Reset badge for previously featured course
+            if current_featured:
+                current_featured.course.badge = 'none'
+                current_featured.course.save()
+            
+            messages.success(request, 'Featured course removed.')
+        
+        elif action == 'add_top_pick':
+            course_id = request.POST.get('course_id')
+            position = request.POST.get('position', 0)
+            
+            try:
+                course = Course.objects.get(id=course_id)
+                
+                # Check if already in top picks
+                if not TopPick.objects.filter(
+                    course=course, 
+                    is_active=True
+                ).exists():
+                    TopPick.objects.create(
+                        course=course,
+                        position=position
+                    )
+                    messages.success(request, f'"{course.title}" added to Top Picks!')
+                else:
+                    messages.warning(request, 'This course is already in Top Picks.')
+                    
+            except Course.DoesNotExist:
+                messages.error(request, 'Course not found.')
+        
+        elif action == 'remove_top_pick':
+            pick_id = request.POST.get('pick_id')
+            TopPick.objects.filter(id=pick_id).delete()
+            messages.success(request, 'Removed from Top Picks.')
+        
+        elif action == 'reorder_top_picks':
+            order = request.POST.getlist('order[]')
+            for position, pick_id in enumerate(order):
+                TopPick.objects.filter(id=pick_id).update(position=position)
+            messages.success(request, 'Order updated!')
+        
+        return redirect('dashboard:manage_featured')
+    
+    context = {
+        'available_courses': available_courses,
+        'current_featured': current_featured,
+        'current_top_picks': current_top_picks,
+        'featured_history': featured_history,
+    }
+    return render(request, 'dashboard/admin/manage_featured.html', context)

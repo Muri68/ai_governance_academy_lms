@@ -1,11 +1,13 @@
 from django.db import models
 
+
 class SiteSetting(models.Model):
     """Site-wide settings managed by super admin (text-based settings)"""
     SETTING_TYPES = [
         ('general', 'General'),
         ('branding', 'Branding'),
         ('content', 'Content Pages'),
+        ('about', 'About Us Content'),
         ('contact', 'Contact Info'),
         ('social', 'Social Media'),
         ('seo', 'SEO'),
@@ -82,7 +84,6 @@ class SiteFileSetting(models.Model):
         if self.file:
             return self.file.name.split('/')[-1]
         return None
-    
     
     
 class FAQ(models.Model):

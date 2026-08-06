@@ -24,7 +24,7 @@ class Command(BaseCommand):
             instructor = CustomUser.objects.filter(user_type='ADMIN', is_active=True).first()
         if not instructor:
             instructor = CustomUser.objects.create_user(
-                email='instructor@aiga.com',
+                email='instructor@aiga.ac',
                 password='Instructor@123',
                 first_name='Dr. Sarah',
                 last_name='Chen',
@@ -45,10 +45,8 @@ class Command(BaseCommand):
                 'duration': '12 Weeks',
                 'language': 'English',
                 'price': 49.99,
-                'discount_price': 39.99,
                 'is_free': False,
                 'status': 'published',
-                'is_featured': True,
                 'has_certificate': True,
                 'requirements': 'No prior programming experience required.',
                 'what_you_learn': 'Python fundamentals, OOP, file handling, databases, web APIs, and deployment.',

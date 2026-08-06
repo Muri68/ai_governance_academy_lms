@@ -656,6 +656,13 @@
                         <span class="sidebar-badge">{{ total_courses }}</span>
                     </a>
                 </li>
+
+                <li>
+                    <a href="{% url 'dashboard:manage_featured' %}" class="{% if request.resolver_match.url_name == 'manage_featured' %}active{% endif %}">
+                        <i class="fas fa-star"></i>
+                        <span>Featured Courses</span>
+                    </a>
+                </li>
                 
                 <li>
                     <a href="{% url 'dashboard:manage_instructors' %}" class="{% if request.resolver_match.url_name == 'manage_instructors' %}active{% endif %}">

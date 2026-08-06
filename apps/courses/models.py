@@ -32,6 +32,19 @@ class CourseCategory(models.Model):
         return self.courses.filter(status='published').count()
 
 
+from django.db import models
+from django.conf import settings
+from django.utils.text import slugify
+from django.utils import timezone
+from django.core.exceptions import ValidationError
+
+
+from django.db import models
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+from django.utils.text import slugify
+
 class Course(models.Model):
     """Main course model"""
     LEVEL_CHOICES = [
@@ -46,6 +59,14 @@ class Course(models.Model):
         ('published', 'Published'),
         ('archived', 'Archived'),
         ('review', 'In Review'),
+    ]
+    
+    BADGE_CHOICES = [
+        ('none', 'None'),
+        ('bestseller', '🔥 Bestseller'),
+        ('trending', '📈 Trending'),
+        ('new', '✨ New'),
+        ('featured', '⭐ Featured Course of the Month'),
     ]
     
     # Basic Info
@@ -68,7 +89,7 @@ class Course(models.Model):
         limit_choices_to={'user_type': 'INSTRUCTOR'}
     )
     category = models.ForeignKey(
-        CourseCategory, 
+        'CourseCategory', 
         on_delete=models.SET_NULL, 
         related_name='courses',
         null=True,
@@ -101,7 +122,18 @@ class Course(models.Model):
     
     # Status & Visibility
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
-    is_featured = models.BooleanField(default=False)
+    
+    # Badge System (REPLACES is_featured)
+    badge = models.CharField(
+        max_length=20, 
+        choices=BADGE_CHOICES, 
+        default='none',
+        help_text="Badge displayed on course card (Bestseller, Trending, New, or Featured)"
+    )
+    badge_updated_at = models.DateTimeField(blank=True, null=True, help_text="When the badge was last updated")
+    
+    # Featured Date Tracking
+    featured_at = models.DateTimeField(blank=True, null=True, help_text="When the course was marked as featured")
     
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
@@ -117,15 +149,67 @@ class Course(models.Model):
             models.Index(fields=['slug']),
             models.Index(fields=['instructor']),
             models.Index(fields=['category']),
+            models.Index(fields=['badge']),
         ]
+    
+    @property
+    def is_featured(self):
+        """Check if course is currently featured based on badge"""
+        return self.badge == 'featured'
+    
+    def clean(self):
+        """Validate that only one course is featured at a time"""
+        super().clean()
+        if self.badge == 'featured':
+            # Check if another course already has the featured badge
+            existing_featured = Course.objects.filter(
+                badge='featured'
+            ).exclude(pk=self.pk).first()
+            if existing_featured:
+                raise ValidationError({
+                    'badge': f'Only one course can be featured at a time. "{existing_featured.title}" is currently the featured course. Please remove the featured badge from that course first.'
+                })
     
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.title)
+        
+        # Handle featured badge logic
+        if self.badge == 'featured':
+            # Remove featured badge from all other courses
+            Course.objects.filter(badge='featured').exclude(pk=self.pk).update(
+                badge='none',
+                badge_updated_at=None,
+                featured_at=None
+            )
+            # Set featured timestamp
+            if not self.featured_at:
+                self.featured_at = timezone.now()
+        else:
+            # If badge is not featured, clear featured_at
+            if not self.featured_at:  # Only clear if it wasn't previously featured
+                pass  # Keep the timestamp for history
+            # If changing from featured to something else
+            if self.pk:
+                original = Course.objects.filter(pk=self.pk).first()
+                if original and original.badge == 'featured':
+                    self.featured_at = None
+        
+        # Handle badge timestamp
+        if self.badge != 'none' and not self.badge_updated_at:
+            self.badge_updated_at = timezone.now()
+        elif self.badge == 'none':
+            self.badge_updated_at = None
+            self.featured_at = None
+        
+        # Publish logic
         if self.status == 'published' and not self.published_at:
             self.published_at = timezone.now()
+        
+        # Free course logic
         if self.is_free:
             self.price = 0.00
+        
         super().save(*args, **kwargs)
     
     def __str__(self):
@@ -137,8 +221,8 @@ class Course(models.Model):
     
     @property
     def total_students(self):
-        """Count of active enrollments"""
-        return self.enrollments.filter(status='active').count()
+        """Count of ALL enrollments (active + completed)"""
+        return self.enrollments.filter(status__in=['active', 'completed']).count()
     
     @property
     def average_rating(self):
@@ -161,18 +245,40 @@ class Course(models.Model):
         return total
     
     @property
-    def progress_percentage(self):
-        """Overall course completion percentage"""
-        total = self.lessons.count()
-        if total == 0:
-            return 0
-        return 0  # Per-student calculation would go here
+    def is_bestseller(self):
+        return self.badge == 'bestseller'
     
     @property
-    def total_students(self):
-        """Count of ALL enrollments (active + completed)"""
-        return self.enrollments.filter(status__in=['active', 'completed']).count()
-
+    def is_trending(self):
+        return self.badge == 'trending'
+    
+    @property
+    def is_new(self):
+        return self.badge == 'new'
+    
+    @property
+    def badge_display(self):
+        """Return the display text for the badge"""
+        badge_map = {
+            'none': None,
+            'bestseller': '🔥 Bestseller',
+            'trending': '📈 Trending',
+            'new': '✨ New',
+            'featured': '⭐ Featured Course of the Month',
+        }
+        return badge_map.get(self.badge)
+    
+    @property
+    def badge_css_class(self):
+        """Return the CSS class for the badge"""
+        css_map = {
+            'none': '',
+            'bestseller': 'tp-badge-hot',
+            'trending': 'tp-badge-trending',
+            'new': 'tp-badge-new',
+            'featured': 'tp-badge-featured',
+        }
+        return css_map.get(self.badge, '')
 
 class Lesson(models.Model):
     """Individual lessons within a course"""
@@ -374,3 +480,53 @@ class CourseAnnouncement(models.Model):
     
     def __str__(self):
         return f"{self.course.title} - {self.title}"
+    
+
+
+
+class FeaturedCourse(models.Model):
+    """Featured Course of the Month - Only ONE active at a time"""
+    course = models.ForeignKey(
+        Course, 
+        on_delete=models.CASCADE,
+        related_name='featured_entries'
+    )
+    start_date = models.DateTimeField(default=timezone.now)
+    end_date = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def clean(self):
+        if self.is_active:
+            # Ensure only one active featured course
+            active = FeaturedCourse.objects.filter(
+                is_active=True
+            ).exclude(pk=self.pk).exists()
+            if active:
+                raise ValidationError(
+                    'Only one course can be featured at a time.'
+                )
+
+
+class TopPick(models.Model):
+    """Top Picks of the Month - Multiple courses allowed"""
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name='top_picks'
+    )
+    position = models.PositiveIntegerField(default=0)  # For ordering
+    is_active = models.BooleanField(default=True)
+    added_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['position']
+        unique_together = ['course', 'is_active']  # Avoid duplicates
