@@ -363,9 +363,15 @@
     </div>
 
     <div class="form-actions">
-        <a href="{% url 'dashboard:manage_final_exam' course_id=course.id %}" class="btn btn-info" style="margin-top: 10px;">
-            <i class="fas fa-graduation-cap"></i> Manage Final Exam
-        </a>
+        {% if course.id %}
+            <a href="{% url 'manage_final_exam' course_id=course.id %}" class="btn btn-primary">
+                Add/Manage Final Exam
+            </a>
+        {% else %}
+            <button type="button" class="btn btn-primary" disabled>
+                Save course first to add/manage final exam
+            </button>
+        {% endif %}
         <a href="{% url 'dashboard:manage_courses' %}" class="btn btn-secondary"><i class="fas fa-times"></i> Cancel</a>
         <button type="button" class="btn btn-secondary" onclick="saveAsDraft()"><i class="fas fa-save"></i> Save as Draft</button>
         <button type="submit" class="btn btn-primary" id="submitBtn"><i class="fas fa-check-circle"></i> {% if is_edit %}Update Course{% else %}Publish Course{% endif %}</button>
