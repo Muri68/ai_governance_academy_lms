@@ -151,8 +151,6 @@ class Command(BaseCommand):
                 'status': 'published',
                 'is_featured': True,
                 'has_certificate': True,
-                'requirements': 'No prior programming experience required',
-                'what_you_learn': 'Python fundamentals, OOP, web development, data analysis, automation',
                 'published_at': timezone.now(),
             }
         )
@@ -522,8 +520,6 @@ class Command(BaseCommand):
                 'status': 'published',
                 'is_featured': True,
                 'has_certificate': True,
-                'requirements': 'Basic understanding of computer networks and operating systems',
-                'what_you_learn': 'Network security, ethical hacking, SOC operations, incident response',
                 'published_at': timezone.now(),
             }
         )
@@ -723,8 +719,6 @@ class Command(BaseCommand):
                 'status': 'published',
                 'is_featured': True,
                 'has_certificate': True,
-                'requirements': 'Basic understanding of AI/ML concepts',
-                'what_you_learn': 'AI ethics principles, bias detection, governance frameworks, regulatory compliance',
                 'published_at': timezone.now(),
             }
         )
@@ -903,8 +897,6 @@ class Command(BaseCommand):
                 'status': 'published',
                 'is_featured': False,
                 'has_certificate': True,
-                'requirements': 'Basic Python knowledge (variables, functions, loops)',
-                'what_you_learn': 'HTML5, CSS3, JavaScript, Django, PostgreSQL, REST APIs',
                 'published_at': timezone.now(),
             }
         )
