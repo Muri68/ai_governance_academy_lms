@@ -595,25 +595,29 @@ def stripe_webhook(request):
 def handle_successful_payment(session):
     """Process a successful Stripe Checkout Session."""
 
-    print(f"🔍 Processing successful Stripe session: {session['id']}")
+    print(f"🔍 Processing successful Stripe session: {session.id}")
 
-    # ---------------------------------------------------------
-    # Get Stripe information
-    # ---------------------------------------------------------
-    session_id = session['id']
-    payment_intent_id = session.get('payment_intent')
+    # Convert StripeObject to normal dictionary
+    session_data = session.to_dict_recursive()
 
-    metadata = session.get('metadata') or {}
+    session_id = session_data.get('id')
+    payment_intent_id = session_data.get('payment_intent')
+
+    metadata = session_data.get('metadata') or {}
 
     user_id = metadata.get('user_id')
     course_id = metadata.get('course_id')
 
-    print(f"User ID: {user_id}")
-    print(f"Course ID: {course_id}")
-    print(f"PaymentIntent: {payment_intent_id}")
+    print(f"🔍 Session ID: {session_id}")
+    print(f"🔍 Payment Intent: {payment_intent_id}")
+    print(f"🔍 User ID: {user_id}")
+    print(f"🔍 Course ID: {course_id}")
+
+    if not session_id:
+        raise ValueError("Stripe session has no ID")
 
     # ---------------------------------------------------------
-    # 1. Try to find the existing Payment
+    # Find existing Payment
     # ---------------------------------------------------------
     payment = Payment.objects.filter(
         stripe_session_id=session_id
@@ -623,18 +627,22 @@ def handle_successful_payment(session):
     ).first()
 
     # ---------------------------------------------------------
-    # 2. Payment doesn't exist - create it from Stripe metadata
+    # If Payment does not exist, create it
     # ---------------------------------------------------------
     if not payment:
 
         print(
-            f"⚠️ No Payment found for session {session_id}. "
-            f"Creating one from Stripe data."
+            f"⚠️ No Payment found for session {session_id}"
         )
 
-        if not user_id or not course_id:
+        if not user_id:
             raise ValueError(
-                "Stripe session is missing user_id or course_id metadata."
+                "Stripe metadata does not contain user_id"
+            )
+
+        if not course_id:
+            raise ValueError(
+                "Stripe metadata does not contain course_id"
             )
 
         from django.contrib.auth import get_user_model
@@ -643,9 +651,9 @@ def handle_successful_payment(session):
         user = User.objects.get(id=user_id)
         course = Course.objects.get(id=course_id)
 
-        # Stripe amount is stored in the smallest currency unit.
-        # GBP uses pence, so divide by 100.
-        amount = Decimal(session['amount_total']) / Decimal('100')
+        amount_total = session_data.get('amount_total', 0)
+
+        amount = Decimal(amount_total) / Decimal('100')
 
         payment = Payment.objects.create(
             user=user,
@@ -653,24 +661,24 @@ def handle_successful_payment(session):
             stripe_session_id=session_id,
             stripe_payment_intent_id=payment_intent_id,
             amount=amount,
-            currency=session.get('currency', 'gbp').lower(),
+            currency=session_data.get('currency', 'gbp').lower(),
             status='completed',
             payment_method='card',
         )
 
         print(
             f"✅ Created Payment #{payment.id} "
-            f"with status COMPLETED"
+            f"as COMPLETED"
         )
 
     # ---------------------------------------------------------
-    # 3. Existing Payment - update it
+    # Existing Payment
     # ---------------------------------------------------------
     else:
 
         print(
             f"✅ Found Payment #{payment.id} "
-            f"(current status: {payment.status})"
+            f"with status: {payment.status}"
         )
 
         payment.status = 'completed'
@@ -685,39 +693,34 @@ def handle_successful_payment(session):
         )
 
     # ---------------------------------------------------------
-    # 4. Create or activate enrollment
+    # Create / activate enrollment
     # ---------------------------------------------------------
-    enrollment, created = Enrollment.objects.get_or_create(
-        student=payment.user,
-        course=payment.course,
-        defaults={
-            'status': 'active'
-        }
-    )
+    if payment.course:
 
-    if not created and enrollment.status != 'active':
-        enrollment.status = 'active'
-        enrollment.save(update_fields=['status'])
+        enrollment, created = Enrollment.objects.get_or_create(
+            student=payment.user,
+            course=payment.course,
+            defaults={
+                'status': 'active'
+            }
+        )
 
-    print(
-        f"✅ Enrollment #{enrollment.id} "
-        f"{'created' if created else 'activated'}"
-    )
+        if not created and enrollment.status != 'active':
+            enrollment.status = 'active'
+            enrollment.save(update_fields=['status'])
 
-    # ---------------------------------------------------------
-    # 5. Link Payment → Enrollment
-    # ---------------------------------------------------------
-    if payment.enrollment_id != enrollment.id:
-        payment.enrollment = enrollment
-        payment.save(update_fields=['enrollment'])
+        print(
+            f"✅ Enrollment #{enrollment.id} "
+            f"{'created' if created else 'activated'}"
+        )
 
-    print(
-        f"✅ Payment #{payment.id} linked to "
-        f"Enrollment #{enrollment.id}"
-    )
+        # Link payment to enrollment
+        if payment.enrollment_id != enrollment.id:
+            payment.enrollment = enrollment
+            payment.save(update_fields=['enrollment'])
 
     # ---------------------------------------------------------
-    # 6. Send payment confirmation email
+    # Send confirmation email
     # ---------------------------------------------------------
     send_payment_success_email(
         payment.user,
@@ -726,9 +729,10 @@ def handle_successful_payment(session):
     )
 
     print(
-        f"✅ Payment confirmation email sent to "
-        f"{payment.user.email}"
+        f"🎉 SUCCESS: Payment #{payment.id} "
+        f"completed successfully."
     )
+
 
 
 def handle_failed_payment_from_session(session):
