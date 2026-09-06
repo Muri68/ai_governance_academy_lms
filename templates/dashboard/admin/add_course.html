@@ -364,7 +364,7 @@
 
     <div class="form-actions">
         {% if course.id %}
-            <a href="{% url 'manage_final_exam' course_id=course.id %}" class="btn btn-primary">
+            <a href="{% url 'dashboard:manage_final_exam' course_id=course.id %}" class="btn btn-primary">
                 Add/Manage Final Exam
             </a>
         {% else %}
