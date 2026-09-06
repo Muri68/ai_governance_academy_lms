@@ -1,0 +1,147 @@
+{% extends "dashboard/instructor/instructor_base.html" %}
+{% load static %}
+
+{% block title %}Announcements{% endblock %}
+{% block page_title %}Announcements{% endblock %}
+
+{% block extra_css %}
+<style>
+    .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+    .btn-primary-sm { padding: 10px 20px; background: var(--green); color: white; border: none; border-radius: 10px; font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: 'Poppins', sans-serif; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; }
+    .btn-primary-sm:hover { background: #059669; transform: translateY(-1px); }
+    .filter-select { padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.8rem; font-family: 'Poppins', sans-serif; background: var(--card-bg); color: var(--text-dark); cursor: pointer; }
+
+    .announcements-list { display: flex; flex-direction: column; gap: 16px; }
+    .announcement-card { background: var(--card-bg); border-radius: 16px; padding: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); border: 1px solid var(--border-color); transition: all 0.2s; }
+    .announcement-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+    .announcement-card.pinned { border-left: 4px solid #f59e0b; }
+    .announcement-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+    .announcement-title { font-size: 0.95rem; font-weight: 600; color: var(--text-dark); }
+    .announcement-meta { font-size: 0.72rem; color: var(--text-muted); margin-bottom: 8px; }
+    .announcement-content { font-size: 0.85rem; color: var(--text-dark); line-height: 1.7; }
+    .pin-badge { background: #fef3c7; color: #92400e; padding: 2px 10px; border-radius: 10px; font-size: 0.65rem; font-weight: 600; }
+    .btn-delete { width: 32px; height: 32px; border-radius: 6px; border: none; background: transparent; cursor: pointer; color: #ef4444; font-size: 0.8rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+    .btn-delete:hover { background: #fee2e2; }
+
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+    .modal-overlay.active { display: flex; }
+    .modal-content { background: var(--card-bg); border-radius: 16px; padding: 24px; max-width: 550px; width: 90%; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .modal-title { font-size: 1rem; font-weight: 600; }
+    .modal-close { width: 32px; height: 32px; border-radius: 8px; border: none; background: #f1f5f9; cursor: pointer; font-size: 0.9rem; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-dark); margin-bottom: 6px; }
+    .form-control { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border-color); border-radius: 10px; font-size: 0.85rem; font-family: 'Poppins', sans-serif; color: var(--text-dark); background: #f8fafc; outline: none; }
+    .form-control:focus { border-color: var(--green); }
+    textarea.form-control { resize: vertical; min-height: 100px; }
+    .toggle-row { display: flex; align-items: center; gap: 10px; }
+    .toggle-switch { position: relative; width: 42px; height: 22px; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #d1d5db; border-radius: 22px; transition: 0.3s; }
+    .toggle-slider:before { content: ""; position: absolute; height: 16px; width: 16px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.3s; }
+    .toggle-switch input:checked + .toggle-slider { background: #f59e0b; }
+    .toggle-switch input:checked + .toggle-slider:before { transform: translateX(20px); }
+
+    .empty-state { text-align: center; padding: 60px; color: var(--text-muted); }
+    .empty-state i { font-size: 3rem; margin-bottom: 12px; opacity: 0.3; }
+
+    @media (max-width: 480px) { .header-row { flex-direction: column; align-items: stretch; } }
+</style>
+{% endblock %}
+
+{% block content %}
+{% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" style="border-radius:12px;margin-bottom:16px;font-size:0.85rem;">
+        {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+{% endif %}
+
+<div class="header-row">
+    <select class="filter-select" onchange="window.location='?course='+this.value">
+        <option value="">All Courses</option>
+        {% for c in courses %}
+        <option value="{{ c.id }}" {% if selected_course and selected_course.id == c.id %}selected{% endif %}>{{ c.title|truncatechars:30 }}</option>
+        {% endfor %}
+    </select>
+    <button class="btn-primary-sm" onclick="openModal()"><i class="fas fa-plus"></i> New Announcement</button>
+</div>
+
+<div class="announcements-list">
+    {% for announcement in announcements %}
+    <div class="announcement-card {% if announcement.is_pinned %}pinned{% endif %}">
+        <div class="announcement-header">
+            <div>
+                <div class="announcement-title">
+                    {% if announcement.is_pinned %}<span class="pin-badge"><i class="fas fa-thumbtack"></i> Pinned</span>{% endif %}
+                    {{ announcement.title }}
+                </div>
+                <div class="announcement-meta">
+                    {{ announcement.course.title|truncatechars:30 }} • {{ announcement.created_at|date:"M d, Y" }} • {{ announcement.created_at|timesince }} ago
+                </div>
+            </div>
+            <form method="POST" style="display:inline;" onsubmit="return confirm('Delete this announcement?')">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="announcement_id" value="{{ announcement.id }}">
+                <button type="submit" class="btn-delete"><i class="fas fa-trash"></i></button>
+            </form>
+        </div>
+        <div class="announcement-content">{{ announcement.content|linebreaks }}</div>
+    </div>
+    {% empty %}
+    <div class="empty-state">
+        <i class="fas fa-bullhorn"></i>
+        <p>No announcements yet. Create your first announcement to engage with students.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Create Announcement Modal -->
+<div class="modal-overlay" id="createModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">New Announcement</h3>
+            <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create">
+            <div class="form-group">
+                <label>Course <span style="color:#ef4444;">*</span></label>
+                <select name="course_id" class="form-control" required>
+                    <option value="">Select course...</option>
+                    {% for c in courses %}
+                    <option value="{{ c.id }}" {% if selected_course and selected_course.id == c.id %}selected{% endif %}>{{ c.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Title <span style="color:#ef4444;">*</span></label>
+                <input type="text" name="title" class="form-control" placeholder="Announcement title" required>
+            </div>
+            <div class="form-group">
+                <label>Content <span style="color:#ef4444;">*</span></label>
+                <textarea name="content" class="form-control" rows="4" placeholder="Write your announcement..." required></textarea>
+            </div>
+            <div class="toggle-row" style="margin-bottom:16px;">
+                <label class="toggle-switch"><input type="checkbox" name="is_pinned"><span class="toggle-slider"></span></label>
+                <span style="font-size:0.82rem;">Pin this announcement</span>
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Post Announcement</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function openModal() { document.getElementById('createModal').classList.add('active'); }
+    function closeModal() { document.getElementById('createModal').classList.remove('active'); }
+    document.getElementById('createModal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+</script>
+{% endblock %}

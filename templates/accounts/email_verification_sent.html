@@ -1,0 +1,181 @@
+{% extends 'auth_base.html' %}
+{% load static %}
+
+{% block title %}Email Verification Sent - AI Governance Authority{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: #f8f9fa !important;
+    }
+    .verification-card {
+        background: white;
+        border-radius: 15px;
+        padding: 30px 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        text-align: center;
+        margin: 0 auto;
+        max-width: 100%;
+    }
+    .icon-wrapper {
+        width: 70px;
+        height: 70px;
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+    }
+    .icon-wrapper i {
+        font-size: 32px;
+        color: white;
+    }
+    
+    /* Responsive text sizes */
+    h2 {
+        font-size: 1.75rem;
+    }
+    
+    /* Button responsiveness */
+    .btn-group-responsive {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 20px;
+    }
+    
+    .btn-group-responsive .btn {
+        width: 100%;
+        margin: 0 !important;
+    }
+    
+    /* Alert responsiveness */
+    .alert {
+        padding: 15px;
+        font-size: 0.9rem;
+    }
+    
+    /* Desktop styles */
+    @media (min-width: 768px) {
+        .verification-card {
+            padding: 40px;
+        }
+        
+        .icon-wrapper {
+            width: 80px;
+            height: 80px;
+        }
+        
+        .icon-wrapper i {
+            font-size: 40px;
+        }
+        
+        h2 {
+            font-size: 2rem;
+        }
+        
+        .btn-group-responsive {
+            flex-direction: row;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .btn-group-responsive .btn {
+            width: auto;
+        }
+    }
+    
+    /* Small mobile devices */
+    @media (max-width: 480px) {
+        .verification-card {
+            padding: 20px 15px;
+            border-radius: 10px;
+        }
+        
+        .icon-wrapper {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 15px;
+        }
+        
+        .icon-wrapper i {
+            font-size: 28px;
+        }
+        
+        h2 {
+            font-size: 1.5rem;
+        }
+        
+        p {
+            font-size: 0.9rem;
+        }
+        
+        .alert {
+            font-size: 0.85rem;
+            padding: 12px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block auth_content %}
+<div class="container py-4 py-md-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5">
+            {% if user.is_authenticated and user.is_social_login %}
+                <div class="verification-card">
+                    <div class="icon-wrapper">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    
+                    <h2 class="mb-3">Signup Successful</h2>
+                    
+                    <p class="text-muted mb-4">
+                        You signed up using a social account. Your email is already verified.
+                    </p>
+                    
+                    <div class="btn-group-responsive">
+                        <a href="{% url 'frontend:index' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-home me-2"></i>Back to Home
+                        </a>
+                        <a href="{% url 'accounts:dashboard' %}" class="btn btn-primary">
+                            <i class="fas fa-speedometer me-2"></i>Go to Dashboard
+                        </a>
+                    </div>
+                </div>
+            {% else %}
+                <div class="verification-card">
+                    <div class="icon-wrapper">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    
+                    <h2 class="mb-3">Check Your Email</h2>
+                    
+                    <p class="text-muted mb-4">
+                        We've sent a verification email to your email address. Please check your inbox and click the verification link to activate your account.
+                    </p>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Didn't receive the email?</strong><br>
+                        <small>
+                            Check your spam folder or 
+                            <a href="{% url 'accounts:resend_verification' %}" class="fw-bold">click here to resend</a>.
+                        </small>
+                    </div>
+                    
+                    <div class="btn-group-responsive">
+                        <a href="{% url 'frontend:index' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-home me-2"></i>Back to Home
+                        </a>
+                        <a href="{% url 'accounts:login' %}" class="btn btn-primary">
+                            <i class="fas fa-sign-in-alt me-2"></i>Go to Login
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

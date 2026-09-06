@@ -1,0 +1,342 @@
+{% extends "dashboard/admin/admin_base.html" %}
+{% load static %}
+
+{% block title %}Compose Newsletter{% endblock %}
+{% block page_title %}Compose Newsletter{% endblock %}
+
+{% block extra_css %}
+<script src="{% static 'tinymce/tinymce.min.js' %}"></script>
+<style>
+    .compose-container {
+        background: var(--bg-card);
+        border-radius: 14px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        border: 1px solid var(--border-color);
+        padding: 28px;
+    }
+    
+    .compose-header {
+        margin-bottom: 24px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .compose-header h2 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 8px;
+    }
+    
+    .compose-header p {
+        font-size: 0.82rem;
+        color: var(--text-muted);
+    }
+    
+    .recipient-info {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+    }
+    
+    .recipient-badge {
+        padding: 10px 16px;
+        background: #f0f9ff;
+        border: 1px solid #bae6fd;
+        border-radius: 10px;
+        font-size: 0.82rem;
+        color: #0c4a6e;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        display: block;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 6px;
+    }
+    
+    .form-group .help-text {
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        margin-bottom: 6px;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1.5px solid var(--border-color);
+        border-radius: 10px;
+        font-size: 0.85rem;
+        font-family: 'Poppins', sans-serif;
+        color: var(--text-dark);
+        background: #f8fafc;
+        outline: none;
+        transition: all 0.2s;
+    }
+    
+    .form-control:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        background: white;
+    }
+    
+    .radio-group {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .radio-option {
+        flex: 1;
+        min-width: 150px;
+    }
+    
+    .radio-option input[type="radio"] {
+        display: none;
+    }
+    
+    .radio-option label {
+        display: block;
+        padding: 14px 18px;
+        border: 2px solid var(--border-color);
+        border-radius: 10px;
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.2s;
+        font-weight: 500;
+    }
+    
+    .radio-option input[type="radio"]:checked + label {
+        border-color: #3b82f6;
+        background: #eff6ff;
+        color: #2563eb;
+    }
+    
+    .btn-submit {
+        padding: 12px 28px;
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: 'Poppins', sans-serif;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .btn-submit:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 16px rgba(16,185,129,0.3);
+    }
+    
+    .btn-back {
+        padding: 12px 24px;
+        background: #f3f4f6;
+        color: #374151;
+        border: none;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .preview-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .preview-content {
+        background: white;
+        border-radius: 14px;
+        max-width: 700px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        padding: 30px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 20px;">
+    <a href="{% url 'dashboard:newsletter_dashboard' %}" class="btn-back">
+        <i class="fas fa-arrow-left"></i> Back to Newsletter
+    </a>
+</div>
+
+<div class="compose-container">
+    <div class="compose-header">
+        <h2><i class="fas fa-paper-plane" style="color: #10b981; margin-right: 8px;"></i> Compose Newsletter</h2>
+        <p>Create and send a newsletter to your subscribers</p>
+    </div>
+    
+    <div class="recipient-info">
+        <div class="recipient-badge">
+            <i class="fas fa-users"></i> 
+            Active Subscribers: <strong>{{ active_count }}</strong>
+        </div>
+        <div class="recipient-badge">
+            <i class="fas fa-database"></i> 
+            Total Subscribers: <strong>{{ total_count }}</strong>
+        </div>
+    </div>
+    
+    <form method="POST" id="newsletterForm">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label>Send To</label>
+            <div class="radio-group">
+                <div class="radio-option">
+                    <input type="radio" name="recipient_type" value="active" id="active" checked>
+                    <label for="active">
+                        <i class="fas fa-user-check"></i><br>
+                        Active Subscribers Only<br>
+                        <small style="color: var(--text-muted);">({{ active_count }} recipients)</small>
+                    </label>
+                </div>
+                <div class="radio-option">
+                    <input type="radio" name="recipient_type" value="all" id="all">
+                    <label for="all">
+                        <i class="fas fa-users"></i><br>
+                        All Subscribers<br>
+                        <small style="color: var(--text-muted);">({{ total_count }} recipients)</small>
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>Subject</label>
+            <input type="text" name="subject" class="form-control" 
+                   placeholder="Enter newsletter subject..." required>
+        </div>
+        
+        <div class="form-group">
+            <label>Content</label>
+            <div class="help-text">Design your newsletter content. Use images, links, and formatting as needed.</div>
+            <textarea name="content" id="newsletterEditor" class="form-control" rows="20">
+                <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
+                    <div style="background: #1e293b; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+                        <h1 style="color: white; margin: 0; font-size: 24px;">AI Governance Academy</h1>
+                        <p style="color: #94a3b8; margin-top: 8px;">Newsletter</p>
+                    </div>
+                    
+                    <div style="padding: 30px; background: white; border: 1px solid #e2e8f0;">
+                        <h2 style="color: #1e293b;">Hello {{ subscriber_email }}</h2>
+                        
+                        <p style="color: #475569; line-height: 1.8;">Write your newsletter content here...</p>
+                        
+                        <div style="margin: 30px 0; text-align: center;">
+                            <a href="#" style="background: #3b82f6; color: white; padding: 12px 30px; 
+                               text-decoration: none; border-radius: 8px; font-weight: bold;">
+                                Learn More
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div style="background: #f8fafc; padding: 20px; text-align: center; border-radius: 0 0 10px 10px;">
+                        <p style="color: #94a3b8; font-size: 12px;">
+                            You're receiving this email because you subscribed to our newsletter.<br>
+                            <a href="{{ unsubscribe_url }}" style="color: #3b82f6;">Unsubscribe</a>
+                        </p>
+                    </div>
+                </div>
+            </textarea>
+        </div>
+        
+        <div style="display: flex; gap: 10px; margin-top: 24px;">
+            <button type="submit" class="btn-submit">
+                <i class="fas fa-paper-plane"></i> Send Newsletter
+            </button>
+            <button type="button" class="btn-back" onclick="previewNewsletter()">
+                <i class="fas fa-eye"></i> Preview
+            </button>
+            <a href="{% url 'dashboard:newsletter_dashboard' %}" class="btn-back">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<!-- Preview Modal -->
+<div class="preview-modal" id="previewModal">
+    <div class="preview-content" id="previewContent"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize TinyMCE
+    if (typeof tinymce !== 'undefined') {
+        tinymce.init({
+            selector: '#newsletterEditor',
+            height: 500,
+            menubar: true,
+            plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table codesample help wordcount',
+            toolbar: 'undo redo | formatselect | bold italic underline strikethrough | forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image media | removeformat | code | preview | help',
+            content_style: 'body { font-family: Poppins, sans-serif; font-size: 14px; color: #1e293b; }',
+            setup: function(editor) {
+                editor.on('change', function() { editor.save(); });
+            }
+        });
+    }
+    
+    function previewNewsletter() {
+        const content = tinymce.get('newsletterEditor').getContent();
+        const modal = document.getElementById('previewModal');
+        const previewContent = document.getElementById('previewContent');
+        
+        previewContent.innerHTML = content + 
+            '<div style="text-align: center; margin-top: 20px;">' +
+            '<button onclick="closePreview()" style="padding: 10px 24px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer;">Close Preview</button>' +
+            '</div>';
+        
+        modal.style.display = 'flex';
+    }
+    
+    function closePreview() {
+        document.getElementById('previewModal').style.display = 'none';
+    }
+    
+    // Close modal on outside click
+    document.getElementById('previewModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closePreview();
+        }
+    });
+    
+    // Confirm before sending
+    document.getElementById('newsletterForm').addEventListener('submit', function(e) {
+        const recipientType = document.querySelector('input[name="recipient_type"]:checked').value;
+        const count = recipientType === 'active' ? {{ active_count }} : {{ total_count }};
+        
+        if (!confirm('Send this newsletter to ' + count + ' subscribers?')) {
+            e.preventDefault();
+        }
+    });
+</script>
+{% endblock %}

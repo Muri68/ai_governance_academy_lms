@@ -1,0 +1,113 @@
+{% extends "dashboard/instructor/instructor_base.html" %}
+{% load static %}
+
+{% block title %}Student Progress - {{ student.get_full_name }}{% endblock %}
+{% block page_title %}Student Progress{% endblock %}
+
+{% block extra_css %}
+<style>
+    .breadcrumb-row { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; margin-bottom: 20px; flex-wrap: wrap; }
+    .breadcrumb-row a { color: var(--text-muted); text-decoration: none; }
+    .breadcrumb-row a:hover { color: var(--green); }
+
+    .student-header { background: linear-gradient(135deg, #0f172a, #1e293b); border-radius: 16px; padding: 24px; margin-bottom: 24px; color: white; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+    .student-avatar-lg { width: 70px; height: 70px; border-radius: 50%; background: linear-gradient(135deg, #10b981, #059669); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; flex-shrink: 0; }
+    .student-info h2 { font-size: 1.2rem; font-weight: 700; }
+    .student-info p { font-size: 0.8rem; color: rgba(255,255,255,0.6); margin: 0; }
+    .student-stats { display: flex; gap: 24px; margin-left: auto; flex-wrap: wrap; }
+    .student-stat { text-align: center; }
+    .student-stat .num { font-size: 1.5rem; font-weight: 700; }
+    .student-stat .num.green { color: #10b981; }
+    .student-stat .num.blue { color: #60a5fa; }
+    .student-stat .lbl { font-size: 0.65rem; color: rgba(255,255,255,0.5); text-transform: uppercase; }
+
+    .content-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+    .card { background: var(--card-bg); border-radius: 16px; padding: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); border: 1px solid var(--border-color); }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .card-title { font-size: 0.95rem; font-weight: 600; color: var(--text-dark); }
+
+    .progress-bar-lg { width: 100%; height: 12px; background: #e5e7eb; border-radius: 6px; overflow: hidden; margin: 16px 0; }
+    .progress-fill-lg { height: 100%; background: linear-gradient(90deg, #10b981, #059669); border-radius: 6px; transition: width 0.5s; }
+
+    .lesson-list { display: flex; flex-direction: column; gap: 8px; max-height: 500px; overflow-y: auto; }
+    .lesson-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 10px; background: #f8fafc; }
+    .lesson-status { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; flex-shrink: 0; }
+    .lesson-status.completed { background: #d1fae5; color: #065f46; }
+    .lesson-status.pending { background: #f1f5f9; color: #94a3b8; }
+    .lesson-info { flex: 1; }
+    .lesson-info h4 { font-size: 0.82rem; font-weight: 500; }
+    .lesson-info span { font-size: 0.7rem; color: var(--text-muted); }
+
+    .activity-list { display: flex; flex-direction: column; gap: 10px; }
+    .activity-item { display: flex; gap: 10px; padding: 10px; border-left: 2px solid #10b981; }
+    .activity-item .dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; margin-top: 5px; flex-shrink: 0; }
+    .activity-info { font-size: 0.78rem; }
+    .activity-info .time { font-size: 0.68rem; color: var(--text-muted); }
+
+    @media (max-width: 1024px) { .content-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 768px) { .student-header { flex-direction: column; text-align: center; } .student-stats { margin-left: 0; justify-content: center; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-row">
+    <a href="{% url 'dashboard:instructor_dashboard' %}"><i class="fas fa-home"></i> Dashboard</a>
+    <span>/</span>
+    <a href="{% url 'dashboard:instructor_courses' %}">My Courses</a>
+    <span>/</span>
+    <a href="{% url 'dashboard:instructor_course_students' course.id %}">{{ course.title|truncatechars:30 }}</a>
+    <span>/</span>
+    <span>{{ student.get_full_name }}</span>
+</div>
+
+<div class="student-header">
+    <div class="student-avatar-lg">{{ student.get_full_name|slice:":1"|upper }}</div>
+    <div class="student-info">
+        <h2>{{ student.get_full_name }}</h2>
+        <p>{{ student.email }}</p>
+        <p>Enrolled: {{ enrollment.enrolled_at|date:"M d, Y" }} • Status: <strong>{{ enrollment.get_status_display }}</strong></p>
+    </div>
+    <div class="student-stats">
+        <div class="student-stat"><div class="num green">{{ completed_lessons }}/{{ total_lessons }}</div><div class="lbl">Lessons Done</div></div>
+        <div class="student-stat"><div class="num blue">{{ progress_percent }}%</div><div class="lbl">Progress</div></div>
+    </div>
+</div>
+
+<div class="content-grid">
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Lesson Progress</h3></div>
+        <div class="progress-bar-lg"><div class="progress-fill-lg" style="width: {{ progress_percent }}%"></div></div>
+        <div class="lesson-list">
+            {% for lesson in lessons %}
+            <div class="lesson-item">
+                <div class="lesson-status {% if lesson.is_completed %}completed{% else %}pending{% endif %}">
+                    {% if lesson.is_completed %}<i class="fas fa-check"></i>{% else %}<i class="fas fa-circle"></i>{% endif %}
+                </div>
+                <div class="lesson-info">
+                    <h4>{{ lesson.order }}. {{ lesson.title }}</h4>
+                    <span>{% if lesson.last_accessed %}Last accessed: {{ lesson.last_accessed|timesince }} ago{% else %}Not accessed yet{% endif %}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Recent Activity</h3></div>
+        <div class="activity-list">
+            {% for activity in activities %}
+            <div class="activity-item">
+                <div class="dot"></div>
+                <div class="activity-info">
+                    <strong>{{ activity.lesson.title }}</strong>
+                    {% if activity.completed %}<span style="color:#10b981;">✓ Completed</span>{% else %}<span>In progress</span>{% endif %}
+                    <div class="time">{{ activity.last_accessed|date:"M d, Y H:i" }}</div>
+                </div>
+            </div>
+            {% empty %}
+            <p style="text-align:center;color:var(--text-muted);padding:20px;">No activity yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Certificate Verification{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="min-height:60vh;">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            {% if verified %}
+            <div style="background:#fff;border-radius:20px;padding:40px;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+                <div style="font-size:4rem;color:#10b981;margin-bottom:16px;"><i class="fas fa-check-circle"></i></div>
+                <h2 style="color:#1a2332;margin-bottom:8px;">Certificate Verified</h2>
+                <p style="color:#6b7280;margin-bottom:20px;">This is a valid certificate from AI Governance Academy.</p>
+                
+                <div style="background:#f8fafc;border-radius:12px;padding:20px;text-align:left;max-width:500px;margin:0 auto;">
+                    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e5e7eb;">
+                        <span style="color:#6b7280;">Student</span>
+                        <span style="font-weight:600;color:#1a2332;">{{ enrollment.student.get_full_name }}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e5e7eb;">
+                        <span style="color:#6b7280;">Course</span>
+                        <span style="font-weight:600;color:#1a2332;">{{ enrollment.course.title }}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e5e7eb;">
+                        <span style="color:#6b7280;">Instructor</span>
+                        <span style="font-weight:600;color:#1a2332;">{{ enrollment.course.instructor.get_full_name }}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #e5e7eb;">
+                        <span style="color:#6b7280;">Completed</span>
+                        <span style="font-weight:600;color:#1a2332;">{{ enrollment.completed_at|date:"F d, Y" }}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:8px 0;">
+                        <span style="color:#6b7280;">Certificate ID</span>
+                        <span style="font-weight:600;color:#1a2332;font-size:0.8rem;">{{ cert_id }}</span>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div style="background:#fff;border-radius:20px;padding:40px;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+                <div style="font-size:4rem;color:#ef4444;margin-bottom:16px;"><i class="fas fa-times-circle"></i></div>
+                <h2 style="color:#1a2332;margin-bottom:8px;">Certificate Not Found</h2>
+                <p style="color:#6b7280;">This certificate could not be verified. The certificate ID may be invalid or the certificate has been revoked.</p>
+                <p style="color:#9ca3af;font-size:0.85rem;">Certificate ID: {{ cert_id }}</p>
+            </div>
+            {% endif %}
+            
+            <a href="{% url 'frontend:index' %}" class="btn btn-primary mt-3" style="padding:10px 24px;border-radius:50px;">Back to Home</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Payment Cancelled - AI Governance Academy{% endblock %}
+
+{% block extra_css %}
+<style>
+    .payment-result-section {
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 60px 20px;
+    }
+    
+    .payment-result-card {
+        background: white;
+        border-radius: 20px;
+        padding: 50px 40px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+        text-align: center;
+        max-width: 550px;
+        width: 100%;
+        animation: slideUp 0.5s ease;
+    }
+    
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .cancel-icon-wrapper {
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 30px;
+        animation: scaleIn 0.5s ease 0.2s both;
+    }
+    
+    @keyframes scaleIn {
+        from {
+            transform: scale(0);
+        }
+        to {
+            transform: scale(1);
+        }
+    }
+    
+    .cancel-icon-wrapper i {
+        font-size: 50px;
+        color: white;
+    }
+    
+    .payment-result-card h2 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 12px;
+        font-family: 'Montserrat', sans-serif;
+    }
+    
+    .payment-result-card .cancel-message {
+        font-size: 16px;
+        color: #6b7280;
+        margin-bottom: 25px;
+        line-height: 1.6;
+    }
+    
+    .help-section {
+        background: #fef7f0;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 30px;
+        border: 1px solid #fde8d0;
+    }
+    
+    .help-section p {
+        font-size: 14px;
+        color: #92400e;
+        margin: 0;
+        font-weight: 500;
+    }
+    
+    .help-section i {
+        color: #f59e0b;
+        margin-right: 8px;
+    }
+    
+    .btn-try-again {
+        display: inline-block;
+        background: #ad7a49;
+        color: white;
+        padding: 14px 35px;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        font-family: 'Montserrat', sans-serif;
+        margin-right: 10px;
+    }
+    
+    .btn-try-again:hover {
+        background: #8c6339;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(173, 122, 73, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-browse-courses {
+        display: inline-block;
+        background: white;
+        color: #374151;
+        padding: 14px 35px;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        font-family: 'Montserrat', sans-serif;
+        border: 2px solid #e5e7eb;
+    }
+    
+    .btn-browse-courses:hover {
+        border-color: #ad7a49;
+        color: #ad7a49;
+        text-decoration: none;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    @media (max-width: 576px) {
+        .payment-result-card {
+            padding: 35px 20px;
+        }
+        
+        .payment-result-card h2 {
+            font-size: 22px;
+        }
+        
+        .cancel-icon-wrapper {
+            width: 80px;
+            height: 80px;
+        }
+        
+        .cancel-icon-wrapper i {
+            font-size: 40px;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .btn-try-again, .btn-browse-courses {
+            width: 100%;
+            text-align: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="payment-result-section">
+    <div class="payment-result-card">
+        <div class="cancel-icon-wrapper">
+            <i class="fas fa-times-circle"></i>
+        </div>
+        
+        <h2>Payment Cancelled</h2>
+        
+        {% if messages %}
+            {% for message in messages %}
+                <p class="cancel-message">{{ message }}</p>
+            {% endfor %}
+        {% else %}
+            <p class="cancel-message">
+                Your payment was not processed. No charges have been made to your account.
+            </p>
+        {% endif %}
+        
+        <div class="help-section">
+            <p>
+                <i class="fas fa-question-circle"></i>
+                If you encountered any issues during payment, please try again or contact our support team for assistance.
+            </p>
+        </div>
+        
+        <div class="action-buttons">
+            {% if course %}
+            <a href="{% url 'payments:checkout' course_slug=course.slug %}" class="btn-try-again">
+                <i class="fas fa-redo me-2"></i> Try Again
+            </a>
+            {% endif %}
+            <a href="{% url 'frontend:courses' %}" class="btn-browse-courses">
+                <i class="fas fa-th-large me-2"></i> Browse Courses
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

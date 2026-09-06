@@ -1,0 +1,80 @@
+{% if content.content_type == 'video' and content.video_file %}
+<div class="video-player-container">
+    <div class="video-wrapper">
+        <video controls preload="metadata" style="width:100%;height:100%;" controlsList="nodownload" oncontextmenu="return false;">
+            <source src="{% url 'courses:serve_file' course.slug content.id %}" type="video/mp4">
+        </video>
+    </div>
+</div>
+{% elif content.content_type == 'video_url' and content.video_url %}
+<div class="video-player-container">
+    <div class="video-wrapper">
+        <iframe src="{{ content.video_url }}" frameborder="0" allowfullscreen style="width:100%;height:100%;"></iframe>
+    </div>
+</div>
+{% endif %}
+
+<span class="content-type-badge {{ content.content_type }}">
+    <i class="{{ content.content_type_icon }}"></i> {{ content.get_content_type_display }}
+</span>
+
+{% if content.content_type == 'text' and content.text_content %}
+    <div class="content-text">{{ content.text_content|safe }}</div>
+{% elif content.content_type == 'pdf' and content.pdf_file %}
+    <div class="pdf-viewer-container" id="pdf-viewer-{{ content.id }}">
+        <div class="pdf-viewer-inner" id="pdf-inner-{{ content.id }}">
+            <div class="pdf-canvas-wrapper"><canvas class="pdf-page-canvas" id="pdf-canvas-{{ content.id }}"></canvas></div>
+        </div>
+        <div class="pdf-loading-overlay" id="pdf-loading-{{ content.id }}">
+            <div style="text-align:center;"><i class="fas fa-spinner fa-spin" style="font-size:32px;"></i><p>Loading PDF...</p></div>
+        </div>
+        <div class="pdf-error-overlay" id="pdf-error-{{ content.id }}">
+            <i class="fas fa-file-pdf"></i><h4>Unable to Load PDF</h4>
+            <button onclick="retryPdfLoad('{{ content.id }}')" class="btn-pdf"><i class="fas fa-redo"></i> Retry</button>
+        </div>
+    </div>
+    <div class="pdf-controls-bar" id="pdf-controls-{{ content.id }}">
+        <button onclick="changePdfPage('{{ content.id }}', -1)" id="pdf-prev-{{ content.id }}" disabled>Previous</button>
+        <span>Page <input type="number" class="page-input" id="pdf-page-input-{{ content.id }}" value="1" min="1" onchange="goToPdfPage('{{ content.id }}', this.value)"> of <span id="pdf-total-pages-{{ content.id }}">?</span></span>
+        <button onclick="changePdfPage('{{ content.id }}', 1)" id="pdf-next-{{ content.id }}" disabled>Next</button>
+    </div>
+    {% if content.allow_download %}
+        <a href="{% url 'courses:serve_file' course.slug content.id %}?download=1" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:var(--gold);color:white;border-radius:8px;text-decoration:none;font-size:12px;margin-top:8px;"><i class="fas fa-download"></i> Download</a>
+    {% endif %}
+{% elif content.content_type == 'quiz' %}
+    <div id="quiz-{{ content.id }}">
+        {% if content.quiz_data %}
+            {% for q in content.quiz_data.questions %}
+            <div class="quiz-question-block" style="margin-bottom:16px;">
+                <div class="quiz-question">{{ forloop.counter }}. {{ q.question }}</div>
+                {% for option in q.options %}
+                <label class="quiz-option" onclick="selectQuizOption(this)"><span class="quiz-radio"></span> {{ option }}</label>
+                {% endfor %}
+            </div>
+            {% endfor %}
+            <button class="btn-submit-quiz" onclick="submitQuiz('{{ content.id }}', {{ content.quiz_data.questions|length }}, {{ content.passing_score }})">Submit Quiz</button>
+            <div id="quiz-result-{{ content.id }}" style="margin-top:12px;"></div>
+        {% endif %}
+    </div>
+{% elif content.content_type == 'code' and content.text_content %}
+    <div class="code-block">{{ content.text_content|safe }}</div>
+{% elif content.content_type == 'assignment' %}
+    <div class="assignment-box">
+        <h4>{{ content.title|default:"Assignment" }}</h4>
+        <span style="font-size:12px;color:var(--text-muted);">Max Score: {{ content.max_score }}</span>
+        <div style="margin-top:12px;">{{ content.assignment_instructions|default:content.text_content|safe }}</div>
+    </div>
+{% elif content.content_type == 'slides' and content.pdf_file %}
+    <div class="pdf-viewer-container" id="pdf-viewer-{{ content.id }}">
+        <div class="pdf-viewer-inner" id="pdf-inner-{{ content.id }}">
+            <div class="pdf-canvas-wrapper"><canvas class="pdf-page-canvas" id="pdf-canvas-{{ content.id }}"></canvas></div>
+        </div>
+        <div class="pdf-loading-overlay" id="pdf-loading-{{ content.id }}"><div style="text-align:center;"><i class="fas fa-spinner fa-spin" style="font-size:32px;"></i><p>Loading Slides...</p></div></div>
+        <div class="pdf-error-overlay" id="pdf-error-{{ content.id }}"><i class="fas fa-file-pdf"></i><h4>Unable to Load</h4><button onclick="retryPdfLoad('{{ content.id }}')" class="btn-pdf"><i class="fas fa-redo"></i> Retry</button></div>
+    </div>
+    <div class="pdf-controls-bar" id="pdf-controls-{{ content.id }}">
+        <button onclick="changePdfPage('{{ content.id }}', -1)" disabled>Previous</button>
+        <span>Page <span id="pdf-current-page-{{ content.id }}">1</span> of <span id="pdf-total-pages-{{ content.id }}">?</span></span>
+        <button onclick="changePdfPage('{{ content.id }}', 1)" disabled>Next</button>
+    </div>
+{% endif %}

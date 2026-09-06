@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to AI Governance Academy</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+    </style>
+</head>
+<body style="margin:0;padding:0;background-color:#f3f4f6;font-family:'Poppins',Arial,sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f3f4f6;padding:40px 0;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
+                    
+                    <!-- Header -->
+                    <tr>
+                        <td style="background:linear-gradient(135deg, #0c1e2e 0%, #142a3e 100%);padding:40px 40px 30px;text-align:center;">
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td style="text-align:center;padding-bottom:20px;">
+                                        <img src="https://yourdomain.com/static/images/logo-white.png" alt="AI Governance Academy" style="max-width:180px;height:auto;" onerror="this.style.display='none'">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-size:28px;font-weight:700;color:#ffffff;line-height:1.3;">
+                                        Welcome to AI Governance Academy! 🎉
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-size:14px;color:rgba(255,255,255,0.7);padding-top:12px;">
+                                        Your {{ role }} account has been created successfully
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- Body -->
+                    <tr>
+                        <td style="padding:40px;">
+                            <!-- Greeting -->
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td style="font-size:18px;font-weight:600;color:#1a1a2e;padding-bottom:8px;">
+                                        Dear {{ user.get_full_name }},
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-size:14px;color:#6b7280;line-height:1.8;padding-bottom:24px;">
+                                        Congratulations! Your {{ role|lower }} account has been created on the AI Governance Academy platform. You're now part of a community dedicated to advancing knowledge in AI governance, cybersecurity, and ethical technology.
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Credentials Box -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f8fafc;border-radius:12px;border:1px solid #e5e7eb;margin-bottom:24px;">
+                                <tr>
+                                    <td style="padding:24px;">
+                                        <table width="100%" cellpadding="0" cellspacing="0">
+                                            <tr>
+                                                <td style="font-size:16px;font-weight:600;color:#1a1a2e;padding-bottom:16px;text-align:center;">
+                                                    🔐 Your Account Credentials
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding-bottom:12px;">
+                                                    <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:8px;padding:14px 16px;border:1px solid #e5e7eb;">
+                                                        <tr>
+                                                            <td style="font-size:12px;color:#6b7280;font-weight:500;width:80px;">Email:</td>
+                                                            <td style="font-size:14px;color:#1a1a2e;font-weight:600;">{{ user.email }}</td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding-bottom:12px;">
+                                                    <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:8px;padding:14px 16px;border:1px solid #e5e7eb;">
+                                                        <tr>
+                                                            <td style="font-size:12px;color:#6b7280;font-weight:500;width:80px;">Password:</td>
+                                                            <td style="font-size:14px;color:#1a1a2e;font-weight:600;font-family:'Courier New',monospace;letter-spacing:1px;">{{ password }}</td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="font-size:12px;color:#ef4444;padding-top:8px;text-align:center;">
+                                                    ⚠️ Please change your password after your first login
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Role-Specific Message -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+                                <tr>
+                                    <td style="font-size:14px;color:#6b7280;line-height:1.8;">
+                                        {% if role == 'STUDENT' %}
+                                        <p style="margin:0 0 12px;">As a student, you can:</p>
+                                        <ul style="margin:0;padding-left:20px;color:#6b7280;">
+                                            <li style="margin-bottom:8px;">📚 Browse and enroll in courses</li>
+                                            <li style="margin-bottom:8px;">📝 Track your learning progress</li>
+                                            <li style="margin-bottom:8px;">🎓 Earn certificates upon completion</li>
+                                            <li style="margin-bottom:8px;">💬 Participate in course discussions</li>
+                                        </ul>
+                                        {% elif role == 'INSTRUCTOR' %}
+                                        <p style="margin:0 0 12px;">As an instructor, you can:</p>
+                                        <ul style="margin:0;padding-left:20px;color:#6b7280;">
+                                            <li style="margin-bottom:8px;">📖 Create and manage courses</li>
+                                            <li style="margin-bottom:8px;">👥 Track student progress</li>
+                                            <li style="margin-bottom:8px;">💰 View your earnings</li>
+                                            <li style="margin-bottom:8px;">📊 Access analytics dashboard</li>
+                                        </ul>
+                                        {% elif role == 'ADMIN' %}
+                                        <p style="margin:0 0 12px;">As an administrator, you can:</p>
+                                        <ul style="margin:0;padding-left:20px;color:#6b7280;">
+                                            <li style="margin-bottom:8px;">👥 Manage users and permissions</li>
+                                            <li style="margin-bottom:8px;">📚 Oversee all courses</li>
+                                            <li style="margin-bottom:8px;">📊 View platform analytics</li>
+                                            <li style="margin-bottom:8px;">⚙️ Configure platform settings</li>
+                                        </ul>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- CTA Button -->
+                            <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+                                <tr>
+                                    <td align="center">
+                                        <a href="{{ login_url }}" style="display:inline-block;padding:14px 40px;background-color:#ad7a49;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;font-size:15px;font-family:'Poppins',Arial,sans-serif;">
+                                            🔑 Login to Your Account
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Divider -->
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td style="border-top:1px solid #e5e7eb;padding-top:24px;">
+                                        <table width="100%" cellpadding="0" cellspacing="0">
+                                            <tr>
+                                                <td style="font-size:13px;color:#9ca3af;line-height:1.6;">
+                                                    <p style="margin:0 0 8px;">If you have any questions or need assistance, please don't hesitate to contact our support team:</p>
+                                                    <p style="margin:0;">
+                                                        📧 <a href="mailto:support@aiga.com" style="color:#ad7a49;text-decoration:none;">support@aiga.com</a> | 
+                                                        🌐 <a href="{{ site_url }}" style="color:#ad7a49;text-decoration:none;">www.aiga.com</a>
+                                                    </p>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color:#0c1e2e;padding:24px 40px;text-align:center;">
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td style="font-size:12px;color:rgba(255,255,255,0.5);padding-bottom:8px;">
+                                        © {% now "Y" %} AI Governance Academy. All rights reserved.
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <a href="{{ site_url }}/privacy/" style="font-size:11px;color:rgba(255,255,255,0.4);text-decoration:none;margin:0 8px;">Privacy Policy</a>
+                                        <span style="color:rgba(255,255,255,0.2);">|</span>
+                                        <a href="{{ site_url }}/terms/" style="font-size:11px;color:rgba(255,255,255,0.4);text-decoration:none;margin:0 8px;">Terms & Conditions</a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

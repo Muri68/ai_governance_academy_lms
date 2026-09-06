@@ -1,0 +1,310 @@
+{% extends "dashboard/admin/admin_base.html" %}
+{% load static %}
+
+{% block title %}Contact Messages{% endblock %}
+{% block page_title %}Contact Messages{% endblock %}
+
+{% block extra_css %}
+<style>
+    .messages-container {
+        background: var(--bg-card);
+        border-radius: 14px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+    }
+    
+    .messages-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    
+    .messages-header h2 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text-dark);
+    }
+    
+    .status-filters {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    
+    .status-filter-btn {
+        padding: 8px 16px;
+        border-radius: 8px;
+        border: 1.5px solid var(--border-color);
+        background: white;
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .status-filter-btn:hover,
+    .status-filter-btn.active {
+        background: #3b82f6;
+        color: white;
+        border-color: #3b82f6;
+    }
+    
+    .status-filter-btn .badge {
+        background: rgba(255,255,255,0.3);
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.7rem;
+    }
+    
+    .message-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .message-table th {
+        padding: 14px 20px;
+        text-align: left;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        background: #f8fafc;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .message-table td {
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 0.85rem;
+        color: var(--text-dark);
+    }
+    
+    .message-table tbody tr {
+        transition: all 0.2s;
+    }
+    
+    .message-table tbody tr:hover {
+        background: #f8fafc;
+    }
+    
+    .message-table tbody tr.unread {
+        background: #f0f9ff;
+        font-weight: 500;
+    }
+    
+    .message-table tbody tr.unread:hover {
+        background: #e0f2fe;
+    }
+    
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        display: inline-block;
+    }
+    
+    .status-unread {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .status-read {
+        background: #f3f4f6;
+        color: #374151;
+    }
+    
+    .status-replied {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .status-archived {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .action-btns {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .btn-action {
+        padding: 6px 12px;
+        border-radius: 6px;
+        border: none;
+        font-size: 0.75rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+    
+    .btn-reply {
+        background: #3b82f6;
+        color: white;
+    }
+    
+    .btn-reply:hover {
+        background: #2563eb;
+    }
+    
+    .btn-archive {
+        background: #f3f4f6;
+        color: #374151;
+    }
+    
+    .btn-archive:hover {
+        background: #e5e7eb;
+    }
+    
+    .btn-delete {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .btn-delete:hover {
+        background: #fecaca;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--text-muted);
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        opacity: 0.3;
+        margin-bottom: 15px;
+    }
+    
+    @media (max-width: 768px) {
+        .message-table {
+            display: block;
+        }
+        
+        .message-table thead {
+            display: none;
+        }
+        
+        .message-table tbody,
+        .message-table tr,
+        .message-table td {
+            display: block;
+        }
+        
+        .message-table tr {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .message-table td {
+            padding: 8px 0;
+            border: none;
+        }
+        
+        .message-table td:before {
+            content: attr(data-label);
+            font-weight: 600;
+            display: block;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="messages-container">
+    <div class="messages-header">
+        <h2><i class="fas fa-envelope" style="color: #3b82f6; margin-right: 8px;"></i> Contact Messages</h2>
+        <div class="status-filters">
+            <a href="?status=all" class="status-filter-btn {% if status_filter == 'all' %}active{% endif %}">
+                All <span class="badge">{{ total_count }}</span>
+            </a>
+            <a href="?status=unread" class="status-filter-btn {% if status_filter == 'unread' %}active{% endif %}">
+                Unread <span class="badge">{{ unread_count }}</span>
+            </a>
+            <a href="?status=read" class="status-filter-btn {% if status_filter == 'read' %}active{% endif %}">
+                Read <span class="badge">{{ read_count }}</span>
+            </a>
+            <a href="?status=replied" class="status-filter-btn {% if status_filter == 'replied' %}active{% endif %}">
+                Replied <span class="badge">{{ replied_count }}</span>
+            </a>
+        </div>
+    </div>
+    
+    {% if messages_list %}
+    <div style="overflow-x: auto;">
+        <table class="message-table">
+            <thead>
+                <tr>
+                    <th>From</th>
+                    <th>Subject</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for msg in messages_list %}
+                <tr class="{% if msg.status == 'unread' %}unread{% endif %}">
+                    <td data-label="From">
+                        <strong>{{ msg.name }}</strong><br>
+                        <span style="color: var(--text-muted); font-size: 0.8rem;">{{ msg.email }}</span>
+                    </td>
+                    <td data-label="Subject">
+                        {{ msg.subject|default:"No Subject"|truncatechars:50 }}
+                    </td>
+                    <td data-label="Date">
+                        {{ msg.created_at|date:"M d, Y" }}<br>
+                        <span style="color: var(--text-muted); font-size: 0.75rem;">{{ msg.created_at|time:"H:i" }}</span>
+                    </td>
+                    <td data-label="Status">
+                        <span class="status-badge status-{{ msg.status }}">{{ msg.get_status_display }}</span>
+                    </td>
+                    <td data-label="Actions">
+                        <div class="action-btns">
+                            <a href="{% url 'dashboard:contact_message_detail' msg.id %}" class="btn-action btn-reply">
+                                <i class="fas fa-reply"></i> Reply
+                            </a>
+                            <a href="{% url 'dashboard:contact_message_action' msg.id 'archive' %}" class="btn-action btn-archive">
+                                <i class="fas fa-archive"></i>
+                            </a>
+                            <a href="{% url 'dashboard:contact_message_action' msg.id 'delete' %}" 
+                               class="btn-action btn-delete"
+                               onclick="return confirm('Delete this message?')">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-inbox"></i>
+        <h3>No Messages</h3>
+        <p>No contact messages found for this filter.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

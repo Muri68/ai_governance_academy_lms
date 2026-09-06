@@ -1,0 +1,22 @@
+# robots.txt for AI Governance Academy
+# https://aiga.ac
+
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /accounts/
+Disallow: /dashboard/
+Disallow: /static/
+Disallow: /media/
+
+# Block specific auth pages
+Disallow: /login/
+Disallow: /register/
+Disallow: /signup/
+Disallow: /password/
+
+# Crawl-delay (optional - be nice to our server)
+Crawl-delay: 5
+
+# Sitemap
+Sitemap: https://aiga.ac/sitemap.xml

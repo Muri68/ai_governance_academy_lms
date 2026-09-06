@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+    <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+        
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #0c1e2e 0%, #142a3e 100%); padding: 40px 30px; text-align: center;">
+            <h1 style="color: #ad7a49; margin: 0; font-size: 28px; font-weight: 700;">🎉 Congratulations!</h1>
+        </div>
+        
+        <!-- Body -->
+        <div style="padding: 40px 30px;">
+            <p style="font-size: 16px; color: #333; line-height: 1.6; margin-bottom: 20px;">
+                Dear <strong>{{ student_name }}</strong>,
+            </p>
+            
+            <p style="font-size: 16px; color: #333; line-height: 1.6; margin-bottom: 20px;">
+                We are delighted to inform you that you have successfully completed the course:
+            </p>
+            
+            <div style="background: #f8fafc; border-left: 4px solid #ad7a49; padding: 16px 20px; margin-bottom: 20px; border-radius: 0 8px 8px 0;">
+                <p style="font-size: 20px; font-weight: 700; color: #0c1e2e; margin: 0 0 8px;">{{ course_title }}</p>
+                <p style="font-size: 14px; color: #666; margin: 0;">Final Exam: {{ exam_title }}</p>
+            </div>
+            
+            <div style="text-align: center; margin-bottom: 30px;">
+                <div style="display: inline-block; background: #d1fae5; border-radius: 50%; width: 80px; height: 80px; line-height: 80px; text-align: center; margin-bottom: 10px;">
+                    <span style="font-size: 40px;">✅</span>
+                </div>
+                <p style="font-size: 24px; font-weight: 700; color: #10b981; margin: 0;">Passed!</p>
+                <p style="font-size: 16px; color: #666; margin: 5px 0 0;">Score: {{ score }}% (Passing: {{ passing_score }}%)</p>
+            </div>
+            
+            <div style="text-align: center; margin-bottom: 30px;">
+                <p style="font-size: 14px; color: #666; margin-bottom: 10px;">
+                    Completion Date: {{ completion_date }}
+                </p>
+                {% if certificate_url %}
+                <a href="{{ certificate_url }}" style="display: inline-block; background: #ad7a49; color: #ffffff; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
+                    📜 Download Your Certificate
+                </a>
+                {% endif %}
+            </div>
+            
+            <p style="font-size: 14px; color: #666; line-height: 1.6; margin-bottom: 20px;">
+                Your certificate is also attached to this email for your records.
+            </p>
+            
+            <p style="font-size: 14px; color: #666; line-height: 1.6;">
+                We wish you continued success in your professional journey in AI Governance and Compliance.
+            </p>
+            
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                <p style="font-size: 13px; color: #999; margin: 0;">
+                    Best regards,<br>
+                    <strong>AI Governance Academy Team</strong>
+                </p>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div style="background: #f8fafc; padding: 20px 30px; text-align: center;">
+            <p style="font-size: 12px; color: #999; margin: 0 0 10px;">
+                <a href="{{ courses_url }}" style="color: #ad7a49; text-decoration: none;">Explore More Courses</a>
+            </p>
+            <p style="font-size: 11px; color: #bbb; margin: 0;">
+                © {% now "Y" %} AI Governance Academy. All rights reserved.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

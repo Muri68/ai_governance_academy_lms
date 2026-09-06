@@ -1,0 +1,42 @@
+WELCOME TO AI GOVERNANCE ACADEMY
+
+Dear {{ user.get_full_name }},
+
+Congratulations! Your {{ role|lower }} account has been created on the AI Governance Academy platform.
+
+YOUR ACCOUNT CREDENTIALS
+------------------------
+Email: {{ user.email }}
+Password: {{ password }}
+
+⚠️ Please change your password after your first login.
+
+GET STARTED
+-----------
+Login here: {{ login_url }}
+
+{% if role == 'STUDENT' %}
+As a student, you can:
+• Browse and enroll in courses
+• Track your learning progress
+• Earn certificates upon completion
+• Participate in course discussions
+{% elif role == 'INSTRUCTOR' %}
+As an instructor, you can:
+• Create and manage courses
+• Track student progress
+• View your earnings
+• Access analytics dashboard
+{% elif role == 'ADMIN' %}
+As an administrator, you can:
+• Manage users and permissions
+• Oversee all courses
+• View platform analytics
+• Configure platform settings
+{% endif %}
+
+NEED HELP?
+----------
+Contact us at support@aiga.com or visit www.aiga.com
+
+© {% now "Y" %} AI Governance Academy. All rights reserved.

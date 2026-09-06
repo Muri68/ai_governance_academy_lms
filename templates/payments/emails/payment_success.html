@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+        .email-wrapper {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+        }
+        .header {
+            background: linear-gradient(135deg, {{ primary_color }} 0%, #2c3e50 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .header .logo {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+        .header .tagline {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .success-badge {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .success-badge .circle {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: white;
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+        }
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        p {
+            margin-bottom: 15px;
+            color: #555;
+        }
+        .payment-box {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+        .payment-box h3 {
+            color: {{ primary_color }};
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .payment-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .payment-row:last-child {
+            border-bottom: none;
+        }
+        .payment-label {
+            font-weight: bold;
+            color: #555;
+        }
+        .payment-value {
+            color: #333;
+        }
+        .btn {
+            display: inline-block;
+            padding: 14px 30px;
+            background-color: {{ primary_color }};
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 20px 0;
+            text-align: center;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #8b6238;
+        }
+        .support-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .support-box p {
+            margin: 0;
+            color: #856404;
+            font-size: 14px;
+        }
+        .footer {
+            background: #2c3e50;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .footer .social-links {
+            margin: 15px 0;
+        }
+        .footer .social-links a {
+            color: white;
+            text-decoration: none;
+            margin: 0 10px;
+            font-size: 14px;
+        }
+        .footer .contact-info {
+            font-size: 13px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+        .footer .copyright {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-wrapper">
+        <div class="header">
+            <div class="logo">{{ site_name }}</div>
+            <div class="tagline">{{ site_tagline }}</div>
+        </div>
+        
+        <div class="content">
+            <div class="success-badge">
+                <div class="circle">✓</div>
+            </div>
+            
+            <h2>Payment Confirmation</h2>
+            
+            <p>Dear {{ user.get_full_name|default:user.get_short_name }},</p>
+            
+            <p>Thank you for your purchase! Your payment has been successfully processed and you are now enrolled in <strong>{{ course.title }}</strong>.</p>
+            
+            <div class="payment-box">
+                <h3>Payment Details</h3>
+                
+                <div class="payment-row">
+                    <span class="payment-label">Course:</span>
+                    <span class="payment-value">{{ course.title }}</span>
+                </div>
+                
+                <div class="payment-row">
+                    <span class="payment-label">Amount Paid:</span>
+                    <span class="payment-value">£{{ payment.amount|floatformat:2 }}</span>
+                </div>
+                
+                <div class="payment-row">
+                    <span class="payment-label">Payment Method:</span>
+                    <span class="payment-value">Credit/Debit Card</span>
+                </div>
+                
+                <div class="payment-row">
+                    <span class="payment-label">Transaction ID:</span>
+                    <span class="payment-value" style="font-size: 12px;">{{ payment.stripe_payment_intent_id|default:payment.stripe_session_id }}</span>
+                </div>
+                
+                <div class="payment-row">
+                    <span class="payment-label">Date:</span>
+                    <span class="payment-value">{{ date|date:"F j, Y - H:i" }}</span>
+                </div>
+            </div>
+            
+            <!-- <div style="text-align: center;">
+                <a href="{{ course_url }}" class="btn">Start Learning Now</a>
+            </div> -->
+            
+            <div class="support-box">
+                <p><strong>Need help?</strong> If you have any questions about your enrollment or need assistance, our support team is here to help. Contact us at {{ contact_email }}{% if contact_phone %} or call {{ contact_phone }}{% endif %}.</p>
+            </div>
+            
+            <!-- <p>You can access your course at any time from your <a href="{{ dashboard_url }}" style="color: {{ primary_color }};">dashboard</a>.</p> -->
+        </div>
+        
+        <div class="footer">
+            <div class="contact-info">
+                {{ site_name }} | {{ office_address }}
+            </div>
+            <div class="contact-info">
+                Email: {{ contact_email }}{% if contact_phone %} | Phone: {{ contact_phone }}{% endif %}
+            </div>
+            <div class="social-links">
+                {% if facebook_url != '#' %}<a href="{{ facebook_url }}">Facebook</a>{% endif %}
+                {% if twitter_url != '#' %}<a href="{{ twitter_url }}">Twitter</a>{% endif %}
+                {% if linkedin_url != '#' %}<a href="{{ linkedin_url }}">LinkedIn</a>{% endif %}
+                {% if instagram_url != '#' %}<a href="{{ instagram_url }}">Instagram</a>{% endif %}
+                {% if youtube_url != '#' %}<a href="{{ youtube_url }}">YouTube</a>{% endif %}
+            </div>
+            <div class="copyright">
+                © {% now "Y" %} {{ site_name }}. All rights reserved.
+            </div>
+        </div>
+    </div>
+</body>
+</html>

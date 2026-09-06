@@ -1,0 +1,544 @@
+{% block extra_css %}
+<style>
+    /* ----- Footer Widget Section ----- */
+    .footer-section .footer-widget-section {
+        background: #b3bcc3;
+        padding: 0px;
+    }
+
+    .footer-section .footer-widget {
+        margin-bottom: 30px;
+    }
+
+    /* ----- Widget Logo / Brand ----- */
+    .footer-section .widget-logo {
+        margin-bottom: 20px;
+    }
+
+    .footer-section .footer-logo {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        text-decoration: none;
+        padding: 0;
+    }
+
+    .footer-section .footer-logo .logo-icon {
+        flex-shrink: 0;
+    }
+
+    .footer-section .footer-logo .logo-icon img {
+        height: 48px;
+        width: auto;
+    }
+
+    .footer-section .footer-logo .logo-text {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.2;
+    }
+
+    .footer-section .footer-logo .logo-text .main-title {
+        display: block;
+        font-size: 18px;
+        font-weight: 700;
+        color: #1a1a2e;
+        letter-spacing: 0.5px;
+    }
+
+    .footer-section .footer-logo .logo-text .main-title:last-of-type {
+        margin-top: -2px;
+    }
+
+    .footer-section .footer-logo .logo-text .sub-title {
+        display: block;
+        font-size: 10px;
+        font-weight: 400;
+        color: #4a5259;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-top: 4px;
+    }
+
+    /* ----- Widget Address / Description ----- */
+    .footer-section .widget-address {
+        margin-bottom: 16px;
+    }
+
+    .footer-section .widget-address .text-muted {
+        color: #2d343a !important;
+        font-size: 14px;
+        line-height: 1.7;
+        margin: 0;
+        max-width: 340px;
+    }
+
+    /* ----- Widget Info (Contact) - Side by Side ----- */
+    .footer-section .widget-info {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 16px 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 24px;
+    }
+
+    .footer-section .widget-info li {
+        margin: 0;
+        padding: 0;
+        flex: 0 0 auto;
+    }
+
+    .footer-section .widget-info li p {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: #2d343a;
+        margin: 0;
+    }
+
+    .footer-section .widget-info li i {
+        color: #ad7a49;
+        width: 16px;
+        font-size: 13px;
+        text-align: center;
+        flex-shrink: 0;
+    }
+
+    .footer-section .widget-info li a {
+        color: #2d343a;
+        text-decoration: none;
+        transition: color 0.2s ease;
+        font-size: 13px;
+    }
+
+    .footer-section .widget-info li a:hover {
+        color: #ad7a49;
+    }
+
+    /* ----- Widget Social Icons ----- */
+    .footer-section .widget-social {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        gap: 10px;
+    }
+
+    .footer-section .widget-social li {
+        margin: 0;
+    }
+
+    .footer-section .widget-social li a {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: #9ea7ae;
+        color: #1a1a2e;
+        text-decoration: none;
+        font-size: 14px;
+        transition: all 0.25s ease;
+    }
+
+    .footer-section .widget-social li a:hover {
+        background: #ad7a49;
+        color: #fff;
+        transform: translateY(-3px);
+        box-shadow: 0 4px 12px rgba(173, 122, 73, 0.3);
+    }
+
+    /* ----- Footer Widget Title ----- */
+    .footer-section .footer-widget-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1a1a2e;
+        margin: 0 0 14px 0;
+        letter-spacing: 0.5px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #ad7a49;
+        display: inline-block;
+    }
+
+    /* ----- Widget Links ----- */
+    .footer-section .footer-widget-link {
+        display: flex;
+        gap: 50px;
+        flex-wrap: wrap;
+        padding-top: 4px;
+    }
+
+    .footer-section .footer-widget-link .footer-widget {
+        flex: 1;
+        min-width: 120px;
+        margin-bottom: 0;
+    }
+
+    .footer-section .widget-link {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .footer-section .widget-link li {
+        margin-bottom: 7px;
+    }
+
+    .footer-section .widget-link li:last-child {
+        margin-bottom: 0;
+    }
+
+    .footer-section .widget-link li a {
+        color: #2d343a;
+        font-size: 14px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        display: inline-block;
+    }
+
+    .footer-section .widget-link li a:hover {
+        color: #ad7a49;
+        transform: translateX(4px);
+    }
+
+    /* ----- Newsletter Subscribe ----- */
+    .footer-section .widget-subscribe p {
+        margin-bottom: 16px;
+    }
+
+    .footer-section .widget-form form {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .footer-section .widget-form input[type="email"] {
+        padding: 11px 16px;
+        border: 1.5px solid #9ea7ae;
+        border-radius: 6px;
+        font-size: 14px;
+        color: #1a1a2e;
+        background: #fff;
+        transition: all 0.25s ease;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .footer-section .widget-form input[type="email"]:focus {
+        border-color: #ad7a49;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(173, 122, 73, 0.15);
+    }
+
+    .footer-section .widget-form input[type="email"]::placeholder {
+        color: #7a838a;
+    }
+
+    .footer-section .widget-form button {
+        padding: 11px 20px;
+        background: #ad7a49;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .footer-section .widget-form button:hover {
+        background: #1a1a2e;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(26, 26, 46, 0.2);
+    }
+
+    .footer-section .widget-form button:active {
+        transform: translateY(0);
+    }
+
+    .footer-section .widget-form button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    /* ----- Newsletter Message ----- */
+    .footer-section #newsletterMessage {
+        margin-top: 12px;
+        display: none;
+    }
+
+    /* ----- Footer Copyright ----- */
+    .footer-section .footer-copyright {
+        background: #0a1628 !important;
+        padding: 20px 0 !important;
+        text-align: center !important;
+    }
+
+    .footer-section .footer-copyright p {
+        color: rgba(255, 255, 255, 0.6) !important;
+        font-size: 13px !important;
+        margin: 0 !important;
+    }
+
+    .footer-section .footer-copyright a {
+        color: #ad7a49 !important;
+        text-decoration: none !important;
+        transition: color 0.2s ease;
+    }
+
+    .footer-section .footer-copyright a:hover {
+        color: #fff !important;
+    }
+
+    /* ----- Responsive Adjustments ----- */
+    @media (max-width: 991px) {
+        .footer-section .footer-widget-link {
+            gap: 40px;
+        }
+    }
+
+    @media (max-width: 767px) {
+        .footer-section .footer-widget-section {
+            padding: 40px 0 30px;
+        }
+
+        .footer-section .widget-address .text-muted {
+            max-width: 100%;
+        }
+
+        .footer-section .footer-logo .logo-icon img {
+            height: 40px;
+        }
+
+        .footer-section .footer-logo .logo-text .main-title {
+            font-size: 16px;
+        }
+
+        .footer-section .footer-logo .logo-text .sub-title {
+            font-size: 9px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .footer-section .footer-widget-link {
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .footer-section .widget-social {
+            gap: 8px;
+        }
+
+        .footer-section .widget-social li a {
+            width: 34px;
+            height: 34px;
+            font-size: 13px;
+        }
+
+        /* Stack contact info on mobile */
+        .footer-section .widget-info {
+            flex-direction: column;
+            gap: 8px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% load static %}
+<!-- Footer Start  -->
+<div class="section footer-section">
+    <div class="footer-widget-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 col-md-6 order-md-1 order-lg-1">
+                    <div class="footer-widget">
+                        <div class="widget-logo">
+                            <a class="navbar-brand footer-logo" href="{% url 'frontend:index' %}">
+                                <div class="logo-icon">
+                                    {% if site_logo_url %}
+                                    <img src="{{ site_logo_url }}" alt="{{ site_name }}" width="100%">
+                                    {% else %}
+                                    <img src="{% static 'images/logo.png' %}" alt="{{ site_name }}" width="100%">
+                                    {% endif %}
+                                </div>
+                                <div class="logo-text">
+                                    <span class="main-title">{{ site_name_line1|default:'AI GOVERNANCE' }}</span>
+                                    <span class="main-title">{{ site_name_line2|default:'ACADEMY' }}</span>
+                                    <span class="sub-title">{{ site_tagline|default:'AI Ethics & Compliance Platform' }}</span>
+                                </div>
+                            </a>
+                        </div>
+
+                        <div class="widget-address">
+                            <p class="text-muted">Empowering professionals with cutting-edge knowledge in AI governance, cybersecurity, and ethical technology practices.</p>
+                        </div>
+
+                        <ul class="widget-info">
+                            <li><p><i class="flaticon-email"></i> <a href="mailto:{{ contact_email }}">{{ contact_email }}</a></p></li>
+                            <li><p><i class="flaticon-phone-call"></i> <a href="tel:{{ contact_phone }}">{{ contact_phone }}</a></p></li>
+                        </ul>
+
+                        <ul class="widget-social">
+                            {% if facebook_url and facebook_url != '#' %}<li><a href="{{ facebook_url }}" target="_blank"><i class="flaticon-facebook"></i></a></li>{% endif %}
+                            {% if twitter_url and twitter_url != '#' %}<li><a href="{{ twitter_url }}" target="_blank"><i class="flaticon-twitter"></i></a></li>{% endif %}
+                            {% if linkedin_url and linkedin_url != '#' %}<li><a href="{{ linkedin_url }}" target="_blank"><i class="flaticon-skype"></i></a></li>{% endif %}
+                            {% if instagram_url and instagram_url != '#' %}<li><a href="{{ instagram_url }}" target="_blank"><i class="flaticon-instagram"></i></a></li>{% endif %}
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 order-md-3 order-lg-2">
+                    <div class="footer-widget-link">
+                        <div class="footer-widget">
+                            <h4 class="footer-widget-title">Categories</h4>
+                            <ul class="widget-link">
+                                <li><a href="{% url 'frontend:courses' %}?category=cybersecurity">Cybersecurity</a></li>
+                                <li><a href="{% url 'frontend:courses' %}?category=ai-ethics">AI & Ethics</a></li>
+                                <li><a href="{% url 'frontend:courses' %}?category=cloud-security">Cloud Security</a></li>
+                                <li><a href="{% url 'frontend:courses' %}?category=data-privacy">Data Privacy</a></li>
+                                <li><a href="{% url 'frontend:courses' %}?category=network-security">Network Security</a></li>
+                                <li><a href="{% url 'frontend:courses' %}?category=programming">Programming</a></li>
+                            </ul>
+                        </div>
+                        <div class="footer-widget">
+                            <h4 class="footer-widget-title">Quick Links</h4>
+                            <ul class="widget-link">
+                                <li><a href="{% url 'frontend:privacy' %}">Privacy Policy</a></li>
+                                <li><a href="{% url 'frontend:terms' %}">Terms & Conditions</a></li>
+                                <li><a href="{% url 'frontend:faq' %}">Course FAQ's</a></li>
+                                <li><a href="{% url 'frontend:contact' %}">Contact Us</a></li>
+                                <li><a href="{% url 'frontend:about' %}">About Us</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 col-md-6 order-md-2 order-lg-3">
+                    <div class="footer-widget">
+                        <h4 class="footer-widget-title">Subscribe to Our Newsletter</h4>
+                        <div class="widget-subscribe">
+                            <p style="font-size:13px;color:#2d343a;margin-bottom:16px;line-height:1.6;">
+                                Stay updated with our latest courses, industry insights, and exclusive offers delivered straight to your inbox.
+                            </p>
+                            <div class="widget-form">
+                                <form id="newsletterForm" onsubmit="return false;">
+                                    {% csrf_token %}
+                                    <input type="email" name="email" id="newsletterEmail" placeholder="Enter your email address" required>
+                                    <button type="submit" id="newsletterBtn" class="btn btn-primary btn-hover-dark">
+                                        <i class="fas fa-paper-plane me-2"></i> Subscribe Now
+                                    </button>
+                                </form>
+                            </div>
+                            <div id="newsletterMessage" style="margin-top:12px;display:none;"></div>
+                            <p style="font-size:11px;color:#7a838a;margin-top:12px;">
+                                <i class="fas fa-lock me-1"></i> We respect your privacy. No spam, ever.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-copyright">
+        <div class="container">
+            <p>
+                {% if footer_text %}
+                    {{ footer_text }}
+                {% else %}
+                    &copy; {% now "Y" %} {{ site_name|default:'AI Governance Academy' }}. All rights reserved.
+                {% endif %}
+                | 
+                <a href="{% url 'frontend:privacy' %}">Privacy Policy</a> | 
+                <a href="{% url 'frontend:terms' %}">Terms & Conditions</a>
+            </p>
+        </div>
+    </div>
+</div>
+<!-- Footer End -->
+
+<!-- Newsletter JavaScript -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const newsletterForm = document.getElementById('newsletterForm');
+        const newsletterBtn = document.getElementById('newsletterBtn');
+        const newsletterEmail = document.getElementById('newsletterEmail');
+        const newsletterMessage = document.getElementById('newsletterMessage');
+        
+        if (newsletterForm) {
+            newsletterForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const email = newsletterEmail.value.trim();
+                if (!email) {
+                    showNewsletterMessage('Please enter your email address.', 'error');
+                    return;
+                }
+                
+                const originalText = newsletterBtn.innerHTML;
+                newsletterBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Subscribing...';
+                newsletterBtn.disabled = true;
+                
+                fetch("{% url 'frontend:subscribe_newsletter' %}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'email=' + encodeURIComponent(email)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNewsletterMessage(data.message, 'success');
+                        newsletterEmail.value = '';
+                    } else {
+                        showNewsletterMessage(data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    showNewsletterMessage('An error occurred. Please try again.', 'error');
+                })
+                .finally(() => {
+                    newsletterBtn.innerHTML = originalText;
+                    newsletterBtn.disabled = false;
+                });
+            });
+        }
+        
+        function showNewsletterMessage(message, type) {
+            if (newsletterMessage) {
+                newsletterMessage.style.display = 'block';
+                newsletterMessage.style.padding = '10px 14px';
+                newsletterMessage.style.borderRadius = '8px';
+                newsletterMessage.style.fontSize = '13px';
+                newsletterMessage.style.fontWeight = '500';
+                
+                if (type === 'success') {
+                    newsletterMessage.style.background = 'rgba(16, 185, 129, 0.1)';
+                    newsletterMessage.style.color = '#065f46';
+                    newsletterMessage.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+                    newsletterMessage.innerHTML = '<i class="fas fa-check-circle me-2"></i>' + message;
+                } else {
+                    newsletterMessage.style.background = 'rgba(239, 68, 68, 0.1)';
+                    newsletterMessage.style.color = '#991b1b';
+                    newsletterMessage.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                    newsletterMessage.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i>' + message;
+                }
+                
+                setTimeout(() => {
+                    newsletterMessage.style.display = 'none';
+                }, 6000);
+            }
+        }
+    });
+</script>

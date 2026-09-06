@@ -1,0 +1,1521 @@
+{% extends "dashboard/admin/admin_base.html" %}
+{% load static %}
+
+{% block title %}{% if is_edit %}Edit Course{% else %}Add Course{% endif %}{% endblock %}
+{% block page_title %}{% if is_edit %}Edit Course{% else %}Add Course{% endif %}{% endblock %}
+
+{% block extra_css %}
+<script src="{% static 'tinymce/tinymce.min.js' %}"></script>
+<style>
+    .breadcrumb-row { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; margin-bottom: 8px; }
+    .breadcrumb-row a { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+    .breadcrumb-row a:hover { color: var(--accent-blue); }
+    .breadcrumb-row .separator { color: var(--text-muted); }
+    .breadcrumb-row .current { color: var(--text-dark); font-weight: 600; }
+    .page-subtitle { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 24px; }
+
+    .form-grid { display: grid; grid-template-columns: 1.3fr 0.9fr; gap: 20px; align-items: start; }
+    .form-card { background: var(--card-bg); border-radius: 16px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); border: 1px solid var(--border-color); margin-bottom: 20px; }
+    .form-card:last-child { margin-bottom: 0; }
+    .form-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border-color); }
+    .form-card-header .icon-circle { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.9rem; flex-shrink: 0; }
+    .icon-circle.blue { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+    .icon-circle.green { background: linear-gradient(135deg, #10b981, #059669); }
+    .icon-circle.purple { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+    .icon-circle.orange { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .form-card-header h3 { font-size: 0.95rem; font-weight: 600; color: var(--text-dark); }
+    .form-card-header .badge { font-size: 0.65rem; padding: 4px 10px; border-radius: 12px; font-weight: 500; margin-left: auto; }
+    .badge-required { background: #fee2e2; color: #991b1b; }
+    .badge-optional { background: #f0fdf4; color: #166534; }
+
+    .form-group { margin-bottom: 18px; }
+    .form-group:last-child { margin-bottom: 0; }
+    .form-group label { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 600; color: var(--text-dark); margin-bottom: 6px; }
+    .form-group label .required-dot { color: #ef4444; font-weight: 700; }
+    .form-group label .optional { font-size: 0.65rem; color: var(--text-muted); font-weight: 400; }
+    .form-control { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border-color); border-radius: 10px; font-size: 0.85rem; font-family: 'Poppins', sans-serif; color: var(--text-dark); background: #f8fafc; outline: none; transition: all 0.2s; }
+    .form-control:focus { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08); background: white; }
+    .form-control::placeholder { color: #94a3b8; }
+    .form-control.error { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08); }
+    .form-control:disabled { background: #f1f5f9; cursor: not-allowed; opacity: 0.7; }
+    textarea.form-control { resize: vertical; min-height: 100px; line-height: 1.6; }
+    select.form-control { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236b7280' viewBox='0 0 12 12'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 40px; cursor: pointer; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    .hint { font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+
+    .toggle-row { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+    .toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #cbd5e1; border-radius: 24px; transition: 0.3s; }
+    .toggle-slider:before { content: ""; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+    .toggle-switch input:checked + .toggle-slider { background: #10b981; }
+    .toggle-switch input:checked + .toggle-slider:before { transform: translateX(20px); }
+    .toggle-label { font-size: 0.82rem; color: var(--text-dark); font-weight: 500; }
+
+    .upload-area { border: 2px dashed #d1d5db; border-radius: 12px; padding: 32px 24px; text-align: center; cursor: pointer; transition: all 0.2s; background: #f8fafc; position: relative; }
+    .upload-area:hover { border-color: #10b981; background: rgba(16, 185, 129, 0.03); }
+    .upload-area.has-image { border-style: solid; border-color: #10b981; padding: 0; overflow: hidden; }
+    .upload-area i { font-size: 2.5rem; color: #94a3b8; margin-bottom: 10px; }
+    .upload-area .upload-title { font-weight: 600; font-size: 0.85rem; color: var(--text-dark); }
+    .upload-area .upload-subtitle { font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; }
+    .upload-area input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .upload-preview { position: relative; }
+    .upload-preview img { width: 100%; height: 200px; object-fit: cover; display: block; }
+    .upload-preview .change-btn { position: absolute; bottom: 10px; right: 10px; background: white; padding: 6px 14px; border-radius: 8px; font-size: 0.75rem; font-weight: 500; cursor: pointer; border: 1px solid #e5e7eb; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 6px; color: var(--text-dark); }
+    .material-upload { border: 2px dashed #d1d5db; border-radius: 10px; padding: 20px 16px; text-align: center; cursor: pointer; transition: all 0.2s; background: #f8fafc; position: relative; min-height: 100px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+    .material-upload:hover { border-color: #8b5cf6; background: rgba(139, 92, 246, 0.03); }
+    .material-upload i { font-size: 1.5rem; color: #94a3b8; }
+    .material-upload span { font-size: 0.72rem; color: var(--text-muted); font-weight: 500; }
+    .material-upload input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+    .lessons-container { display: flex; flex-direction: column; gap: 12px; }
+    .lesson-block { border: 1.5px solid var(--border-color); border-radius: 12px; overflow: hidden; transition: all 0.2s; background: var(--card-bg); }
+    .lesson-block:hover { border-color: #10b981; }
+    .lesson-block-header { padding: 14px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; background: #f8fafc; transition: background 0.2s; }
+    .lesson-block-header:hover { background: #f1f5f9; }
+    .lesson-block-header .lesson-number { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 700; flex-shrink: 0; }
+    .lesson-block-header .lesson-title-input { flex: 1; border: none; background: transparent; font-size: 0.85rem; font-weight: 600; color: var(--text-dark); font-family: 'Poppins', sans-serif; outline: none; padding: 4px 0; }
+    .lesson-block-header .lesson-title-input:focus { border-bottom: 2px solid #3b82f6; }
+    .lesson-block-header .lesson-title-input::placeholder { color: #94a3b8; }
+    .lesson-block-header .lesson-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .lesson-block-header .item-count { font-size: 0.7rem; color: var(--text-muted); white-space: nowrap; }
+    .lesson-block-header .quiz-indicator { font-size: 0.7rem; color: #8b5cf6; background: #f3e8ff; padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
+    .lesson-block-header .toggle-icon { color: var(--text-muted); font-size: 0.7rem; transition: transform 0.2s; }
+    .lesson-block-header.open .toggle-icon { transform: rotate(180deg); }
+    .btn-remove-lesson { width: 28px; height: 28px; border-radius: 6px; border: none; background: transparent; cursor: pointer; color: #ef4444; font-size: 0.8rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+    .btn-remove-lesson:hover { background: #fee2e2; }
+    
+    .lesson-block-body { padding: 16px; display: none; border-top: 1px solid var(--border-color); background: white; }
+    .lesson-block-body.open { display: block; }
+    
+    .content-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+    .content-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: #f8fafc; border-radius: 10px; border: 1px solid #f1f5f9; transition: all 0.2s; cursor: pointer; }
+    .content-item:hover { background: #f1f5f9; border-color: #e5e7eb; }
+    .content-item.editing { border: 2px solid #f59e0b !important; background: #fffbeb !important; }
+    .content-type-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; flex-shrink: 0; color: white; }
+    .content-info { flex: 1; min-width: 0; }
+    .content-info .content-title { font-size: 0.82rem; font-weight: 500; color: var(--text-dark); }
+    .content-info .content-meta { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
+    .btn-remove-content { width: 28px; height: 28px; border-radius: 6px; border: none; background: transparent; cursor: pointer; color: #ef4444; font-size: 0.75rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .btn-remove-content:hover { background: #fee2e2; }
+
+    .add-content-section { border: 1.5px dashed #d1d5db; border-radius: 10px; padding: 16px; background: #fafbfc; }
+    .add-content-section .section-title { font-size: 0.78rem; font-weight: 600; color: var(--text-dark); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+    .add-content-row { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
+    .add-content-row .form-group-sm { margin-bottom: 0; }
+    .add-content-row .type-select { flex: 0 0 150px; min-width: 150px; }
+    .add-content-row .title-input { flex: 1; min-width: 150px; }
+    .add-content-row .duration-input { flex: 0 0 80px; min-width: 80px; }
+    .form-control-sm { padding: 9px 12px; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.8rem; font-family: 'Poppins', sans-serif; color: var(--text-dark); background: white; outline: none; width: 100%; transition: all 0.2s; }
+    .form-control-sm:focus { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.06); }
+    .form-control-sm::placeholder { color: #94a3b8; }
+    select.form-control-sm { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%236b7280' viewBox='0 0 10 10'%3E%3Cpath d='M5 7L1 3h8z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 32px; cursor: pointer; }
+    .btn-sm { padding: 9px 16px; border-radius: 8px; font-size: 0.78rem; font-weight: 600; cursor: pointer; border: none; font-family: 'Poppins', sans-serif; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; height: 40px; }
+    .btn-sm-primary { background: #3b82f6; color: white; }
+    .btn-sm-primary:hover { background: #2563eb; }
+    .btn-sm-update { background: #f59e0b; color: white; }
+    .btn-sm-update:hover { background: #d97706; }
+    .btn-add-lesson { background: white; color: #10b981; border: 2px dashed #10b981; padding: 12px 20px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.85rem; font-family: 'Poppins', sans-serif; margin-top: 4px; }
+    .btn-add-lesson:hover { background: #f0fdf4; }
+
+    .dynamic-fields { margin-top: 12px; padding: 12px; background: #f8fafc; border-radius: 8px; border: 1px solid #e5e7eb; }
+    .dynamic-fields label { display: block; font-size: 0.72rem; font-weight: 600; color: var(--text-dark); margin-bottom: 4px; }
+    .dynamic-fields input[type="file"] { padding: 8px 10px; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.78rem; width: 100%; background: white; }
+    .dynamic-fields input[type="url"] { padding: 9px 12px; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.8rem; width: 100%; font-family: 'Poppins', sans-serif; }
+    .dynamic-fields textarea { width: 100%; border: 1.5px solid var(--border-color); border-radius: 8px; padding: 10px; font-family: 'Poppins', sans-serif; font-size: 0.8rem; resize: vertical; min-height: 80px; }
+    .dynamic-fields .field-row { display: flex; gap: 10px; }
+    .dynamic-fields .field-row > div { flex: 1; }
+
+    .empty-lessons { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+    .empty-lessons i { font-size: 3rem; color: #d1d5db; margin-bottom: 12px; }
+
+    .form-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-color); }
+    .btn { padding: 11px 24px; border-radius: 10px; font-size: 0.88rem; font-weight: 600; cursor: pointer; border: none; font-family: 'Poppins', sans-serif; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
+    .btn-primary { background: linear-gradient(135deg, #10b981, #059669); color: white; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4); }
+    .btn-secondary { background: white; color: var(--text-dark); border: 1px solid var(--border-color); }
+    .btn-secondary:hover { background: #f8fafc; }
+
+    /* ============ QUIZ SECTION STYLES ============ */
+    .quiz-section { margin-top: 16px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fafbfc; }
+    .quiz-section-header { padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e5e7eb; background: #f8fafc; }
+    .quiz-section-header .quiz-title { font-size: 0.8rem; font-weight: 600; color: var(--text-dark); display: flex; align-items: center; gap: 8px; }
+    .quiz-section-header .quiz-title i { color: #8b5cf6; }
+    .quiz-section-body { padding: 14px; }
+    .quiz-builder { padding: 12px; background: white; border: 1px solid #e5e7eb; border-radius: 8px; }
+    .quiz-question-block { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; margin-bottom: 10px; background: white; }
+    .quiz-question-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .quiz-question-header strong { font-size: 0.8rem; color: var(--text-dark); }
+    .quiz-answers-container { margin-bottom: 8px; }
+    .quiz-answer-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .quiz-answer-text { flex: 1; padding: 7px 10px; border: 1.5px solid #e5e7eb; border-radius: 6px; font-size: 0.75rem; font-family: 'Poppins', sans-serif; }
+    .quiz-answer-correct { width: 16px; height: 16px; cursor: pointer; flex-shrink: 0; }
+    .btn-remove-question, .btn-remove-answer { width: 24px; height: 24px; border-radius: 4px; border: none; background: #fee2e2; color: #ef4444; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .btn-add-answer { padding: 6px 12px; background: #f3f4f6; color: #374151; border: 1px dashed #d1d5db; border-radius: 6px; cursor: pointer; font-size: 11px; margin-top: 4px; }
+    .btn-add-question { padding: 8px 16px; background: #8b5cf6; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; margin-top: 8px; font-family: 'Poppins', sans-serif; }
+    .btn-toggle-quiz { padding: 6px 14px; background: #f3e8ff; color: #8b5cf6; border: 1px solid #d8b4fe; border-radius: 6px; cursor: pointer; font-size: 0.72rem; font-weight: 500; font-family: 'Poppins', sans-serif; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-toggle-quiz:hover { background: #ede9fe; }
+
+    @media (max-width: 1024px) { .form-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 768px) { 
+        .form-row, .form-row-3 { grid-template-columns: 1fr; } 
+        .add-content-row { flex-direction: column; }
+        .add-content-row .type-select, .add-content-row .title-input, .add-content-row .duration-input { flex: 1 1 100%; min-width: 100%; }
+        .dynamic-fields .field-row { flex-direction: column; }
+        .form-actions { flex-direction: column; }
+        .form-actions .btn { justify-content: center; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-row">
+    <a href="{% url 'dashboard:manage_courses' %}"><i class="fas fa-arrow-left"></i> Courses</a>
+    <span class="separator">/</span>
+    <span class="current">{% if is_edit %}Edit Course{% else %}Add Course{% endif %}</span>
+</div>
+<p class="page-subtitle">{% if is_edit %}Update course details, lessons, and content. Click on any content item to edit it.{% else %}Create a new course with lessons and learning materials.{% endif %}</p>
+
+{% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" style="border-radius:12px;margin-bottom:16px;font-size:0.85rem;">{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    {% endfor %}
+{% endif %}
+
+<form method="POST" enctype="multipart/form-data" id="courseForm">
+    {% csrf_token %}
+    
+    <div class="form-grid">
+        <div>
+            <div class="form-card">
+                <div class="form-card-header"><div class="icon-circle blue"><i class="fas fa-info-circle"></i></div><h3>Course Details</h3><span class="badge badge-required">Required</span></div>
+                <div class="form-group"><label>Course Title <span class="required-dot">*</span></label><input type="text" name="title" class="form-control" placeholder="e.g., AI Compliance and Ethics for Data Centres" required value="{{ course.title|default:'' }}"></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Category</label><select name="category" class="form-control"><option value="">Select category...</option>{% for cat in categories %}<option value="{{ cat.id }}" {% if course.category and course.category.id == cat.id %}selected{% endif %}>{{ cat.name }}</option>{% endfor %}</select></div>
+                    <div class="form-group"><label>Instructor <span class="required-dot">*</span></label><select name="instructor" class="form-control" required><option value="">Select instructor</option>{% for inst in instructors %}<option value="{{ inst.id }}" {% if course.instructor.id == inst.id %}selected{% endif %}>{{ inst.get_full_name }}</option>{% endfor %}</select></div>
+                </div>
+                <div class="form-group"><label>Short Description <span class="optional">(optional)</span></label><textarea name="short_description" class="form-control" rows="2" placeholder="Brief summary for course cards...">{{ course.short_description|default:'' }}</textarea></div>
+                
+                <div class="form-group">
+                    <label>Full Description</label>
+                    <textarea name="description" id="courseDescription" class="form-control" rows="15" placeholder="Write your course description here. Use headings (H2/H3) for sections like Requirements, What You'll Learn, etc.">{{ course.description|default:'' }}</textarea>
+                    <div class="hint"><i class="fas fa-info-circle"></i> Use the editor toolbar to add headings, lists, and formatting for sections like "Requirements" and "What You'll Learn".</div>
+                </div>
+                
+                <div class="form-row-3">
+                    <div class="form-group"><label>Duration</label><input type="text" name="duration" class="form-control" placeholder="e.g., 12 Weeks" value="{{ course.duration|default:'' }}"></div>
+                    <div class="form-group"><label>Level</label><select name="level" class="form-control"><option value="beginner" {% if course.level == 'beginner' %}selected{% endif %}>Beginner</option><option value="intermediate" {% if course.level == 'intermediate' %}selected{% endif %}>Intermediate</option><option value="advanced" {% if course.level == 'advanced' %}selected{% endif %}>Advanced</option><option value="all" {% if course.level == 'all' %}selected{% endif %}>All Levels</option></select></div>
+                    <div class="form-group"><label>Language</label><input type="text" name="language" class="form-control" value="{{ course.language|default:'English' }}"></div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Price (£ GBP)</label>
+                        <input type="text" name="price" id="priceInput" class="form-control" placeholder="49.99" value="{% if course.is_free %}0{% elif course.price %}{{ course.price }}{% endif %}">
+                        <div class="toggle-row"><label class="toggle-switch"><input type="checkbox" id="isFreeToggle" name="is_free" {% if course.is_free %}checked{% endif %} onchange="toggleFreePrice()"><span class="toggle-slider"></span></label><span class="toggle-label">This is a free course</span></div>
+                    </div>
+                    <div class="form-group"><label>Discount Price (£) <span class="optional">(optional)</span></label><input type="text" name="discount_price" class="form-control" placeholder="39.99" value="{{ course.discount_price|default:'' }}"></div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group"><label>Status</label><select name="status" class="form-control"><option value="draft" {% if course.status == 'draft' %}selected{% endif %}>💾 Draft</option><option value="review" {% if course.status == 'review' %}selected{% endif %}>🔍 In Review</option><option value="published" {% if course.status == 'published' %}selected{% endif %}>🚀 Published</option></select></div>
+                    <div class="form-group"><label>Trailer URL <span class="optional">(optional)</span></label><input type="url" name="trailer_url" class="form-control" placeholder="https://youtube.com/watch?v=..." value="{{ course.trailer_url|default:'' }}"></div>
+                </div>
+                <div class="toggle-row"><label class="toggle-switch"><input type="checkbox" name="has_certificate" {% if course.has_certificate %}checked{% endif %}><span class="toggle-slider"></span></label><span class="toggle-label"><i class="fas fa-certificate" style="color:#f59e0b;"></i> Offer certificate of completion</span></div>
+            </div>
+
+            <div class="form-card">
+                <div class="form-card-header"><div class="icon-circle purple"><i class="fas fa-layer-group"></i></div><h3>Lessons & Content</h3><span class="badge badge-required">Required</span></div>
+                
+                <div class="lessons-container" id="lessonsContainer">
+                    {% if is_edit and course.lessons.exists %}
+                        {% for lesson in course.lessons.all %}
+                        <div class="lesson-block" data-lesson-index="{{ forloop.counter0 }}" data-lesson-id="{{ lesson.id }}">
+                            <div class="lesson-block-header open" onclick="toggleLessonBody(this)">
+                                <div class="lesson-number">{{ forloop.counter }}</div>
+                                <input type="text" class="lesson-title-input" value="{{ lesson.title }}" placeholder="Lesson title" onchange="updateLessonData()" onclick="event.stopPropagation()">
+                                <div class="lesson-actions">
+                                    {% if lesson.quizzes.exists %}
+                                    <span class="quiz-indicator"><i class="fas fa-question-circle"></i> Quiz</span>
+                                    {% endif %}
+                                    <span class="item-count">{{ lesson.contents.count }} items</span>
+                                    <i class="fas fa-chevron-down toggle-icon"></i>
+                                    <button type="button" class="btn-remove-lesson" onclick="event.stopPropagation();removeLesson(this.closest('.lesson-block'))" title="Remove Lesson"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                            <div class="lesson-block-body open">
+                                <div class="content-list">
+                                    {% for content in lesson.contents.all %}
+                                    <div class="content-item" data-content-id="{{ content.id }}" data-type="{{ content.content_type }}" data-title="{{ content.title|default:'' }}" data-duration="{{ content.duration_minutes|default:'' }}" data-video-url="{{ content.video_url|default:'' }}" data-text-content="{{ content.text_content|default:'' }}" onclick="handleContentClick(this)" title="Click to edit">
+                                        <div class="content-type-icon" style="background:{% if content.content_type == 'video' %}#3b82f6{% elif content.content_type == 'video_url' %}#6366f1{% elif content.content_type == 'text' %}#10b981{% elif content.content_type == 'pdf' %}#ef4444{% elif content.content_type == 'assignment' %}#f59e0b{% elif content.content_type == 'code' %}#ec4899{% elif content.content_type == 'slides' %}#06b6d4{% else %}#6b7280{% endif %};color:white;"><i class="fas {% if content.content_type == 'video' %}fa-play-circle{% elif content.content_type == 'video_url' %}fa-link{% elif content.content_type == 'text' %}fa-file-alt{% elif content.content_type == 'pdf' %}fa-file-pdf{% elif content.content_type == 'assignment' %}fa-tasks{% elif content.content_type == 'code' %}fa-code{% elif content.content_type == 'slides' %}fa-desktop{% else %}fa-file{% endif %}"></i></div>
+                                        <div class="content-info"><div class="content-title">{{ content.title|default:content.get_content_type_display }}</div><div class="content-meta">{{ content.get_content_type_display }}{% if content.duration_minutes %} • {{ content.duration_minutes }} min{% endif %}{% if content.video_file %} • 📎 Video{% endif %}{% if content.pdf_file %} • 📎 File{% endif %}{% if content.video_url %} • 🔗 URL{% endif %}{% if content.text_content %} • 📝 Rich Text{% endif %}</div></div>
+                                        <div class="hidden-file-area" style="display:none;"></div>
+                                        <button type="button" class="btn-remove-content" onclick="event.stopPropagation(); removeContentItem(this);" title="Remove"><i class="fas fa-times"></i></button>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                
+                                <!-- Quiz Section -->
+                                <div class="quiz-section" id="quizSection-{{ forloop.counter0 }}">
+                                    <div class="quiz-section-header">
+                                        <div class="quiz-title">
+                                            <i class="fas fa-question-circle"></i> Quiz
+                                            {% if lesson.quizzes.exists %}
+                                            <span class="badge" style="background:#f3e8ff;color:#8b5cf6;font-size:0.65rem;">{{ lesson.quizzes.first.questions.count }} questions</span>
+                                            {% endif %}
+                                        </div>
+                                        <button type="button" class="btn-toggle-quiz" onclick="toggleQuizSection({{ forloop.counter0 }})">
+                                            <i class="fas {% if lesson.quizzes.exists %}fa-edit{% else %}fa-plus{% endif %}"></i>
+                                            {% if lesson.quizzes.exists %}Edit Quiz{% else %}Add Quiz{% endif %}
+                                        </button>
+                                    </div>
+                                    <div class="quiz-section-body" id="quizSectionBody-{{ forloop.counter0 }}" style="display:none;">
+                                        <div class="quiz-builder" id="quizBuilder-{{ forloop.counter0 }}">
+                                            <div class="form-group" style="margin-bottom:12px;">
+                                                <label style="font-size:0.72rem;font-weight:600;color:var(--text-dark);display:block;margin-bottom:4px;">Quiz Title</label>
+                                                <input type="text" class="form-control-sm" id="quizTitle-{{ forloop.counter0 }}" placeholder="Enter quiz title" value="{% if lesson.quizzes.exists %}{{ lesson.quizzes.first.title }}{% endif %}" style="width:100%;">
+                                            </div>
+                                            
+                                            <div class="quiz-questions-list" id="quizQuestionsList-{{ forloop.counter0 }}"></div>
+                                            
+                                            <button type="button" class="btn-add-question" onclick="addQuizQuestion({{ forloop.counter0 }})">
+                                                <i class="fas fa-plus-circle"></i> Add Another Question
+                                            </button>
+                                        </div>
+                                        
+                                        <div style="margin-top:12px;padding:12px;background:white;border:1px solid #e5e7eb;border-radius:8px;">
+                                            <h4 style="font-size:0.78rem;font-weight:600;color:var(--text-dark);margin-bottom:8px;">Quiz Settings</h4>
+                                            <div class="form-row">
+                                                <div class="form-group" style="margin-bottom:8px;">
+                                                    <label style="font-size:0.72rem;font-weight:600;color:var(--text-dark);display:block;margin-bottom:4px;">Passing Score (%)</label>
+                                                    <input type="number" class="form-control-sm" id="passingScore-{{ forloop.counter0 }}" value="{% if lesson.quizzes.exists %}{{ lesson.quizzes.first.passing_score }}{% else %}60{% endif %}" min="0" max="100" style="width:100px;">
+                                                </div>
+                                                <div class="form-group" style="margin-bottom:8px;">
+                                                    <label style="font-size:0.72rem;font-weight:600;color:var(--text-dark);display:block;margin-bottom:4px;">Questions Per Attempt</label>
+                                                    <input type="number" class="form-control-sm" id="questionsPerAttempt-{{ forloop.counter0 }}" value="{% if lesson.quizzes.exists and lesson.quizzes.first.questions_per_attempt %}{{ lesson.quizzes.first.questions_per_attempt }}{% endif %}" min="1" placeholder="All" style="width:100px;">
+                                                </div>
+                                            </div>
+                                            <div style="margin-top:8px;">
+                                                <label style="display:flex;align-items:center;gap:8px;font-size:0.72rem;font-weight:500;color:var(--text-dark);margin-bottom:4px;">
+                                                    <input type="checkbox" id="randomizeQuestions-{{ forloop.counter0 }}" {% if lesson.quizzes.exists and lesson.quizzes.first.randomize_questions %}checked{% endif %}> Randomize question order
+                                                </label>
+                                                <label style="display:flex;align-items:center;gap:8px;font-size:0.72rem;font-weight:500;color:var(--text-dark);">
+                                                    <input type="checkbox" id="randomizeAnswers-{{ forloop.counter0 }}" {% if lesson.quizzes.exists and lesson.quizzes.first.randomize_answers %}checked{% endif %}> Randomize answer options
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="add-content-section">
+                                    <div class="section-title" id="sectionTitle-{{ forloop.counter0 }}"><i class="fas fa-plus-circle" style="color:#3b82f6;"></i> Add Content to this Lesson</div>
+                                    <div class="add-content-row">
+                                        <div class="form-group-sm type-select"><select class="form-control-sm content-type-select" id="contentType-{{ forloop.counter0 }}" onchange="toggleContentFields(this)"><option value="video">🎬 Video File</option><option value="video_url">🔗 Video URL</option><option value="text">📝 Text/Article</option><option value="pdf">📄 PDF Document</option><option value="assignment">📋 Assignment</option><option value="code">💻 Code Exercise</option><option value="slides">📊 Slides</option></select></div>
+                                        <div class="form-group-sm title-input"><input type="text" class="form-control-sm" id="contentTitle-{{ forloop.counter0 }}" placeholder="Content title"></div>
+                                        <div class="form-group-sm duration-input" id="durationField-{{ forloop.counter0 }}"><input type="number" class="form-control-sm" id="contentDuration-{{ forloop.counter0 }}" placeholder="Min" min="0"></div>
+                                        <button type="button" class="btn-sm btn-sm-primary" id="contentActionBtn-{{ forloop.counter0 }}" onclick="addContentToLesson({{ forloop.counter0 }})"><i class="fas fa-plus"></i> Add</button>
+                                        <button type="button" class="btn-sm btn-sm-update" id="contentCancelBtn-{{ forloop.counter0 }}" onclick="cancelEdit({{ forloop.counter0 }})" style="display:none;"><i class="fas fa-times"></i> Cancel</button>
+                                    </div>
+                                    <div class="dynamic-fields" id="dynamicFields-{{ forloop.counter0 }}" style="display:none;"></div>
+                                    <input type="hidden" id="editingContentId-{{ forloop.counter0 }}" value="">
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-lessons" id="emptyLessons"><i class="fas fa-layer-group"></i><p>No lessons added yet. Click the button below to add your first lesson.</p></div>
+                    {% endif %}
+                </div>
+                
+                <button type="button" class="btn-add-lesson" onclick="addLesson()"><i class="fas fa-plus-circle"></i> Add New Lesson</button>
+                <input type="hidden" name="lessons_data" id="lessonsData" value="{{ existing_lessons_json|default:'[]' }}">
+                <input type="hidden" name="quizzes_data" id="quizzesData" value="{{ existing_quizzes_json|default:'[]' }}">
+            </div>
+        </div>
+
+        <div>
+            <div class="form-card"><div class="form-card-header"><div class="icon-circle orange"><i class="fas fa-image"></i></div><h3>Course Thumbnail</h3></div>
+                {% if is_edit and course.featured_image %}<div style="margin-bottom:12px;"><img src="{{ course.featured_image.url }}" style="width:100%;border-radius:10px;margin-bottom:8px;"><span style="font-size:0.75rem;color:var(--text-muted);">Current thumbnail</span></div>{% endif %}
+                <div class="upload-area {% if course.featured_image %}has-image{% endif %}" id="thumbnailArea">
+                    {% if course.featured_image %}<div class="upload-preview" id="thumbnailPreviewContainer"><img src="{{ course.featured_image.url }}" alt="Current thumbnail" id="previewImg"><button type="button" class="change-btn" onclick="event.stopPropagation(); document.getElementById('thumbnailInput').click()"><i class="fas fa-pen"></i> Change Image</button></div>
+                    {% else %}<i class="fas fa-cloud-upload-alt" id="thumbnailIcon"></i><div class="upload-title" id="thumbnailTitle">Upload Thumbnail</div><div class="upload-subtitle">PNG, JPG or WEBP (Max 2MB)</div>{% endif %}
+                    <input type="file" name="thumbnail" id="thumbnailInput" accept="image/*" onchange="previewThumbnail(this)" style="{% if course.featured_image %}position:absolute;inset:0;opacity:0;cursor:pointer;{% endif %}">
+                </div>
+            </div>
+
+            <div class="form-card"><div class="form-card-header"><div class="icon-circle blue"><i class="fas fa-video"></i></div><h3>Featured Video</h3></div>
+                {% if is_edit and course.featured_video %}<div style="margin-bottom:12px;"><span style="font-size:0.75rem;color:var(--text-muted);">Current video: {{ course.featured_video.name }}</span></div>{% endif %}
+                <div class="upload-area" id="featuredVideoArea"><i class="fas fa-cloud-upload-alt"></i><div class="upload-title" id="featuredVideoTitle">Upload Featured Video</div><div class="upload-subtitle">MP4, WebM (Max 100MB)</div><div id="featuredVideoName" style="font-size:0.75rem;color:#10b981;margin-top:8px;display:none;"></div><input type="file" name="featured_video" id="featuredVideoInput" accept="video/*" onchange="showVideoFileName(this)"></div>
+            </div>
+
+            <div class="form-card"><div class="form-card-header"><div class="icon-circle purple"><i class="fas fa-folder-open"></i></div><h3>Course Materials</h3></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div class="material-upload" onclick="document.getElementById('pdfMaterial').click()"><i class="fas fa-file-pdf"></i><span>Upload PDF</span><input type="file" name="pdf_material" id="pdfMaterial" accept=".pdf" style="display:none;"></div>
+                    <div class="material-upload" onclick="document.getElementById('slidesMaterial').click()"><i class="fas fa-desktop"></i><span>Upload Slides</span><input type="file" name="slides_material" id="slidesMaterial" accept=".ppt,.pptx,.pdf" style="display:none;"></div>
+                </div>
+            </div>
+            
+            <div class="form-card"><div class="form-card-header"><div class="icon-circle blue"><i class="fas fa-lightbulb"></i></div><h3>Tips</h3></div>
+                <div style="font-size:0.8rem;color:var(--text-muted);line-height:2;"><p>✅ Use H2 headings in description for "Requirements" and "What You'll Learn"</p><p>✅ Click on any content item to edit it</p><p>✅ Use a clear, descriptive title</p><p>✅ Mix video, text, and quiz content</p><p>✅ Add quizzes to test student understanding</p><p>✅ Keep video lessons under 15 min</p></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-actions">
+        <a href="{% url 'dashboard:manage_final_exam' course_id=course.id %}" class="btn btn-info" style="margin-top: 10px;">
+            <i class="fas fa-graduation-cap"></i> Manage Final Exam
+        </a>
+        <a href="{% url 'dashboard:manage_courses' %}" class="btn btn-secondary"><i class="fas fa-times"></i> Cancel</a>
+        <button type="button" class="btn btn-secondary" onclick="saveAsDraft()"><i class="fas fa-save"></i> Save as Draft</button>
+        <button type="submit" class="btn btn-primary" id="submitBtn"><i class="fas fa-check-circle"></i> {% if is_edit %}Update Course{% else %}Publish Course{% endif %}</button>
+    </div>
+</form>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+    // ============================================
+    // Initialize TinyMCE for course description
+    // ============================================
+    tinymce.init({
+        selector: '#courseDescription',
+        height: 400,
+        menubar: false,
+        plugins: ['advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview', 'searchreplace', 'visualblocks', 'code', 'fullscreen', 'insertdatetime', 'table', 'help', 'wordcount'],
+        toolbar: 'undo redo | blocks | bold italic underline strikethrough | forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image | table | removeformat | code | help',
+        content_style: 'body { font-family: Poppins, sans-serif; font-size: 14px; line-height: 1.6; color: #1e293b; }',
+        branding: false,
+        promotion: false,
+        setup: function(editor) {
+            editor.on('change', function() {
+                editor.save();
+            });
+        }
+    });
+
+    // ============================================
+    // Global Variables
+    // ============================================
+    var lessonsData = [];
+    var quizzesData = [];
+    var quizQuestionCounter = {};
+    
+    var contentIcons = { 
+        video: 'fa-play-circle', 
+        video_url: 'fa-link', 
+        text: 'fa-file-alt', 
+        pdf: 'fa-file-pdf', 
+        assignment: 'fa-tasks', 
+        code: 'fa-code', 
+        slides: 'fa-desktop' 
+    };
+    var contentIconsBg = { 
+        video: '#3b82f6', 
+        video_url: '#6366f1', 
+        text: '#10b981', 
+        pdf: '#ef4444', 
+        assignment: '#f59e0b', 
+        code: '#ec4899', 
+        slides: '#06b6d4' 
+    };
+    var typeNames = { 
+        video: 'Video File', 
+        video_url: 'Video URL', 
+        text: 'Text/Article', 
+        pdf: 'PDF Document', 
+        assignment: 'Assignment', 
+        code: 'Code Exercise', 
+        slides: 'Slides' 
+    };
+
+    {% if is_edit and existing_lessons_json %}
+    lessonsData = {{ existing_lessons_json|safe }};
+    {% endif %}
+    
+    {% if is_edit and existing_quizzes_json %}
+    quizzesData = {{ existing_quizzes_json|safe }};
+    {% endif %}
+
+    // ============================================
+    // TinyMCE Helper Functions
+    // ============================================
+    var tinyMCEConfig = {
+        height: 350, 
+        menubar: false,
+        plugins: ['advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview', 'searchreplace', 'visualblocks', 'code', 'fullscreen', 'insertdatetime', 'table', 'help', 'wordcount', 'codesample'],
+        toolbar: 'undo redo | blocks | bold italic underline strikethrough | forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image | codesample | removeformat | code | help',
+        content_style: 'body { font-family: Poppins, sans-serif; font-size: 14px; line-height: 1.6; color: #1e293b; } pre { background: #1e293b; color: #e2e8f0; padding: 16px; border-radius: 8px; }',
+        codesample_languages: [
+            {text:'HTML/XML',value:'markup'},
+            {text:'JavaScript',value:'javascript'},
+            {text:'Python',value:'python'},
+            {text:'CSS',value:'css'},
+            {text:'SQL',value:'sql'},
+            {text:'Bash',value:'bash'},
+            {text:'JSON',value:'json'}
+        ],
+        setup: function(editor) { 
+            editor.on('change', function() { 
+                editor.save(); 
+            }); 
+        }
+    };
+
+    function initTinyMCE(id) { 
+        var e = tinymce.get(id); 
+        if (e) e.remove(); 
+        tinymce.init(Object.assign({}, tinyMCEConfig, {selector: '#' + id})); 
+    }
+    
+    function removeTinyMCE(id) { 
+        var e = tinymce.get(id); 
+        if (e) { 
+            e.save(); 
+            e.remove(); 
+        } 
+    }
+    
+    function saveTinyMCE(id) { 
+        var e = tinymce.get(id); 
+        if (e) { 
+            e.save(); 
+            return e.getContent(); 
+        } 
+        var el = document.getElementById(id);
+        return el ? el.value : ''; 
+    }
+    
+    function removeAllTinyMCE() { 
+        if (typeof tinymce !== 'undefined' && tinymce.editors) {
+            tinymce.editors.forEach(function(e) { 
+                e.save(); 
+                e.remove(); 
+            }); 
+        }
+    }
+
+    // ============================================
+    // Thumbnail & Video Functions
+    // ============================================
+    function previewThumbnail(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var area = document.getElementById('thumbnailArea'); 
+                if (!area) return;
+                area.classList.add('has-image');
+                var previewDiv = document.getElementById('thumbnailPreviewContainer');
+                var icon = document.getElementById('thumbnailIcon');
+                var title = document.getElementById('thumbnailTitle');
+                if (previewDiv) { 
+                    previewDiv.querySelector('img').src = e.target.result; 
+                }
+                else {
+                    if (icon) icon.style.display = 'none'; 
+                    if (title) title.style.display = 'none';
+                    previewDiv = document.createElement('div'); 
+                    previewDiv.className = 'upload-preview'; 
+                    previewDiv.id = 'thumbnailPreviewContainer';
+                    previewDiv.innerHTML = '<img src="' + e.target.result + '" id="previewImg"><button type="button" class="change-btn" onclick="event.stopPropagation(); document.getElementById(\'thumbnailInput\').click()"><i class="fas fa-pen"></i> Change Image</button>';
+                    var fileInput = document.getElementById('thumbnailInput'); 
+                    area.insertBefore(previewDiv, fileInput);
+                    fileInput.style.position = 'absolute'; 
+                    fileInput.style.inset = '0'; 
+                    fileInput.style.opacity = '0'; 
+                    fileInput.style.cursor = 'pointer';
+                }
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function showVideoFileName(input) { 
+        var d = document.getElementById('featuredVideoName');
+        var t = document.getElementById('featuredVideoTitle');
+        if (input.files && input.files[0]) { 
+            if (d) {
+                d.textContent = '✅ Selected: ' + input.files[0].name; 
+                d.style.display = 'block'; 
+            }
+            if (t) t.textContent = 'Change Video'; 
+        } 
+    }
+    
+    function toggleFreePrice() { 
+        var p = document.getElementById('priceInput'); 
+        var toggle = document.getElementById('isFreeToggle');
+        if (!p || !toggle) return;
+        if (toggle.checked) { 
+            p.value = '0'; 
+            p.disabled = true; 
+        } else { 
+            p.value = ''; 
+            p.disabled = false; 
+        } 
+    }
+    
+    function getContentIndex(li) { 
+        var b = document.querySelector('.lesson-block[data-lesson-index="' + li + '"]'); 
+        return b ? b.querySelectorAll('.content-item').length : 0; 
+    }
+
+    // ============================================
+    // Content Type Field Toggling
+    // ============================================
+    function toggleContentFields(selectElement) {
+        var li = selectElement.id.replace('contentType-', '');
+        var df = document.getElementById('dynamicFields-' + li);
+        var durF = document.getElementById('durationField-' + li);
+        var type = selectElement.value;
+        var ci = getContentIndex(li);
+        
+        removeTinyMCE('textContent-' + li);
+        
+        if (durF) durF.style.display = (type === 'video' || type === 'video_url') ? '' : 'none';
+        
+        var fn = 'lesson_content_file_' + li + '_' + ci;
+        var html = '';
+        
+        switch(type) {
+            case 'video': 
+                html = '<div class="field-row"><div><label>Upload Video File</label><input type="file" name="' + fn + '" accept="video/*"></div><div><label>Or Video URL</label><input type="url" id="videoUrl-' + li + '" placeholder="https://..."></div></div>'; 
+                break;
+            case 'video_url': 
+                html = '<div><label>Video URL (YouTube/Vimeo)</label><input type="url" id="videoUrl-' + li + '" placeholder="https://youtube.com/watch?v=..."></div>'; 
+                break;
+            case 'pdf': 
+                html = '<div><label>Upload PDF Document</label><input type="file" name="' + fn + '" accept=".pdf"></div>'; 
+                break;
+            case 'text': 
+            case 'assignment': 
+                html = '<div><label>' + (typeNames[type] || type) + ' (Rich Text Editor)</label><textarea id="textContent-' + li + '" placeholder="Start typing..."></textarea></div>'; 
+                break;
+            case 'code': 
+                html = '<div><label>Code Exercise</label><textarea id="textContent-' + li + '" rows="5" placeholder="Enter code..." class="code-textarea"></textarea></div>'; 
+                break;
+            case 'slides': 
+                html = '<div><label>Upload Presentation Slides</label><input type="file" name="' + fn + '" accept=".ppt,.pptx,.pdf"></div>'; 
+                break;
+        }
+        
+        if (df) { 
+            df.innerHTML = html; 
+            df.style.display = 'block'; 
+            if (type === 'text' || type === 'assignment') {
+                setTimeout(function() { initTinyMCE('textContent-' + li); }, 300); 
+            }
+        }
+    }
+
+    // ============================================
+    // Quiz Functions
+    // ============================================
+    function toggleQuizSection(lessonIndex) {
+        var body = document.getElementById('quizSectionBody-' + lessonIndex);
+        var btn = document.querySelector('#quizSection-' + lessonIndex + ' .btn-toggle-quiz');
+        
+        if (!body) return;
+        
+        if (body.style.display === 'none' || body.style.display === '') {
+            body.style.display = 'block';
+            if (btn) {
+                btn.innerHTML = '<i class="fas fa-times"></i> Close Quiz';
+            }
+            var questionsList = document.getElementById('quizQuestionsList-' + lessonIndex);
+            if (questionsList && questionsList.children.length === 0) {
+                loadQuizDataIfExists(lessonIndex);
+            }
+        } else {
+            body.style.display = 'none';
+            if (btn) {
+                var hasQuiz = quizzesData[lessonIndex] && quizzesData[lessonIndex].questions && quizzesData[lessonIndex].questions.length > 0;
+                btn.innerHTML = hasQuiz ? '<i class="fas fa-edit"></i> Edit Quiz' : '<i class="fas fa-plus"></i> Add Quiz';
+            }
+            updateQuizData();
+        }
+    }
+    
+    function loadQuizDataIfExists(lessonIndex) {
+        if (quizzesData[lessonIndex] && quizzesData[lessonIndex].questions && quizzesData[lessonIndex].questions.length > 0) {
+            var quizTitleInput = document.getElementById('quizTitle-' + lessonIndex);
+            if (quizTitleInput && quizzesData[lessonIndex].title) {
+                quizTitleInput.value = quizzesData[lessonIndex].title;
+            }
+            
+            var questionsList = document.getElementById('quizQuestionsList-' + lessonIndex);
+            if (questionsList) {
+                questionsList.innerHTML = '';
+            }
+            
+            loadQuizData(lessonIndex, quizzesData[lessonIndex].questions);
+        }
+    }
+    
+    function addQuizQuestion(lessonIndex) {
+        var container = document.getElementById('quizQuestionsList-' + lessonIndex);
+        if (!container) return;
+        
+        if (typeof quizQuestionCounter[lessonIndex] === 'undefined') {
+            quizQuestionCounter[lessonIndex] = 0;
+        }
+        
+        var qIndex = quizQuestionCounter[lessonIndex];
+        quizQuestionCounter[lessonIndex]++;
+        
+        var questionHTML = '<div class="quiz-question-block" data-question-index="' + qIndex + '" data-lesson-index="' + lessonIndex + '" style="border:2px solid #8b5cf6;border-radius:8px;padding:16px;margin-bottom:16px;background:white;">';
+        questionHTML += '<div class="quiz-question-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #e5e7eb;">';
+        questionHTML += '<strong style="color:#8b5cf6;font-size:14px;">Question ' + (qIndex + 1) + '</strong>';
+        questionHTML += '<div style="display:flex;gap:8px;">';
+        questionHTML += '<button type="button" class="btn-edit-question" onclick="toggleEditQuestion(this)" style="background:#f3e8ff;color:#8b5cf6;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;"><i class="fas fa-pen"></i> Edit</button>';
+        questionHTML += '<button type="button" class="btn-remove-question" onclick="removeQuizQuestion(this)" style="background:#fee2e2;color:#ef4444;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;"><i class="fas fa-trash"></i></button>';
+        questionHTML += '</div></div>';
+        questionHTML += '<div class="quiz-question-content" style="display:none;">';
+        questionHTML += '<div class="form-group" style="margin-bottom:10px;"><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Question Type</label>';
+        questionHTML += '<select class="form-control-sm quiz-question-type" onchange="toggleQuestionType(this)" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;">';
+        questionHTML += '<option value="multiple_choice">Multiple Choice</option><option value="true_false">True/False</option><option value="short_answer">Short Answer</option></select></div>';
+        questionHTML += '<div class="form-group" style="margin-bottom:10px;"><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Question Text</label>';
+        questionHTML += '<textarea class="form-control-sm quiz-question-text" rows="3" placeholder="Enter your question..." style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;font-family:Poppins,sans-serif;"></textarea></div>';
+        questionHTML += '<div class="form-group" style="margin-bottom:10px;"><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Points</label>';
+        questionHTML += '<input type="number" class="form-control-sm quiz-question-points" value="1" min="1" style="width:80px;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;"></div>';
+        questionHTML += '<div class="quiz-answers-container" style="margin-bottom:10px;"></div>';
+        questionHTML += '<button type="button" class="btn-add-answer" onclick="addQuizAnswer(this)" style="background:#f3f4f6;color:#374151;border:1px dashed #d1d5db;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:11px;margin-bottom:10px;"><i class="fas fa-plus"></i> Add Answer</button>';
+        questionHTML += '<div class="form-group" style="margin-bottom:0;"><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Explanation (optional)</label>';
+        questionHTML += '<textarea class="form-control-sm quiz-question-explanation" rows="2" placeholder="Explain why this answer is correct..." style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;font-family:Poppins,sans-serif;"></textarea></div>';
+        questionHTML += '</div>';
+        questionHTML += '<div class="quiz-question-preview" style="padding:8px;background:#f8fafc;border-radius:6px;font-size:12px;color:#6b7280;"><em>Click Edit to add question details</em></div>';
+        questionHTML += '</div>';
+        
+        container.insertAdjacentHTML('beforeend', questionHTML);
+        
+        var block = container.querySelector('.quiz-question-block:last-child');
+        if (block) {
+            var answersContainer = block.querySelector('.quiz-answers-container');
+            if (answersContainer) {
+                answersContainer.innerHTML = '<div class="quiz-answer-row" style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">' +
+                    '<input type="text" class="quiz-answer-text" placeholder="Answer option A" style="flex:1;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;font-family:Poppins,sans-serif;">' +
+                    '<input type="radio" name="correctAnswer-' + lessonIndex + '-' + qIndex + '" class="quiz-answer-correct" title="Mark as correct answer" style="width:16px;height:16px;cursor:pointer;">' +
+                    '<button type="button" class="btn-remove-answer" onclick="removeQuizAnswer(this)" style="background:#fee2e2;color:#ef4444;border:none;width:24px;height:24px;border-radius:4px;cursor:pointer;font-size:12px;">×</button></div>' +
+                    '<div class="quiz-answer-row" style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">' +
+                    '<input type="text" class="quiz-answer-text" placeholder="Answer option B" style="flex:1;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;font-family:Poppins,sans-serif;">' +
+                    '<input type="radio" name="correctAnswer-' + lessonIndex + '-' + qIndex + '" class="quiz-answer-correct" title="Mark as correct answer" style="width:16px;height:16px;cursor:pointer;">' +
+                    '<button type="button" class="btn-remove-answer" onclick="removeQuizAnswer(this)" style="background:#fee2e2;color:#ef4444;border:none;width:24px;height:24px;border-radius:4px;cursor:pointer;font-size:12px;">×</button></div>';
+            }
+        }
+        
+        updateQuizData();
+    }
+
+    function toggleEditQuestion(btn) {
+        var questionBlock = btn.closest('.quiz-question-block');
+        if (!questionBlock) return;
+        
+        var content = questionBlock.querySelector('.quiz-question-content');
+        var preview = questionBlock.querySelector('.quiz-question-preview');
+        
+        if (!content || !preview) return;
+        
+        if (content.style.display === 'none') {
+            content.style.display = 'block';
+            preview.style.display = 'none';
+            btn.innerHTML = '<i class="fas fa-check"></i> Done';
+            btn.style.background = '#d1fae5';
+            btn.style.color = '#065f46';
+        } else {
+            content.style.display = 'none';
+            preview.style.display = 'block';
+            
+            var questionText = questionBlock.querySelector('.quiz-question-text');
+            var questionType = questionBlock.querySelector('.quiz-question-type');
+            
+            if (questionText && questionType) {
+                var qText = questionText.value.trim();
+                var qType = questionType.value;
+                var typeNamesMap = {
+                    'multiple_choice': 'Multiple Choice',
+                    'true_false': 'True/False',
+                    'short_answer': 'Short Answer'
+                };
+                
+                if (qText) {
+                    preview.innerHTML = '<strong>' + qText + '</strong><br><small>' + (typeNamesMap[qType] || qType) + '</small>';
+                } else {
+                    preview.innerHTML = '<em>Click Edit to add question details</em>';
+                }
+            }
+            
+            btn.innerHTML = '<i class="fas fa-pen"></i> Edit';
+            btn.style.background = '#f3e8ff';
+            btn.style.color = '#8b5cf6';
+            
+            updateQuizData();
+        }
+    }
+
+    function toggleQuestionType(selectElement) {
+        var questionBlock = selectElement.closest('.quiz-question-block');
+        if (!questionBlock) return;
+        
+        var answersContainer = questionBlock.querySelector('.quiz-answers-container');
+        var addAnswerBtn = questionBlock.querySelector('.btn-add-answer');
+        var qIndex = questionBlock.getAttribute('data-question-index');
+        var lessonIndex = questionBlock.getAttribute('data-lesson-index');
+        
+        if (!answersContainer) return;
+        
+        if (selectElement.value === 'true_false') {
+            answersContainer.innerHTML = '<div class="quiz-answer-row" style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">' +
+                '<input type="text" class="quiz-answer-text" value="True" readonly style="flex:1;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;font-family:Poppins,sans-serif;background:#f8fafc;">' +
+                '<input type="radio" name="correctAnswer-' + lessonIndex + '-' + qIndex + '" class="quiz-answer-correct" style="width:16px;height:16px;cursor:pointer;"></div>' +
+                '<div class="quiz-answer-row" style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">' +
+                '<input type="text" class="quiz-answer-text" value="False" readonly style="flex:1;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;font-family:Poppins,sans-serif;background:#f8fafc;">' +
+                '<input type="radio" name="correctAnswer-' + lessonIndex + '-' + qIndex + '" class="quiz-answer-correct" style="width:16px;height:16px;cursor:pointer;"></div>';
+            if (addAnswerBtn) addAnswerBtn.style.display = 'none';
+        } else if (selectElement.value === 'short_answer') {
+            answersContainer.innerHTML = '<p style="font-size:12px;color:#6b7280;font-style:italic;">Students will type their answer. You will review manually.</p>';
+            if (addAnswerBtn) addAnswerBtn.style.display = 'none';
+        } else {
+            if (addAnswerBtn) addAnswerBtn.style.display = 'inline-flex';
+            if (answersContainer.querySelectorAll('.quiz-answer-row').length < 2) {
+                answersContainer.innerHTML = '<div class="quiz-answer-row" style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">' +
+                    '<input type="text" class="quiz-answer-text" placeholder="Answer option A" style="flex:1;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;font-family:Poppins,sans-serif;">' +
+                    '<input type="radio" name="correctAnswer-' + lessonIndex + '-' + qIndex + '" class="quiz-answer-correct" style="width:16px;height:16px;cursor:pointer;">' +
+                    '<button type="button" class="btn-remove-answer" onclick="removeQuizAnswer(this)" style="background:#fee2e2;color:#ef4444;border:none;width:24px;height:24px;border-radius:4px;cursor:pointer;font-size:12px;">×</button></div>' +
+                    '<div class="quiz-answer-row" style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">' +
+                    '<input type="text" class="quiz-answer-text" placeholder="Answer option B" style="flex:1;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;font-family:Poppins,sans-serif;">' +
+                    '<input type="radio" name="correctAnswer-' + lessonIndex + '-' + qIndex + '" class="quiz-answer-correct" style="width:16px;height:16px;cursor:pointer;">' +
+                    '<button type="button" class="btn-remove-answer" onclick="removeQuizAnswer(this)" style="background:#fee2e2;color:#ef4444;border:none;width:24px;height:24px;border-radius:4px;cursor:pointer;font-size:12px;">×</button></div>';
+            }
+        }
+        
+        updateQuizData();
+    }
+
+    function addQuizAnswer(btn) {
+        var questionBlock = btn.closest('.quiz-question-block');
+        if (!questionBlock) return;
+        
+        var answersContainer = questionBlock.querySelector('.quiz-answers-container');
+        var qIndex = questionBlock.getAttribute('data-question-index');
+        var lessonIndex = questionBlock.getAttribute('data-lesson-index');
+        
+        if (!answersContainer) return;
+        
+        var row = document.createElement('div');
+        row.className = 'quiz-answer-row';
+        row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:6px;';
+        row.innerHTML = '<input type="text" class="quiz-answer-text" placeholder="Answer option" style="flex:1;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;font-family:Poppins,sans-serif;">' +
+            '<input type="radio" name="correctAnswer-' + lessonIndex + '-' + qIndex + '" class="quiz-answer-correct" title="Mark as correct answer" style="width:16px;height:16px;cursor:pointer;">' +
+            '<button type="button" class="btn-remove-answer" onclick="removeQuizAnswer(this)" style="background:#fee2e2;color:#ef4444;border:none;width:24px;height:24px;border-radius:4px;cursor:pointer;font-size:12px;">×</button>';
+        answersContainer.appendChild(row);
+        updateQuizData();
+    }
+
+    function removeQuizAnswer(btn) {
+        var row = btn.closest('.quiz-answer-row');
+        if (!row) return;
+        
+        var container = row.closest('.quiz-answers-container');
+        if (container && container.querySelectorAll('.quiz-answer-row').length > 2) {
+            row.remove();
+            updateQuizData();
+        }
+    }
+
+    function removeQuizQuestion(btn) {
+        if (confirm('Remove this question?')) {
+            var questionBlock = btn.closest('.quiz-question-block');
+            if (!questionBlock) return;
+            
+            var lessonIndex = questionBlock.getAttribute('data-lesson-index');
+            questionBlock.remove();
+            updateQuizData();
+            
+            var container = document.getElementById('quizQuestionsList-' + lessonIndex);
+            if (container) {
+                var questions = container.querySelectorAll('.quiz-question-block');
+                questions.forEach(function(q, i) {
+                    q.setAttribute('data-question-index', i);
+                    var header = q.querySelector('.quiz-question-header strong');
+                    if (header) header.textContent = 'Question ' + (i + 1);
+                });
+            }
+        }
+    }
+
+    function collectQuizData(lessonIndex) {
+        var quizBuilder = document.getElementById('quizBuilder-' + lessonIndex);
+        if (!quizBuilder) return { title: '', questions: [] };
+        
+        var quizTitleInput = document.getElementById('quizTitle-' + lessonIndex);
+        var quizTitle = quizTitleInput ? quizTitleInput.value.trim() : '';
+        
+        var questions = [];
+        var questionBlocks = quizBuilder.querySelectorAll('.quiz-question-block');
+        
+        questionBlocks.forEach(function(qBlock) {
+            var typeSelect = qBlock.querySelector('.quiz-question-type');
+            var textArea = qBlock.querySelector('.quiz-question-text');
+            var pointsInput = qBlock.querySelector('.quiz-question-points');
+            var explanationArea = qBlock.querySelector('.quiz-question-explanation');
+            
+            if (!typeSelect || !textArea) return;
+            
+            var qType = typeSelect.value;
+            var qText = textArea.value.trim();
+            var qPoints = pointsInput ? (parseInt(pointsInput.value) || 1) : 1;
+            var qExplanation = explanationArea ? explanationArea.value.trim() : '';
+            
+            var answers = [];
+            var answerRows = qBlock.querySelectorAll('.quiz-answer-row');
+            
+            answerRows.forEach(function(aRow) {
+                var answerText = aRow.querySelector('.quiz-answer-text');
+                var answerCorrect = aRow.querySelector('.quiz-answer-correct');
+                
+                if (answerText) {
+                    var aText = answerText.value.trim();
+                    var isCorrect = answerCorrect ? answerCorrect.checked : false;
+                    
+                    if (aText) {
+                        answers.push({ 
+                            text: aText, 
+                            is_correct: isCorrect 
+                        });
+                    }
+                }
+            });
+            
+            if (qText) {
+                questions.push({
+                    type: qType,
+                    text: qText,
+                    points: qPoints,
+                    explanation: qExplanation,
+                    answers: answers
+                });
+            }
+        });
+        
+        return {
+            title: quizTitle,
+            questions: questions
+        };
+    }
+
+    function loadQuizData(lessonIndex, quizData) {
+        var questionsList = document.getElementById('quizQuestionsList-' + lessonIndex);
+        if (!questionsList) return;
+        
+        questionsList.innerHTML = '';
+        quizQuestionCounter[lessonIndex] = 0;
+        
+        quizData.forEach(function(question, qIndex) {
+            addQuizQuestion(lessonIndex);
+            var questionBlock = questionsList.querySelectorAll('.quiz-question-block')[qIndex];
+            
+            if (questionBlock) {
+                var typeSelect = questionBlock.querySelector('.quiz-question-type');
+                if (typeSelect) {
+                    typeSelect.value = question.type || 'multiple_choice';
+                    toggleQuestionType(typeSelect);
+                }
+                
+                var textArea = questionBlock.querySelector('.quiz-question-text');
+                if (textArea) textArea.value = question.text || '';
+                
+                var pointsInput = questionBlock.querySelector('.quiz-question-points');
+                if (pointsInput) pointsInput.value = question.points || 1;
+                
+                var explanationArea = questionBlock.querySelector('.quiz-question-explanation');
+                if (explanationArea) explanationArea.value = question.explanation || '';
+                
+                if (question.type === 'true_false') {
+                    var correctAnswer = question.answers.find(function(a) { return a.is_correct; });
+                    var answerRows = questionBlock.querySelectorAll('.quiz-answer-row');
+                    if (correctAnswer && answerRows.length >= 2) {
+                        if (correctAnswer.text.toLowerCase() === 'true') {
+                            answerRows[0].querySelector('.quiz-answer-correct').checked = true;
+                        } else {
+                            answerRows[1].querySelector('.quiz-answer-correct').checked = true;
+                        }
+                    }
+                } else if (question.type !== 'short_answer') {
+                    var answersContainer = questionBlock.querySelector('.quiz-answers-container');
+                    if (answersContainer) {
+                        answersContainer.innerHTML = '';
+                        
+                        question.answers.forEach(function(answer) {
+                            var row = document.createElement('div');
+                            row.className = 'quiz-answer-row';
+                            row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:6px;';
+                            row.innerHTML = '<input type="text" class="quiz-answer-text" value="' + (answer.text || '') + '" style="flex:1;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;font-family:Poppins,sans-serif;">' +
+                                '<input type="radio" name="correctAnswer-' + lessonIndex + '-' + qIndex + '" class="quiz-answer-correct" ' + (answer.is_correct ? 'checked' : '') + ' style="width:16px;height:16px;cursor:pointer;">' +
+                                '<button type="button" class="btn-remove-answer" onclick="removeQuizAnswer(this)" style="background:#fee2e2;color:#ef4444;border:none;width:24px;height:24px;border-radius:4px;cursor:pointer;font-size:12px;">×</button>';
+                            answersContainer.appendChild(row);
+                        });
+                    }
+                }
+                
+                var preview = questionBlock.querySelector('.quiz-question-preview');
+                if (preview && question.text) {
+                    var typeNamesMap = {
+                        'multiple_choice': 'Multiple Choice',
+                        'true_false': 'True/False',
+                        'short_answer': 'Short Answer'
+                    };
+                    preview.innerHTML = '<strong>' + question.text + '</strong><br><small>' + (typeNamesMap[question.type] || question.type) + '</small>';
+                }
+            }
+        });
+        
+        updateQuizData();
+    }
+
+    function updateQuizData() {
+        quizzesData = [];
+        
+        var lessonBlocks = document.querySelectorAll('.lesson-block');
+        
+        lessonBlocks.forEach(function(b, i) {
+            var quizData = collectQuizData(i);
+            var passingScore = document.getElementById('passingScore-' + i);
+            var questionsPerAttempt = document.getElementById('questionsPerAttempt-' + i);
+            var randomizeQuestions = document.getElementById('randomizeQuestions-' + i);
+            var randomizeAnswers = document.getElementById('randomizeAnswers-' + i);
+            
+            quizzesData.push({
+                lesson_index: i,
+                lesson_id: b.getAttribute('data-lesson-id') || null,
+                title: quizData ? quizData.title : '',
+                questions: quizData ? quizData.questions : [],
+                passing_score: passingScore ? (parseInt(passingScore.value) || 60) : 60,
+                questions_per_attempt: questionsPerAttempt && questionsPerAttempt.value ? parseInt(questionsPerAttempt.value) : null,
+                randomize_questions: randomizeQuestions ? randomizeQuestions.checked : true,
+                randomize_answers: randomizeAnswers ? randomizeAnswers.checked : true
+            });
+        });
+        
+        updateQuizzesData();
+    }
+    
+    function updateQuizzesData() { 
+        var quizzesDataInput = document.getElementById('quizzesData');
+        if (quizzesDataInput) {
+            quizzesDataInput.value = JSON.stringify(quizzesData || []); 
+        }
+    }
+
+    // ============================================
+    // Lesson Management Functions
+    // ============================================
+    function addLesson() {
+        var c = document.getElementById('lessonsContainer');
+        var es = document.getElementById('emptyLessons'); 
+        if (es) es.remove();
+        
+        var i = c.querySelectorAll('.lesson-block').length;
+        
+        var lessonHTML = '<div class="lesson-block" data-lesson-index="' + i + '" data-lesson-id="">';
+        lessonHTML += '<div class="lesson-block-header open" onclick="toggleLessonBody(this)">';
+        lessonHTML += '<div class="lesson-number">' + (i + 1) + '</div>';
+        lessonHTML += '<input type="text" class="lesson-title-input" value="Lesson ' + (i + 1) + '" placeholder="Lesson title" onchange="updateLessonData()" onclick="event.stopPropagation()">';
+        lessonHTML += '<div class="lesson-actions"><span class="item-count">0 items</span><i class="fas fa-chevron-down toggle-icon"></i>';
+        lessonHTML += '<button type="button" class="btn-remove-lesson" onclick="event.stopPropagation();removeLesson(this.closest(\'.lesson-block\'))" title="Remove"><i class="fas fa-trash"></i></button></div></div>';
+        lessonHTML += '<div class="lesson-block-body open"><div class="content-list"></div>';
+        
+        // Quiz section
+        lessonHTML += '<div class="quiz-section" id="quizSection-' + i + '" style="margin-top:16px;border:1px solid #e5e7eb;border-radius:8px;background:#fafbfc;">';
+        lessonHTML += '<div class="quiz-section-header" style="padding:12px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e5e7eb;background:#f8fafc;">';
+        lessonHTML += '<div class="quiz-title" style="font-size:13px;font-weight:600;color:#0c1e2e;display:flex;align-items:center;gap:8px;"><i class="fas fa-question-circle" style="color:#8b5cf6;"></i> Quiz</div>';
+        lessonHTML += '<button type="button" class="btn-toggle-quiz" onclick="toggleQuizSection(' + i + ')" style="padding:6px 14px;background:#f3e8ff;color:#8b5cf6;border:1px solid #d8b4fe;border-radius:6px;cursor:pointer;font-size:12px;font-weight:500;"><i class="fas fa-plus"></i> Add Quiz</button></div>';
+        lessonHTML += '<div class="quiz-section-body" id="quizSectionBody-' + i + '" style="display:none;padding:14px;">';
+        lessonHTML += '<div class="form-group" style="margin-bottom:12px;"><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Quiz Title</label>';
+        lessonHTML += '<input type="text" class="form-control-sm" id="quizTitle-' + i + '" placeholder="Enter quiz title" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;"></div>';
+        lessonHTML += '<div class="quiz-builder" id="quizBuilder-' + i + '"><div class="quiz-questions-list" id="quizQuestionsList-' + i + '"></div>';
+        lessonHTML += '<button type="button" class="btn-add-question" onclick="addQuizQuestion(' + i + ')" style="background:#8b5cf6;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;margin-top:8px;"><i class="fas fa-plus-circle"></i> Add Another Question</button></div>';
+        lessonHTML += '<div style="margin-top:16px;padding:12px;background:white;border:1px solid #e5e7eb;border-radius:8px;">';
+        lessonHTML += '<h4 style="font-size:13px;font-weight:600;color:#374151;margin-bottom:8px;">Quiz Settings</h4>';
+        lessonHTML += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">';
+        lessonHTML += '<div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Passing Score (%)</label>';
+        lessonHTML += '<input type="number" class="form-control-sm" id="passingScore-' + i + '" value="60" min="0" max="100" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;"></div>';
+        lessonHTML += '<div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Questions Per Attempt</label>';
+        lessonHTML += '<input type="number" class="form-control-sm" id="questionsPerAttempt-' + i + '" min="1" placeholder="All" style="width:100%;padding:8px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;"></div></div>';
+        lessonHTML += '<div style="margin-top:8px;">';
+        lessonHTML += '<label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:500;color:#374151;margin-bottom:4px;"><input type="checkbox" id="randomizeQuestions-' + i + '" checked> Randomize question order</label>';
+        lessonHTML += '<label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:500;color:#374151;"><input type="checkbox" id="randomizeAnswers-' + i + '" checked> Randomize answer options</label></div></div></div></div>';
+        
+        // Add content section
+        lessonHTML += '<div class="add-content-section" style="margin-top:16px;border:1.5px dashed #d1d5db;border-radius:10px;padding:16px;background:#fafbfc;">';
+        lessonHTML += '<div class="section-title" id="sectionTitle-' + i + '"><i class="fas fa-plus-circle" style="color:#3b82f6;"></i> Add Content</div>';
+        lessonHTML += '<div class="add-content-row" style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">';
+        lessonHTML += '<div class="form-group-sm type-select" style="flex:0 0 150px;"><select class="form-control-sm content-type-select" id="contentType-' + i + '" onchange="toggleContentFields(this)">';
+        lessonHTML += '<option value="video">🎬 Video File</option><option value="video_url">🔗 Video URL</option><option value="text">📝 Text/Article</option><option value="pdf">📄 PDF Document</option><option value="assignment">📋 Assignment</option><option value="code">💻 Code Exercise</option><option value="slides">📊 Slides</option></select></div>';
+        lessonHTML += '<div class="form-group-sm title-input" style="flex:1;min-width:150px;"><input type="text" class="form-control-sm" id="contentTitle-' + i + '" placeholder="Content title"></div>';
+        lessonHTML += '<div class="form-group-sm duration-input" id="durationField-' + i + '" style="flex:0 0 80px;"><input type="number" class="form-control-sm" id="contentDuration-' + i + '" placeholder="Min" min="0"></div>';
+        lessonHTML += '<button type="button" class="btn-sm btn-sm-primary" id="contentActionBtn-' + i + '" onclick="addContentToLesson(' + i + ')" style="padding:9px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:#3b82f6;color:white;"><i class="fas fa-plus"></i> Add</button>';
+        lessonHTML += '<button type="button" class="btn-sm btn-sm-update" id="contentCancelBtn-' + i + '" onclick="cancelEdit(' + i + ')" style="display:none;padding:9px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:#f59e0b;color:white;"><i class="fas fa-times"></i> Cancel</button></div>';
+        lessonHTML += '<div class="dynamic-fields" id="dynamicFields-' + i + '" style="display:none;"></div>';
+        lessonHTML += '<input type="hidden" id="editingContentId-' + i + '" value=""></div></div></div>';
+        
+        c.insertAdjacentHTML('beforeend', lessonHTML);
+        
+        updateLessonNumbers(); 
+        updateLessonData();
+        updateQuizData();
+    }
+
+    function toggleLessonBody(h) { 
+        if (h.nextElementSibling) {
+            h.nextElementSibling.classList.toggle('open'); 
+        }
+        h.classList.toggle('open'); 
+    }
+    
+    function removeLesson(b) { 
+        if (confirm('Remove this lesson and all its content?')) { 
+            var lessonIndex = b.getAttribute('data-lesson-index');
+            removeTinyMCE('textContent-' + lessonIndex); 
+            b.remove(); 
+            updateLessonNumbers(); 
+            updateLessonData(); 
+            updateQuizData();
+            var c = document.getElementById('lessonsContainer'); 
+            if (c && c.querySelectorAll('.lesson-block').length === 0) {
+                c.innerHTML = '<div class="empty-lessons" id="emptyLessons"><i class="fas fa-layer-group"></i><p>No lessons added yet.</p></div>'; 
+            }
+        } 
+    }
+    
+    function removeContentItem(btn) { 
+        var ci = btn.closest('.content-item'); 
+        if (ci) { 
+            var lb = ci.closest('.lesson-block');
+            var li = lb ? lb.getAttribute('data-lesson-index') : null; 
+            ci.remove(); 
+            updateLessonData(); 
+            updateAllItemCounts(); 
+            if (li !== null) cancelEdit(li); 
+        } 
+    }
+    
+    function updateLessonNumbers() {
+        document.querySelectorAll('.lesson-block').forEach(function(b, i) {
+            var numEl = b.querySelector('.lesson-number');
+            if (numEl) numEl.textContent = i + 1;
+            b.setAttribute('data-lesson-index', i);
+            
+            var ts = b.querySelector('select.content-type-select');
+            var ti = b.querySelector('input[placeholder="Content title"]');
+            var di = b.querySelector('input[placeholder="Min"]');
+            var ab = b.querySelector('[id^="contentActionBtn-"]');
+            var cb = b.querySelector('[id^="contentCancelBtn-"]');
+            var df = b.querySelector('[id^="dynamicFields-"]');
+            var durF = b.querySelector('[id^="durationField-"]');
+            var st = b.querySelector('[id^="sectionTitle-"]');
+            var ei = b.querySelector('[id^="editingContentId-"]');
+            var qs = b.querySelector('[id^="quizSection-"]');
+            var qsb = b.querySelector('[id^="quizSectionBody-"]');
+            var qb = b.querySelector('[id^="quizBuilder-"]');
+            var qql = b.querySelector('[id^="quizQuestionsList-"]');
+            var qt = b.querySelector('[id^="quizTitle-"]');
+            var ps = b.querySelector('[id^="passingScore-"]');
+            var qpa = b.querySelector('[id^="questionsPerAttempt-"]');
+            var rq = b.querySelector('[id^="randomizeQuestions-"]');
+            var ra = b.querySelector('[id^="randomizeAnswers-"]');
+            
+            if (ts) ts.id = 'contentType-' + i; 
+            if (ti) ti.id = 'contentTitle-' + i; 
+            if (di) di.id = 'contentDuration-' + i;
+            if (ab) ab.id = 'contentActionBtn-' + i; 
+            if (cb) cb.id = 'contentCancelBtn-' + i;
+            if (df) df.id = 'dynamicFields-' + i; 
+            if (durF) durF.id = 'durationField-' + i;
+            if (st) st.id = 'sectionTitle-' + i; 
+            if (ei) ei.id = 'editingContentId-' + i;
+            if (qs) qs.id = 'quizSection-' + i;
+            if (qsb) qsb.id = 'quizSectionBody-' + i;
+            if (qb) qb.id = 'quizBuilder-' + i;
+            if (qql) qql.id = 'quizQuestionsList-' + i;
+            if (qt) qt.id = 'quizTitle-' + i;
+            if (ps) ps.id = 'passingScore-' + i;
+            if (qpa) qpa.id = 'questionsPerAttempt-' + i;
+            if (rq) rq.id = 'randomizeQuestions-' + i;
+            if (ra) ra.id = 'randomizeAnswers-' + i;
+        });
+    }
+    
+    function updateAllItemCounts() { 
+        document.querySelectorAll('.lesson-block').forEach(function(b) { 
+            var c = b.querySelector('.item-count'); 
+            if (c) c.textContent = b.querySelectorAll('.content-item').length + ' items'; 
+        }); 
+    }
+
+    function handleContentClick(contentItem) {
+        var lessonBlock = contentItem.closest('.lesson-block');
+        if (!lessonBlock) return;
+        
+        var lessonIndex = lessonBlock.getAttribute('data-lesson-index');
+        var contentId = contentItem.getAttribute('data-content-id');
+        var type = contentItem.getAttribute('data-type');
+        var title = contentItem.getAttribute('data-title');
+        var duration = contentItem.getAttribute('data-duration');
+        var videoUrl = contentItem.getAttribute('data-video-url');
+        var textContent = contentItem.getAttribute('data-text-content');
+        
+        removeTinyMCE('textContent-' + lessonIndex);
+        
+        var ts = document.getElementById('contentType-' + lessonIndex);
+        var ti = document.getElementById('contentTitle-' + lessonIndex);
+        var di = document.getElementById('contentDuration-' + lessonIndex);
+        var ei = document.getElementById('editingContentId-' + lessonIndex);
+        
+        if (ts) ts.value = type;
+        if (ti) ti.value = title;
+        if (di) di.value = duration;
+        if (ei) ei.value = contentId;
+        
+        if (ts) toggleContentFields(ts);
+        
+        setTimeout(function() {
+            var vu = document.getElementById('videoUrl-' + lessonIndex);
+            if (vu && videoUrl) vu.value = videoUrl;
+            
+            if (textContent && (type === 'text' || type === 'assignment')) {
+                var check = setInterval(function() {
+                    var ed = tinymce.get('textContent-' + lessonIndex);
+                    if (ed) {
+                        ed.setContent(textContent);
+                        clearInterval(check);
+                    }
+                }, 100);
+            } else if (textContent) {
+                var tc = document.getElementById('textContent-' + lessonIndex);
+                if (tc) tc.value = textContent;
+            }
+        }, 400);
+        
+        setEditMode(lessonIndex, true);
+        document.querySelectorAll('.content-item').forEach(function(item) { item.classList.remove('editing'); });
+        contentItem.classList.add('editing');
+    }
+
+    function setEditMode(lessonIndex, isEditing) {
+        var ab = document.getElementById('contentActionBtn-' + lessonIndex);
+        var cb = document.getElementById('contentCancelBtn-' + lessonIndex);
+        var st = document.getElementById('sectionTitle-' + lessonIndex);
+        
+        if (isEditing) {
+            if (ab) { 
+                ab.innerHTML = '<i class="fas fa-save"></i> Update'; 
+                ab.className = 'btn-sm btn-sm-update'; 
+                ab.setAttribute('onclick', 'updateContentItem(' + lessonIndex + ')'); 
+                ab.style.display = 'inline-flex'; 
+            }
+            if (cb) cb.style.display = 'inline-flex'; 
+            if (st) st.innerHTML = '<i class="fas fa-edit" style="color:#f59e0b;"></i> Editing Content';
+        } else {
+            if (ab) { 
+                ab.innerHTML = '<i class="fas fa-plus"></i> Add'; 
+                ab.className = 'btn-sm btn-sm-primary'; 
+                ab.setAttribute('onclick', 'addContentToLesson(' + lessonIndex + ')'); 
+                ab.style.display = 'inline-flex'; 
+            }
+            if (cb) cb.style.display = 'none'; 
+            if (st) st.innerHTML = '<i class="fas fa-plus-circle" style="color:#3b82f6;"></i> Add Content to this Lesson';
+            var ei = document.getElementById('editingContentId-' + lessonIndex); 
+            if (ei) ei.value = '';
+            document.querySelectorAll('.content-item').forEach(function(item) { item.classList.remove('editing'); });
+        }
+    }
+
+    function cancelEdit(lessonIndex) { 
+        removeTinyMCE('textContent-' + lessonIndex); 
+        resetAddContentForm(lessonIndex); 
+        setEditMode(lessonIndex, false); 
+    }
+
+    function resetAddContentForm(lessonIndex) {
+        var ti = document.getElementById('contentTitle-' + lessonIndex);
+        var di = document.getElementById('contentDuration-' + lessonIndex);
+        var df = document.getElementById('dynamicFields-' + lessonIndex);
+        var durF = document.getElementById('durationField-' + lessonIndex);
+        
+        if (ti) ti.value = ''; 
+        if (di) di.value = ''; 
+        if (df) { 
+            df.innerHTML = ''; 
+            df.style.display = 'none'; 
+        } 
+        if (durF) durF.style.display = 'none';
+    }
+
+    function updateContentItem(lessonIndex) {
+        saveTinyMCE('textContent-' + lessonIndex);
+        removeTinyMCE('textContent-' + lessonIndex);
+        
+        var ei = document.getElementById('editingContentId-' + lessonIndex);
+        var contentId = ei ? ei.value : '';
+        if (!contentId) { 
+            addContentToLesson(lessonIndex); 
+            return; 
+        }
+        
+        var ts = document.getElementById('contentType-' + lessonIndex);
+        var ti = document.getElementById('contentTitle-' + lessonIndex);
+        var di = document.getElementById('contentDuration-' + lessonIndex);
+        
+        if (!ts || !ti) return;
+        
+        var type = ts.value;
+        var title = ti.value.trim();
+        var duration = di ? di.value : '';
+        
+        if (!title) { 
+            alert('Please enter a content title.'); 
+            ti.focus(); 
+            return; 
+        }
+        
+        var vu = document.getElementById('videoUrl-' + lessonIndex);
+        var tc = document.getElementById('textContent-' + lessonIndex);
+        var df = document.getElementById('dynamicFields-' + lessonIndex);
+        var fi = df ? df.querySelector('input[type="file"]') : null;
+        var contentItem = document.querySelector('.content-item[data-content-id="' + contentId + '"]');
+        
+        if (!contentItem) return;
+        
+        var ed = {};
+        var hf = false;
+        var tcv = tc ? tc.value : '';
+        
+        if (fi && fi.files && fi.files.length > 0) {
+            ed.fileName = fi.files[0].name;
+            hf = true;
+            fi.name = 'lesson_content_file_' + lessonIndex + '_' + contentId;
+        }
+        if (vu && vu.value) ed.videoUrl = vu.value;
+        
+        contentItem.setAttribute('data-type', type);
+        contentItem.setAttribute('data-title', title);
+        contentItem.setAttribute('data-duration', duration);
+        contentItem.setAttribute('data-video-url', ed.videoUrl || '');
+        contentItem.setAttribute('data-text-content', tcv);
+        
+        var mt = typeNames[type] || type;
+        if (duration) mt += ' • ' + duration + ' min';
+        if (ed.fileName) mt += ' • 📎 ' + ed.fileName;
+        if (ed.videoUrl) mt += ' • 🔗 URL added';
+        if (tcv && (type === 'text' || type === 'assignment')) mt += ' • 📝 Rich Text';
+        if (tcv && type === 'code') mt += ' • 💻 Code';
+        
+        var ie = contentItem.querySelector('.content-type-icon');
+        var te = contentItem.querySelector('.content-title');
+        var me = contentItem.querySelector('.content-meta');
+        
+        if (ie) {
+            ie.style.background = contentIconsBg[type] || '#6b7280';
+            var iconEl = ie.querySelector('i');
+            if (iconEl) iconEl.className = 'fas ' + (contentIcons[type] || 'fa-file');
+        }
+        if (te) te.textContent = title;
+        if (me) me.textContent = mt;
+        
+        if (hf && fi) {
+            var ha = contentItem.querySelector('.hidden-file-area');
+            if (ha) {
+                ha.innerHTML = '';
+                ha.appendChild(fi);
+            }
+        }
+        
+        cancelEdit(lessonIndex);
+        updateLessonData();
+    }
+
+    function addContentToLesson(li) {
+        saveTinyMCE('textContent-' + li);
+        removeTinyMCE('textContent-' + li);
+        
+        var ts = document.getElementById('contentType-' + li);
+        var ti = document.getElementById('contentTitle-' + li);
+        var di = document.getElementById('contentDuration-' + li);
+        
+        if (!ts || !ti) return;
+        
+        var type = ts.value;
+        var title = ti.value.trim();
+        var duration = di ? di.value : '';
+        
+        if (!title) { 
+            alert('Please enter a content title.'); 
+            ti.focus(); 
+            return; 
+        }
+        
+        var lb = document.querySelector('.lesson-block[data-lesson-index="' + li + '"]');
+        if (!lb) return;
+        
+        var ci = lb.querySelectorAll('.content-item').length;
+        var vu = document.getElementById('videoUrl-' + li);
+        var tc = document.getElementById('textContent-' + li);
+        var df = document.getElementById('dynamicFields-' + li);
+        var fi = df ? df.querySelector('input[type="file"]') : null;
+        
+        var ed = {};
+        var hf = false;
+        var tcv = tc ? tc.value : '';
+        
+        if (fi && fi.files && fi.files.length > 0) {
+            ed.fileName = fi.files[0].name;
+            hf = true;
+            fi.name = 'lesson_content_file_' + li + '_' + ci;
+        }
+        if (vu && vu.value) ed.videoUrl = vu.value;
+        
+        var cl = lb.querySelector('.content-list');
+        var mt = typeNames[type] || type;
+        if (duration) mt += ' • ' + duration + ' min';
+        if (ed.fileName) mt += ' • 📎 ' + ed.fileName;
+        if (ed.videoUrl) mt += ' • 🔗 URL';
+        if (tcv && (type === 'text' || type === 'assignment')) mt += ' • 📝 Rich Text';
+        
+        var cd = document.createElement('div');
+        cd.className = 'content-item';
+        cd.setAttribute('data-content-id', '');
+        cd.setAttribute('data-type', type);
+        cd.setAttribute('data-title', title);
+        cd.setAttribute('data-duration', duration);
+        cd.setAttribute('data-video-url', ed.videoUrl || '');
+        cd.setAttribute('data-text-content', tcv);
+        cd.setAttribute('onclick', 'handleContentClick(this)');
+        cd.setAttribute('title', 'Click to edit');
+        
+        cd.innerHTML = '<div class="content-type-icon" style="background:' + (contentIconsBg[type] || '#6b7280') + ';color:white;"><i class="fas ' + (contentIcons[type] || 'fa-file') + '"></i></div><div class="content-info"><div class="content-title">' + title + '</div><div class="content-meta">' + mt + '</div></div><div class="hidden-file-area" style="display:none;"></div><button type="button" class="btn-remove-content" onclick="event.stopPropagation(); removeContentItem(this);" title="Remove"><i class="fas fa-times"></i></button>';
+        
+        cl.appendChild(cd);
+        if (hf && fi) cd.querySelector('.hidden-file-area').appendChild(fi);
+        
+        ti.value = ''; 
+        if (di) di.value = ''; 
+        if (vu) vu.value = ''; 
+        if (tc) tc.value = '';
+        if (df) { 
+            df.innerHTML = ''; 
+            df.style.display = 'none'; 
+        }
+        var durF = document.getElementById('durationField-' + li);
+        if (durF) durF.style.display = 'none';
+        
+        updateAllItemCounts(); 
+        updateLessonData();
+    }
+
+    function updateLessonData() {
+        lessonsData = [];
+        document.querySelectorAll('.lesson-block').forEach(function(b, i) {
+            var ti = b.querySelector('.lesson-title-input');
+            var title = ti ? ti.value.trim() : 'Lesson ' + (i + 1);
+            var lid = b.getAttribute('data-lesson-id') || null;
+            var contents = [];
+            
+            b.querySelectorAll('.content-item').forEach(function(item) {
+                var cid = item.getAttribute('data-content-id') || null;
+                var contentData = {
+                    id: cid ? parseInt(cid) : null,
+                    type: item.getAttribute('data-type'),
+                    title: item.getAttribute('data-title'),
+                    duration: item.getAttribute('data-duration') || '',
+                    video_url: item.getAttribute('data-video-url') || '',
+                    text_content: item.getAttribute('data-text-content') || ''
+                };
+                
+                contents.push(contentData);
+            });
+            
+            lessonsData.push({ 
+                id: lid ? parseInt(lid) : null, 
+                title: title, 
+                contents: contents 
+            });
+        });
+        updateLessonsData();
+    }
+    
+    function updateLessonsData() { 
+        var lessonsDataInput = document.getElementById('lessonsData');
+        if (lessonsDataInput) {
+            lessonsDataInput.value = JSON.stringify(lessonsData); 
+        }
+    }
+    
+    function saveAsDraft() { 
+        var s = document.querySelector('[name="status"]'); 
+        if (s) s.value = 'draft'; 
+        removeAllTinyMCE(); 
+        updateLessonData(); 
+        updateQuizData();
+        document.getElementById('courseForm').submit(); 
+    }
+
+    // ============================================
+    // Initialization - Safe Version
+    // ============================================
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if course.is_free %}
+        toggleFreePrice();
+        {% endif %}
+        
+        updateAllItemCounts();
+        updateQuizData();
+        updateLessonsData();
+        
+        // Add quiz indicators safely
+        document.querySelectorAll('.lesson-block').forEach(function(b, i) {
+            if (quizzesData[i] && quizzesData[i].questions && quizzesData[i].questions.length > 0) {
+                var itemCount = b.querySelector('.item-count');
+                if (itemCount && itemCount.parentNode) {
+                    var existingIndicator = b.querySelector('.quiz-indicator');
+                    if (!existingIndicator) {
+                        var indicator = document.createElement('span');
+                        indicator.className = 'quiz-indicator';
+                        indicator.style.cssText = 'font-size:0.7rem;color:#8b5cf6;background:#f3e8ff;padding:2px 8px;border-radius:10px;white-space:nowrap;';
+                        indicator.innerHTML = '<i class="fas fa-question-circle"></i> Quiz';
+                        itemCount.parentNode.insertBefore(indicator, itemCount);
+                    }
+                }
+            }
+        });
+    });
+
+    // Form submission handler
+    document.getElementById('courseForm').addEventListener('submit', function(e) {
+        if (tinymce.get('courseDescription')) { 
+            tinymce.get('courseDescription').save(); 
+        }
+        removeAllTinyMCE(); 
+        updateLessonData();
+        updateQuizData();
+        
+        document.querySelectorAll('.lesson-block').forEach(function(b, li) { 
+            b.querySelectorAll('.content-item').forEach(function(item, ci) { 
+                var fi = item.querySelector('input[type="file"]'); 
+                if (fi && fi.files && fi.files.length > 0) {
+                    fi.name = 'lesson_content_file_' + li + '_' + ci; 
+                } else if (fi) {
+                    fi.remove(); 
+                }
+            }); 
+        });
+        
+        var ti = this.querySelector('[name="title"]'); 
+        if (!ti.value.trim()) { 
+            e.preventDefault(); 
+            ti.classList.add('error'); 
+            ti.focus(); 
+        }
+    });
+</script>
+{% endblock %}

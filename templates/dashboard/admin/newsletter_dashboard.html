@@ -1,0 +1,289 @@
+{% extends "dashboard/admin/admin_base.html" %}
+{% load static %}
+
+{% block title %}Newsletter Management{% endblock %}
+{% block page_title %}Newsletter Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .stat-card {
+        background: var(--bg-card);
+        border-radius: 14px;
+        padding: 24px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        border: 1px solid var(--border-color);
+    }
+    
+    .stat-card .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        margin-bottom: 15px;
+    }
+    
+    .stat-card .stat-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 4px;
+    }
+    
+    .stat-card .stat-label {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+    
+    .content-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+    }
+    
+    .card {
+        background: var(--bg-card);
+        border-radius: 14px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+    }
+    
+    .card-header {
+        padding: 18px 24px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .card-header h3 {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--text-dark);
+    }
+    
+    .card-body {
+        padding: 20px 24px;
+    }
+    
+    .subscriber-list {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .subscriber-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 0.85rem;
+    }
+    
+    .subscriber-item:last-child {
+        border-bottom: none;
+    }
+    
+    .subscriber-email {
+        color: var(--text-dark);
+        font-weight: 500;
+    }
+    
+    .subscriber-date {
+        color: var(--text-muted);
+        font-size: 0.75rem;
+    }
+    
+    .btn-delete-sub {
+        padding: 4px 10px;
+        background: #fee2e2;
+        color: #991b1b;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        cursor: pointer;
+    }
+    
+    .btn-delete-sub:hover {
+        background: #fecaca;
+    }
+    
+    .campaign-list {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .campaign-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 0;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    
+    .campaign-info h4 {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 4px;
+    }
+    
+    .campaign-meta {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+    
+    .btn-compose {
+        padding: 10px 20px;
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .btn-compose:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 16px rgba(59,130,246,0.3);
+        color: white;
+    }
+    
+    @media (max-width: 768px) {
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon" style="background: #dbeafe; color: #2563eb;">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-value">{{ subscribers_count }}</div>
+        <div class="stat-label">Active Subscribers</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background: #d1fae5; color: #059669;">
+            <i class="fas fa-user-plus"></i>
+        </div>
+        <div class="stat-value">{{ total_subscribers }}</div>
+        <div class="stat-label">Total Subscribers</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background: #fef3c7; color: #d97706;">
+            <i class="fas fa-user-minus"></i>
+        </div>
+        <div class="stat-value">{{ unsubscribed_count }}</div>
+        <div class="stat-label">Unsubscribed</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background: #ede9fe; color: #7c3aed;">
+            <i class="fas fa-paper-plane"></i>
+        </div>
+        <div class="stat-value">{{ campaigns.count }}</div>
+        <div class="stat-label">Campaigns</div>
+    </div>
+</div>
+
+<div class="content-grid">
+    <!-- Subscribers List -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-list" style="color: #3b82f6; margin-right: 6px;"></i> Subscribers</h3>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">{{ subscribers_count }} active</span>
+        </div>
+        <div class="card-body">
+            {% if subscribers %}
+            <div class="subscriber-list">
+                {% for sub in subscribers|slice:":20" %}
+                <div class="subscriber-item">
+                    <div>
+                        <div class="subscriber-email">{{ sub.email }}</div>
+                        <div class="subscriber-date">Subscribed {{ sub.subscribed_at|date:"M d, Y" }}</div>
+                    </div>
+                    <form method="POST" action="{% url 'dashboard:delete_subscriber' sub.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-delete-sub" onclick="return confirm('Delete this subscriber?')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+            {% if subscribers.count > 20 %}
+            <div style="text-align: center; margin-top: 10px; color: var(--text-muted); font-size: 0.8rem;">
+                Showing 20 of {{ subscribers_count }} subscribers
+            </div>
+            {% endif %}
+            {% else %}
+            <div style="text-align: center; padding: 30px; color: var(--text-muted);">
+                <i class="fas fa-users" style="font-size: 2rem; opacity: 0.3; margin-bottom: 10px;"></i>
+                <p>No subscribers yet</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Campaigns & Compose -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-paper-plane" style="color: #10b981; margin-right: 6px;"></i> Campaigns</h3>
+            <a href="{% url 'dashboard:newsletter_compose' %}" class="btn-compose">
+                <i class="fas fa-plus"></i> Compose
+            </a>
+        </div>
+        <div class="card-body">
+            {% if campaigns %}
+            <div class="campaign-list">
+                {% for campaign in campaigns %}
+                <div class="campaign-item">
+                    <div class="campaign-info">
+                        <h4>{{ campaign.subject }}</h4>
+                        <div class="campaign-meta">
+                            Sent to {{ campaign.sent_count }}/{{ campaign.recipients_count }} • 
+                            {{ campaign.sent_at|date:"M d, Y"|default:"Not sent" }}
+                        </div>
+                    </div>
+                    <span class="status-badge" style="padding: 4px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: 600;
+                        {% if campaign.status == 'sent' %}background: #d1fae5; color: #065f46;
+                        {% elif campaign.status == 'draft' %}background: #f3f4f6; color: #374151;
+                        {% elif campaign.status == 'sending' %}background: #dbeafe; color: #1e40af;
+                        {% else %}background: #fee2e2; color: #991b1b;{% endif %}">
+                        {{ campaign.get_status_display }}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div style="text-align: center; padding: 30px; color: var(--text-muted);">
+                <i class="fas fa-envelope-open" style="font-size: 2rem; opacity: 0.3; margin-bottom: 10px;"></i>
+                <p>No campaigns yet</p>
+                <a href="{% url 'dashboard:newsletter_compose' %}" class="btn-compose" style="margin-top: 10px;">
+                    <i class="fas fa-plus"></i> Create First Campaign
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,346 @@
+{% extends "dashboard/admin/admin_base.html" %}
+{% load static %}
+
+{% block title %}Manage Final Exam - {{ course.title }}{% endblock %}
+
+{% block page_title %}Manage Final Exam{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto;">
+    
+    <!-- Breadcrumb -->
+    <div style="margin-bottom: 20px;">
+        <a href="{% url 'dashboard:manage_courses' %}" style="color: #666; text-decoration: none;">← Back to Courses</a>
+        <span style="margin: 0 8px; color: #999;">/</span>
+        <a href="{% url 'dashboard:edit_course' course_id=course.id %}" style="color: #666; text-decoration: none;">{{ course.title }}</a>
+        <span style="margin: 0 8px; color: #999;">/</span>
+        <span style="color: #333; font-weight: 600;">Final Exam</span>
+    </div>
+    
+    {% if messages %}
+    <div style="margin-bottom: 20px;">
+        {% for message in messages %}
+        <div style="padding: 12px 16px; border-radius: 8px; background: {% if message.tags == 'success' %}#d1fae5; color: #065f46;{% elif message.tags == 'error' %}#fee2e2; color: #991b1b;{% else %}#dbeafe; color: #1e40af;{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- Exam Settings -->
+    <div style="background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+        <h3 style="margin-bottom: 16px; color: #0c1e2e;">
+            <i class="fas fa-cog" style="color: #ad7a49;"></i> Exam Settings
+            <span style="float: right; font-size: 12px; padding: 4px 12px; border-radius: 20px; {% if final_exam.is_active %}background: #d1fae5; color: #065f46;{% else %}background: #fee2e2; color: #991b1b;{% endif %}">
+                {{ final_exam.is_active|yesno:"Active,Inactive" }}
+            </span>
+        </h3>
+        
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_settings">
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div>
+                    <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Exam Title</label>
+                    <input type="text" name="title" value="{{ final_exam.title }}" style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px;">
+                </div>
+                
+                <div>
+                    <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Passing Score (%)</label>
+                    <input type="number" name="passing_score" value="{{ final_exam.passing_score }}" min="0" max="100" style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px;">
+                </div>
+                
+                <div>
+                    <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Time Limit (minutes)</label>
+                    <input type="number" name="time_limit" value="{{ final_exam.time_limit }}" min="1" style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px;">
+                </div>
+                
+                <div>
+                    <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Max Attempts</label>
+                    <input type="number" name="max_attempts" value="{{ final_exam.max_attempts }}" min="1" style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px;">
+                </div>
+                
+                <div>
+                    <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Questions Per Attempt (optional)</label>
+                    <input type="number" name="questions_per_attempt" value="{{ final_exam.questions_per_attempt|default:'' }}" min="1" placeholder="All questions" style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px;">
+                </div>
+            </div>
+            
+            <div style="margin-top: 16px;">
+                <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Description</label>
+                <textarea name="description" rows="3" style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px;">{{ final_exam.description|default:'' }}</textarea>
+            </div>
+            
+            <div style="margin-top: 16px; display: flex; gap: 20px; flex-wrap: wrap;">
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 13px;">
+                    <input type="checkbox" name="randomize_questions" {% if final_exam.randomize_questions %}checked{% endif %}>
+                    Randomize Questions
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 13px;">
+                    <input type="checkbox" name="randomize_answers" {% if final_exam.randomize_answers %}checked{% endif %}>
+                    Randomize Answers
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 13px;">
+                    <input type="checkbox" name="is_active" {% if final_exam.is_active %}checked{% endif %}>
+                    Active
+                </label>
+            </div>
+            
+            <div style="margin-top: 16px; display: flex; gap: 10px;">
+                <button type="submit" style="background: #ad7a49; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                    <i class="fas fa-save"></i> Save Settings
+                </button>
+            </div>
+        </form>
+        
+        <!-- Separate Delete Exam Form -->
+        <form method="POST" onsubmit="return confirm('Are you sure you want to delete the entire final exam? This cannot be undone.');" style="margin-top: 10px;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete_exam">
+            <button type="submit" style="background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                <i class="fas fa-trash"></i> Delete Exam
+            </button>
+        </form>
+    </div>
+    
+    <!-- Statistics -->
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px;">
+        <div style="background: white; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+            <div style="font-size: 28px; font-weight: 700; color: #0c1e2e;">{{ questions.count }}</div>
+            <div style="font-size: 12px; color: #666;">Total Questions</div>
+        </div>
+        <div style="background: white; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+            <div style="font-size: 28px; font-weight: 700; color: #0c1e2e;">{{ total_attempts }}</div>
+            <div style="font-size: 12px; color: #666;">Total Attempts</div>
+        </div>
+        <div style="background: white; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+            <div style="font-size: 28px; font-weight: 700; color: #10b981;">{{ pass_rate }}%</div>
+            <div style="font-size: 12px; color: #666;">Pass Rate</div>
+        </div>
+    </div>
+    
+    <!-- Questions List -->
+    <div style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+        <h3 style="margin-bottom: 16px; color: #0c1e2e;">
+            <i class="fas fa-list" style="color: #ad7a49;"></i> Questions ({{ questions.count }})
+        </h3>
+        
+        {% for question in questions %}
+        <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+                <p style="font-weight: 600; margin-bottom: 8px;">
+                    Q{{ forloop.counter }}. {{ question.question_text }}
+                    <span style="font-size: 11px; color: #666;">({{ question.points }} pts)</span>
+                </p>
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" onclick="toggleEditForm('editQuestion{{ question.id }}')" style="background: #f3e8ff; color: #8b5cf6; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <form method="POST" onsubmit="return confirm('Delete this question?');" style="display: inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete_question">
+                        <input type="hidden" name="question_id" value="{{ question.id }}">
+                        <button type="submit" style="background: #fee2e2; color: #ef4444; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Answers Display -->
+            <div style="margin-left: 20px;">
+                {% for answer in question.answers.all %}
+                <p style="font-size: 13px; {% if answer.is_correct %}color: #10b981; font-weight: 600;{% endif %}">
+                    {% if answer.is_correct %}✓{% else %}○{% endif %} {{ answer.answer_text }}
+                </p>
+                {% endfor %}
+                
+                <div style="margin-top: 8px;">
+                    <span style="font-size: 11px; padding: 2px 10px; border-radius: 20px; {% if question.is_active %}background: #d1fae5; color: #065f46;{% else %}background: #fee2e2; color: #991b1b;{% endif %}">
+                        {{ question.is_active|yesno:"Active,Inactive" }}
+                    </span>
+                    <span style="font-size: 11px; padding: 2px 10px; border-radius: 20px; background: #dbeafe; color: #1e40af; margin-left: 8px;">
+                        {{ question.get_question_type_display }}
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Edit Question Form (hidden by default) -->
+            <div id="editQuestion{{ question.id }}" style="display: none; margin-top: 16px; border-top: 1px solid #e5e7eb; padding-top: 16px;">
+                <form method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="edit_question">
+                    <input type="hidden" name="question_id" value="{{ question.id }}">
+                    
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-bottom: 12px;">
+                        <div>
+                            <label style="font-size: 11px; font-weight: 600;">Question Text</label>
+                            <textarea name="question_text" rows="2" style="width: 100%; padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px;">{{ question.question_text }}</textarea>
+                        </div>
+                        <div>
+                            <label style="font-size: 11px; font-weight: 600;">Question Type</label>
+                            <select name="question_type" style="width: 100%; padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px;">
+                                <option value="multiple_choice" {% if question.question_type == 'multiple_choice' %}selected{% endif %}>Multiple Choice</option>
+                                <option value="true_false" {% if question.question_type == 'true_false' %}selected{% endif %}>True/False</option>
+                                <option value="short_answer" {% if question.question_type == 'short_answer' %}selected{% endif %}>Short Answer</option>
+                            </select>
+                            
+                            <label style="font-size: 11px; font-weight: 600; display: block; margin-top: 8px;">Points</label>
+                            <input type="number" name="points" value="{{ question.points }}" min="1" style="width: 100%; padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px;">
+                        </div>
+                    </div>
+                    
+                    {% if question.question_type != 'short_answer' %}
+                    <div style="margin-bottom: 12px;">
+                        <label style="font-size: 11px; font-weight: 600; display: block; margin-bottom: 8px;">Answers (select the correct one)</label>
+                        {% for answer in question.answers.all %}
+                        <div style="display: flex; gap: 8px; margin-bottom: 6px;">
+                            <input type="radio" name="correct_answer" value="{{ forloop.counter0 }}" {% if answer.is_correct %}checked{% endif %}>
+                            <input type="text" name="answer_text[]" value="{{ answer.answer_text }}" style="flex: 1; padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px;">
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <div style="margin-bottom: 12px;">
+                        <label style="font-size: 11px; font-weight: 600; display: block; margin-bottom: 4px;">Explanation (optional)</label>
+                        <textarea name="explanation" rows="2" style="width: 100%; padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px;">{{ question.explanation|default:'' }}</textarea>
+                    </div>
+                    
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 12px;">
+                        <input type="checkbox" name="is_active" {% if question.is_active %}checked{% endif %}>
+                        Active
+                    </label>
+                    
+                    <div style="display: flex; gap: 8px;">
+                        <button type="submit" style="background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Save</button>
+                        <button type="button" onclick="toggleEditForm('editQuestion{{ question.id }}')" style="background: #f3f4f6; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% empty %}
+        <p style="color: #666;">No questions added yet. Add your first question below.</p>
+        {% endfor %}
+    </div>
+    
+    <!-- Add Question Form -->
+    <div style="background: white; border-radius: 12px; padding: 24px; margin-top: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+        <h3 style="margin-bottom: 16px; color: #0c1e2e;">
+            <i class="fas fa-plus-circle" style="color: #ad7a49;"></i> Add Question
+        </h3>
+        
+        <form method="POST" id="addQuestionForm">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_question">
+            
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-bottom: 12px;">
+                <div>
+                    <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Question Text</label>
+                    <textarea name="question_text" rows="3" required style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px;" placeholder="Enter question..."></textarea>
+                </div>
+                <div>
+                    <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Question Type</label>
+                    <select name="question_type" id="questionType" onchange="toggleAnswerFields()" style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px;">
+                        <option value="multiple_choice">Multiple Choice</option>
+                        <option value="true_false">True/False</option>
+                        <option value="short_answer">Short Answer</option>
+                    </select>
+                    
+                    <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px; margin-top: 12px;">Points</label>
+                    <input type="number" name="points" value="1" min="1" style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px;">
+                </div>
+            </div>
+            
+            <div id="answerFields">
+                <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 8px;">Answers (check the correct one)</label>
+                
+                <div id="answersContainer">
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                        <input type="radio" name="is_correct" value="0" checked>
+                        <input type="text" name="answer_text[]" placeholder="Answer option A" required style="flex: 1; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px;">
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                        <input type="radio" name="is_correct" value="1">
+                        <input type="text" name="answer_text[]" placeholder="Answer option B" required style="flex: 1; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px;">
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                        <input type="radio" name="is_correct" value="2">
+                        <input type="text" name="answer_text[]" placeholder="Answer option C (optional)" style="flex: 1; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px;">
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                        <input type="radio" name="is_correct" value="3">
+                        <input type="text" name="answer_text[]" placeholder="Answer option D (optional)" style="flex: 1; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px;">
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 12px;">
+                <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px;">Explanation (optional)</label>
+                <textarea name="explanation" rows="2" style="width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px;" placeholder="Explain why the correct answer is right..."></textarea>
+            </div>
+            
+            <button type="submit" style="background: #ad7a49; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; margin-top: 12px;">
+                <i class="fas fa-plus"></i> Add Question
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+function toggleAnswerFields() {
+    var type = document.getElementById('questionType').value;
+    var answerFields = document.getElementById('answerFields');
+    
+    if (type === 'short_answer') {
+        answerFields.style.display = 'none';
+    } else {
+        answerFields.style.display = 'block';
+        
+        if (type === 'true_false') {
+            var answersContainer = document.getElementById('answersContainer');
+            answersContainer.innerHTML = `
+                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                    <input type="radio" name="is_correct" value="0" checked>
+                    <input type="text" name="answer_text[]" value="True" readonly style="flex: 1; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px; background: #f8fafc;">
+                </div>
+                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                    <input type="radio" name="is_correct" value="1">
+                    <input type="text" name="answer_text[]" value="False" readonly style="flex: 1; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px; background: #f8fafc;">
+                </div>
+            `;
+        } else {
+            var answersContainer = document.getElementById('answersContainer');
+            answersContainer.innerHTML = `
+                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                    <input type="radio" name="is_correct" value="0" checked>
+                    <input type="text" name="answer_text[]" placeholder="Answer option A" required style="flex: 1; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px;">
+                </div>
+                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                    <input type="radio" name="is_correct" value="1">
+                    <input type="text" name="answer_text[]" placeholder="Answer option B" required style="flex: 1; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px;">
+                </div>
+                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                    <input type="radio" name="is_correct" value="2">
+                    <input type="text" name="answer_text[]" placeholder="Answer option C (optional)" style="flex: 1; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px;">
+                </div>
+                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                    <input type="radio" name="is_correct" value="3">
+                    <input type="text" name="answer_text[]" placeholder="Answer option D (optional)" style="flex: 1; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px;">
+                </div>
+            `;
+        }
+    }
+}
+
+function toggleEditForm(formId) {
+    var form = document.getElementById(formId);
+    if (form.style.display === 'none' || form.style.display === '') {
+        form.style.display = 'block';
+    } else {
+        form.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

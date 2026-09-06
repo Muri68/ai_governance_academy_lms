@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+    {{ content|safe }}
+    <div style="text-align: center; padding: 20px; font-size: 11px; color: #94a3b8;">
+        <p>You're receiving this email because you subscribed to our newsletter.</p>
+        <p><a href="{{ unsubscribe_url }}" style="color: #3b82f6;">Unsubscribe</a> | 
+        © {% now "Y" %} {{ site_name }}</p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,885 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ exam.title }} - {{ course.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --navy: #0c1e2e; --gold: #ad7a49; --text-dark: #1a1a2e;
+        --text-muted: #8a8a8a; --border-color: #e5e7eb;
+    }
+    
+    .exam-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        padding-top: 80px; /* Space for sticky timer */
+    }
+    
+    /* =====================================================
+       STICKY TIMER BAR - Always visible at top
+    ====================================================== */
+    .sticky-timer-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: var(--navy);
+        color: white;
+        z-index: 9999;
+        padding: 12px 20px;
+        display: none;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .sticky-timer-bar.show {
+        display: flex;
+    }
+    
+    .sticky-timer-bar .exam-name {
+        font-size: 14px;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 200px;
+    }
+    
+    .sticky-timer-bar .timer-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(255,255,255,0.1);
+        padding: 6px 14px;
+        border-radius: 20px;
+    }
+    
+    .sticky-timer-bar .timer-icon {
+        color: var(--gold);
+        font-size: 16px;
+    }
+    
+    .sticky-timer-bar .timer-display {
+        font-size: 20px;
+        font-weight: 700;
+        font-family: 'Courier New', monospace;
+        min-width: 60px;
+        text-align: center;
+    }
+    
+    .sticky-timer-bar .timer-display.warning {
+        color: #f59e0b;
+        animation: pulse 1s infinite;
+    }
+    
+    .sticky-timer-bar .timer-display.danger {
+        color: #ef4444;
+        animation: pulse 0.5s infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    
+    .exam-header {
+        background: var(--navy);
+        color: white;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+    }
+    
+    .exam-title {
+        font-size: 20px;
+        font-weight: 700;
+        margin: 0;
+    }
+    
+    .question-card {
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 16px;
+    }
+    
+    .question-text {
+        font-weight: 600;
+        margin-bottom: 12px;
+        color: var(--text-dark);
+        font-size: 15px;
+    }
+    
+    .answer-label {
+        display: block;
+        padding: 12px 14px;
+        margin-bottom: 8px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: 0.2s;
+        font-size: 14px;
+    }
+    
+    .answer-label:hover {
+        border-color: var(--gold);
+        background: rgba(173,122,73,0.05);
+    }
+    
+    .answer-label input[type="radio"] {
+        margin-right: 10px;
+        transform: scale(1.2);
+    }
+    
+    .submit-btn {
+        background: var(--navy);
+        color: white;
+        border: none;
+        padding: 14px 28px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+        margin-top: 20px;
+        transition: 0.3s;
+    }
+    
+    .submit-btn:hover {
+        background: var(--gold);
+    }
+    
+    .exam-info {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+    
+    .info-item {
+        background: #f8fafc;
+        padding: 10px 16px;
+        border-radius: 8px;
+        font-size: 13px;
+        color: var(--text-muted);
+        flex: 1;
+        min-width: 100px;
+        text-align: center;
+    }
+    
+    .info-item strong {
+        color: var(--text-dark);
+        display: block;
+        font-size: 18px;
+        margin-bottom: 4px;
+    }
+    
+    .result-container {
+        text-align: center;
+        padding: 40px;
+    }
+    
+    .result-icon {
+        font-size: 60px;
+        margin-bottom: 16px;
+    }
+    
+    .result-score {
+        font-size: 36px;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+    
+    /* =====================================================
+       RULES MODAL
+    ====================================================== */
+    .rules-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.7);
+        z-index: 99999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+    
+    .rules-modal {
+        background: white;
+        border-radius: 16px;
+        padding: 30px;
+        max-width: 650px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    
+    .rules-title {
+        text-align: center;
+        margin-bottom: 20px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #f1f5f9;
+    }
+    
+    .rules-title i {
+        font-size: 40px;
+        color: var(--gold);
+    }
+    
+    .rules-title h2 {
+        margin: 10px 0 0;
+        color: var(--navy);
+        font-size: 22px;
+    }
+    
+    .rules-section {
+        margin-bottom: 20px;
+    }
+    
+    .rules-section h4 {
+        color: var(--navy);
+        margin-bottom: 10px;
+        font-size: 15px;
+    }
+    
+    .rules-section ul {
+        padding-left: 20px;
+        margin: 0;
+    }
+    
+    .rules-section li {
+        font-size: 13px;
+        color: #555;
+        line-height: 1.8;
+    }
+    
+    .agreement-box {
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .agreement-box label {
+        font-size: 13px;
+        color: #555;
+        line-height: 1.6;
+        cursor: pointer;
+    }
+    
+    .start-exam-btn {
+        background: var(--navy);
+        color: white;
+        border: none;
+        padding: 14px 28px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+        transition: 0.3s;
+    }
+    
+    .start-exam-btn:hover:not(:disabled) {
+        background: var(--gold);
+    }
+    
+    .start-exam-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+    }
+    
+    .exam-content {
+        display: none;
+    }
+    
+    .exam-content.show {
+        display: block;
+    }
+    
+    /* Leave Warning Modal */
+    .leave-warning-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.7);
+        z-index: 99998;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+    
+    .leave-warning-modal {
+        background: white;
+        border-radius: 16px;
+        padding: 30px;
+        max-width: 450px;
+        width: 100%;
+        text-align: center;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    
+    .leave-warning-icon {
+        font-size: 50px;
+        color: #f59e0b;
+        margin-bottom: 15px;
+    }
+    
+    .leave-warning-modal h3 {
+        color: var(--navy);
+        margin-bottom: 10px;
+        font-size: 20px;
+    }
+    
+    .leave-warning-modal p {
+        color: #666;
+        font-size: 14px;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+    
+    .leave-warning-buttons {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+    }
+    
+    .btn-stay {
+        background: #10b981;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+    }
+    
+    .btn-leave {
+        background: #ef4444;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- =====================================================
+     STICKY TIMER BAR (Hidden until exam starts)
+====================================================== -->
+<div class="sticky-timer-bar" id="stickyTimerBar">
+    <div class="exam-name">{{ exam.title }}</div>
+    <div class="timer-wrapper">
+        <i class="fas fa-clock timer-icon"></i>
+        <span class="timer-display" id="stickyTimerDisplay">--:--</span>
+    </div>
+</div>
+
+<!-- =====================================================
+     RULES MODAL
+====================================================== -->
+<div class="rules-overlay" id="rulesOverlay">
+    <div class="rules-modal">
+        <div class="rules-title">
+            <i class="fas fa-graduation-cap"></i>
+            <h2>📋 Final Exam Rules & Instructions</h2>
+            <p style="color: #666; font-size: 13px; margin-top: 5px;">Please read carefully before starting</p>
+        </div>
+        
+        <div class="rules-section">
+            <h4>📌 Exam Details</h4>
+            <ul>
+                <li><strong>Course:</strong> {{ course.title }}</li>
+                <li><strong>Total Questions:</strong> {{ questions|length }}</li>
+                <li><strong>Time Limit:</strong> {{ exam.time_limit }} minutes</li>
+                <li><strong>Passing Score:</strong> {{ exam.passing_score }}%</li>
+                {% if remaining_attempts %}
+                <li><strong>Attempts Remaining:</strong> {{ remaining_attempts }}</li>
+                {% endif %}
+            </ul>
+        </div>
+        
+        <div class="rules-section">
+            <h4 style="color: #10b981;">✅ DO's</h4>
+            <ul>
+                <li>Read each question carefully before answering</li>
+                <li>Manage your time wisely - the timer cannot be paused</li>
+                <li>Ensure you have a stable internet connection</li>
+                <li>Submit your exam before the timer reaches zero</li>
+            </ul>
+        </div>
+        
+        <div class="rules-section">
+            <h4 style="color: #ef4444;">❌ DON'Ts</h4>
+            <ul>
+                <li><strong>Do NOT refresh the page</strong> - Your exam will be submitted automatically</li>
+                <li><strong>Do NOT leave this page</strong> - Your exam will be submitted automatically</li>
+                <li>Do not open new tabs or switch applications</li>
+                <li>Do not use external resources or assistance</li>
+            </ul>
+        </div>
+        
+        <div class="agreement-box">
+            <label>
+                <input type="checkbox" id="agreeCheckbox" onchange="toggleStartButton()" style="margin-right: 8px; transform: scale(1.2);">
+                I have read and understood the exam rules. I agree to complete this exam independently. I understand that <strong>refreshing or leaving the page will automatically submit my exam</strong>.
+            </label>
+        </div>
+        
+        <button class="start-exam-btn" id="startExamBtn" disabled onclick="startExam()">
+            <i class="fas fa-play-circle"></i> Start Exam
+        </button>
+    </div>
+</div>
+
+<!-- =====================================================
+     LEAVE WARNING MODAL
+====================================================== -->
+<div class="leave-warning-overlay" id="leaveWarningOverlay">
+    <div class="leave-warning-modal">
+        <div class="leave-warning-icon">⚠️</div>
+        <h3>Warning: Exam in Progress</h3>
+        <p>
+            You are about to leave the exam page.<br>
+            <strong>This will result in automatic submission of your exam.</strong>
+        </p>
+        <div class="leave-warning-buttons">
+            <button class="btn-stay" onclick="stayOnPage()">
+                <i class="fas fa-check"></i> Stay on Page
+            </button>
+            <button class="btn-leave" onclick="leaveAndSubmit()">
+                <i class="fas fa-sign-out-alt"></i> Leave & Submit
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- =====================================================
+     BOOTSTRAP CONFIRM SUBMIT MODAL (Replaces confirm())
+====================================================== -->
+<div class="modal fade" id="confirmSubmitModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+            <div class="modal-body text-center py-4">
+                <div style="font-size: 40px; color: #f59e0b; margin-bottom: 15px;">📝</div>
+                <h5 style="color: #0c1e2e; font-weight: 600; margin-bottom: 10px;">Submit Final Exam</h5>
+                <p style="font-size: 14px; color: #555; margin-bottom: 5px;">Are you sure you want to submit your final exam?</p>
+                <p style="font-size: 13px; color: #999;">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer justify-content-center" style="border-top: 1px solid #f1f5f9;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="padding: 10px 24px; font-size: 14px; border-radius: 6px;">
+                    Cancel
+                </button>
+                <button type="button" class="btn btn-primary" onclick="confirmSubmitExam()" style="background: #0c1e2e; border-color: #0c1e2e; padding: 10px 24px; font-size: 14px; border-radius: 6px;">
+                    <i class="fas fa-check-circle"></i> Submit Exam
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- =====================================================
+     BOOTSTRAP ALERT MODAL (Replaces alert())
+====================================================== -->
+<div class="modal fade" id="bootstrapAlertModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content" style="border-radius: 12px; border: none; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+            <div class="modal-body text-center py-4">
+                <div id="alertIcon" style="font-size: 40px; margin-bottom: 15px;">⚠️</div>
+                <p id="alertMessage" style="font-size: 14px; color: #333; line-height: 1.6; margin: 0;"></p>
+            </div>
+            <div class="modal-footer justify-content-center" style="border-top: 1px solid #f1f5f9;">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal" style="background: #0c1e2e; border-color: #0c1e2e; padding: 8px 24px; font-size: 13px; border-radius: 6px;">
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- =====================================================
+     EXAM CONTENT
+====================================================== -->
+<div class="exam-container exam-content" id="examContent">
+    <div class="exam-header">
+        <div>
+            <h1 class="exam-title">{{ exam.title }}</h1>
+            <p style="margin: 4px 0 0; opacity: 0.8; font-size: 14px;">{{ course.title }}</p>
+        </div>
+    </div>
+    
+    <div class="exam-info">
+        <div class="info-item">
+            <strong>{{ questions|length }}</strong>
+            Questions
+        </div>
+        <div class="info-item">
+            <strong>{{ exam.passing_score }}%</strong>
+            Passing Score
+        </div>
+        <div class="info-item">
+            <strong>{{ exam.time_limit }} min</strong>
+            Time Limit
+        </div>
+    </div>
+    
+    <form id="examForm" onsubmit="submitExam(event)">
+        {% csrf_token %}
+        {% for question in questions %}
+        <div class="question-card">
+            <p class="question-text">
+                <span style="background: var(--navy); color: white; padding: 2px 8px; border-radius: 4px; margin-right: 8px;">Q{{ forloop.counter }}</span>
+                {{ question.question_text }}
+                <span style="float: right; font-size: 12px; color: var(--text-muted);">{{ question.points }} pts</span>
+            </p>
+            
+            {% for answer in question.randomized_answers %}
+            <label class="answer-label">
+                <input type="radio" name="question_{{ question.id }}" value="{{ answer.id }}" style="margin-right: 10px;">
+                {{ answer.answer_text }}
+            </label>
+            {% endfor %}
+        </div>
+        {% endfor %}
+        
+        <button type="submit" class="submit-btn">
+            <i class="fas fa-check-circle"></i> Submit Final Exam
+        </button>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var timeLimitSeconds = {{ time_limit_seconds }};
+var examForm = document.getElementById('examForm');
+var examSubmitted = false;
+var examStarted = false;
+var startTime = null;
+var timeTakenSeconds = 0;
+var timerInterval = null;
+var leaveWarningShown = false;
+
+// =====================================================
+// MODAL HELPER FUNCTIONS
+// =====================================================
+
+function showAlert(message, icon) {
+    document.getElementById('alertMessage').textContent = message;
+    document.getElementById('alertIcon').innerHTML = icon || '⚠️';
+    var alertModal = new bootstrap.Modal(document.getElementById('bootstrapAlertModal'));
+    alertModal.show();
+}
+
+// =====================================================
+// RULES MODAL FUNCTIONS
+// =====================================================
+
+function toggleStartButton() {
+    var checkbox = document.getElementById('agreeCheckbox');
+    var startBtn = document.getElementById('startExamBtn');
+    startBtn.disabled = !checkbox.checked;
+}
+
+function startExam() {
+    examStarted = true;
+    startTime = new Date().getTime();
+    
+    // Save exam state to localStorage for tracking
+    localStorage.setItem('examInProgress', 'true');
+    localStorage.setItem('examStartTime', startTime.toString());
+    localStorage.setItem('examSubmitted', 'false');
+    
+    // Hide rules modal
+    document.getElementById('rulesOverlay').style.display = 'none';
+    
+    // Show exam content
+    document.getElementById('examContent').classList.add('show');
+    
+    // Show sticky timer
+    document.getElementById('stickyTimerBar').classList.add('show');
+    
+    // Start timer
+    updateTimer();
+    timerInterval = setInterval(updateTimer, 1000);
+}
+
+// =====================================================
+// TIMER FUNCTIONS
+// =====================================================
+
+function updateTimer() {
+    if (examSubmitted || !examStarted) return;
+    
+    var currentTime = new Date().getTime();
+    var elapsedSeconds = Math.floor((currentTime - startTime) / 1000);
+    var remainingSeconds = timeLimitSeconds - elapsedSeconds;
+    timeTakenSeconds = elapsedSeconds;
+    
+    var stickyDisplay = document.getElementById('stickyTimerDisplay');
+    
+    if (remainingSeconds <= 0) {
+        stickyDisplay.textContent = '00:00';
+        stickyDisplay.classList.add('danger');
+        autoSubmitExam();
+        return;
+    }
+    
+    var minutes = Math.floor(remainingSeconds / 60);
+    var seconds = remainingSeconds % 60;
+    var timeString = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+    
+    stickyDisplay.textContent = timeString;
+    
+    // Warning states
+    if (remainingSeconds <= 60) {
+        stickyDisplay.classList.add('danger');
+        stickyDisplay.classList.remove('warning');
+    } else if (remainingSeconds <= 300) {
+        stickyDisplay.classList.add('warning');
+        stickyDisplay.classList.remove('danger');
+    }
+}
+
+function autoSubmitExam() {
+    if (examSubmitted) return;
+    examSubmitted = true;
+    clearInterval(timerInterval);
+    localStorage.setItem('examSubmitted', 'true');
+    showAlert('⏰ Time is up! Your exam has been submitted automatically.', '⏰');
+    submitExamForm(true);
+}
+
+// =====================================================
+// LEAVE WARNING FUNCTIONS
+// =====================================================
+
+function showLeaveWarning() {
+    if (!examStarted || examSubmitted || leaveWarningShown) return;
+    leaveWarningShown = true;
+    document.getElementById('leaveWarningOverlay').style.display = 'flex';
+}
+
+function stayOnPage() {
+    leaveWarningShown = false;
+    document.getElementById('leaveWarningOverlay').style.display = 'none';
+}
+
+function leaveAndSubmit() {
+    document.getElementById('leaveWarningOverlay').style.display = 'none';
+    autoSubmitExam();
+}
+
+// =====================================================
+// SUBMIT FUNCTIONS
+// =====================================================
+
+function submitExam(event) {
+    if (event) event.preventDefault();
+    if (examSubmitted) return;
+    
+    // Show Bootstrap modal instead of confirm()
+    var confirmModal = new bootstrap.Modal(document.getElementById('confirmSubmitModal'));
+    confirmModal.show();
+}
+
+function confirmSubmitExam() {
+    // Hide the modal
+    var confirmModal = bootstrap.Modal.getInstance(document.getElementById('confirmSubmitModal'));
+    if (confirmModal) confirmModal.hide();
+    
+    // Proceed with submission
+    submitExamForm(false);
+}
+
+function submitExamForm(isAutoSubmit) {
+    examSubmitted = true;
+    clearInterval(timerInterval);
+    localStorage.setItem('examSubmitted', 'true');
+    
+    var formData = new FormData(examForm);
+    var answers = {};
+    
+    for (var pair of formData.entries()) {
+        if (pair[0].startsWith('question_')) {
+            answers[pair[0].replace('question_', '')] = pair[1];
+        }
+    }
+    
+    var submitBtn = examForm.querySelector('.submit-btn');
+    if (submitBtn) {
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+        submitBtn.disabled = true;
+    }
+    
+    fetch('/courses/final-exam/{{ exam.id }}/submit/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            answers: answers,
+            time_taken_seconds: timeTakenSeconds
+        })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) {
+            // Clear localStorage
+            localStorage.removeItem('examInProgress');
+            localStorage.removeItem('examStartTime');
+            localStorage.removeItem('examSubmitted');
+            
+            // Hide sticky timer
+            document.getElementById('stickyTimerBar').classList.remove('show');
+            
+            var resultHTML = '<div class="result-container">';
+            
+            if (data.passed) {
+                resultHTML += '<div class="result-icon">🎉</div>';
+                resultHTML += '<div class="result-score" style="color: #10b981;">' + data.score + '%</div>';
+                resultHTML += '<p style="font-size: 18px; color: #065f46;">Congratulations! You passed the final exam!</p>';
+                resultHTML += '<p style="color: #6b7280;">Your certificate is now available.</p>';
+                
+                if (data.certificate_url) {
+                    resultHTML += '<a href="' + data.certificate_url + '" class="submit-btn" style="display: inline-block; width: auto; padding: 14px 30px; background: #8b5cf6; text-decoration: none;">📜 View Certificate</a><br>';
+                }
+                
+                resultHTML += '<a href="/courses/learn/{{ course.slug }}/" class="submit-btn" style="display: inline-block; width: auto; padding: 10px 20px; background: #f8fafc; color: #333; border: 1px solid #e5e7eb; text-decoration: none; margin-top: 10px;">← Go to Course Page</a>';
+            } else {
+                resultHTML += '<div class="result-icon">❌</div>';
+                resultHTML += '<div class="result-score" style="color: #ef4444;">' + data.score + '%</div>';
+                resultHTML += '<p style="font-size: 18px; color: #991b1b;">You did not pass the final exam.</p>';
+                resultHTML += '<p style="color: #6b7280;">Passing score: ' + data.passing_score + '%</p>';
+                
+                if (data.remaining_attempts !== null && data.remaining_attempts > 0) {
+                    resultHTML += '<p style="color: #6b7280;">Attempts remaining: ' + data.remaining_attempts + '</p>';
+                    resultHTML += '<a href="/courses/final-exam/{{ exam.id }}/take/" class="submit-btn" style="display: inline-block; width: auto; padding: 14px 30px; text-decoration: none;">Retake Exam</a>';
+                } else if (data.remaining_attempts === 0) {
+                    resultHTML += '<p style="color: #ef4444;">You have used all your attempts.</p>';
+                }
+            }
+            
+            resultHTML += '</div>';
+            
+            document.querySelector('.exam-container.exam-content').innerHTML = resultHTML;
+        }
+    })
+    .catch(function(error) {
+        console.error('Error:', error);
+        showAlert('Error submitting exam. Please try again.', '❌');
+        examSubmitted = false;
+        clearInterval(timerInterval);
+        timerInterval = setInterval(updateTimer, 1000);
+        if (submitBtn) {
+            submitBtn.innerHTML = 'Submit Final Exam';
+            submitBtn.disabled = false;
+        }
+    });
+}
+
+// =====================================================
+// ANTI-CHEAT MEASURES
+// =====================================================
+
+// Prevent refresh during exam
+window.addEventListener('beforeunload', function(e) {
+    if (examStarted && !examSubmitted) {
+        e.preventDefault();
+        e.returnValue = '⚠️ Refreshing or leaving will submit your exam automatically!';
+        return e.returnValue;
+    }
+});
+
+// Detect tab switch
+document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'hidden' && examStarted && !examSubmitted) {
+        showLeaveWarning();
+    }
+});
+
+// Prevent right-click during exam
+document.addEventListener('contextmenu', function(e) {
+    if (examStarted && !examSubmitted) {
+        e.preventDefault();
+        showAlert('Right-click is disabled during the exam.', '🚫');
+    }
+});
+
+// Prevent copy during exam
+document.addEventListener('copy', function(e) {
+    if (examStarted && !examSubmitted) {
+        e.preventDefault();
+        showAlert('Copying is disabled during the exam.', '📋');
+    }
+});
+
+// Prevent paste during exam
+document.addEventListener('paste', function(e) {
+    if (examStarted && !examSubmitted) {
+        e.preventDefault();
+        showAlert('Pasting is disabled during the exam.', '📋');
+    }
+});
+
+// Detect keyboard shortcuts (F12, Ctrl+Shift+I, etc.)
+document.addEventListener('keydown', function(e) {
+    if (examStarted && !examSubmitted) {
+        if (e.key === 'F12') {
+            e.preventDefault();
+        }
+        if (e.ctrlKey && e.shiftKey && e.key === 'I') {
+            e.preventDefault();
+        }
+        if (e.ctrlKey && e.shiftKey && e.key === 'J') {
+            e.preventDefault();
+        }
+        if (e.ctrlKey && e.key === 'u') {
+            e.preventDefault();
+        }
+    }
+});
+
+// =====================================================
+// PAGE LOAD - Check if exam was already in progress
+// =====================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    var examInProgress = localStorage.getItem('examInProgress');
+    var wasSubmitted = localStorage.getItem('examSubmitted');
+    var savedStartTime = localStorage.getItem('examStartTime');
+    
+    if (examInProgress === 'true' && wasSubmitted === 'false' && savedStartTime) {
+        showAlert('You refreshed the page during the exam. Your exam will be submitted automatically.', '⚠️');
+        
+        examStarted = true;
+        examSubmitted = true;
+        startTime = parseInt(savedStartTime);
+        
+        var currentTime = new Date().getTime();
+        timeTakenSeconds = Math.floor((currentTime - startTime) / 1000);
+        
+        document.getElementById('rulesOverlay').style.display = 'none';
+        document.getElementById('examContent').classList.add('show');
+        
+        submitExamForm(true);
+    }
+});
+</script>
+{% endblock %}

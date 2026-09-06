@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Privacy Policy - AI Governance Academy{% endblock %}
+
+{% block meta_description %}Privacy Policy for AI Governance Academy (AIGA). Learn how we collect, use, and protect your personal data under UK GDPR. 128 City Road, London, EC1V 2NX.{% endblock %}
+
+{% block og_title %}Privacy Policy - AI Governance Academy{% endblock %}
+{% block og_description %}How AI Governance Academy collects, uses, and protects your personal information under UK GDPR.{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --navy: #0c1e2e;
+        --gold: #ad7a49;
+        --gold-dark: #b07d55;
+        --text-muted: #6c757d;
+        --text-dark: #1a1a2e;
+        --border-color: #e5e7eb;
+    }
+
+    .page-header-section {
+        background: linear-gradient(135deg, var(--navy) 0%, #142a3e 100%);
+        padding: 60px 0;
+        text-align: center;
+        color: white;
+    }
+
+    .page-header-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .page-header-subtitle {
+        font-size: 1rem;
+        color: rgba(255,255,255,0.7);
+    }
+
+    .content-section {
+        padding: 60px 0;
+    }
+
+    .content-wrapper {
+        max-width: 850px;
+        margin: 0 auto;
+    }
+
+    .content-wrapper h1 { font-size: 1.8rem; font-weight: 700; color: var(--navy); margin: 36px 0 16px; padding-bottom: 10px; border-bottom: 2px solid var(--gold); }
+    .content-wrapper h1:first-child { margin-top: 0; }
+    .content-wrapper h2 { font-size: 1.5rem; font-weight: 700; color: var(--navy); margin: 32px 0 14px; padding-bottom: 8px; border-bottom: 2px solid var(--gold); }
+    .content-wrapper h3 { font-size: 1.2rem; font-weight: 600; color: var(--text-dark); margin: 24px 0 10px; }
+    .content-wrapper h4 { font-size: 1.05rem; font-weight: 600; color: var(--text-dark); margin: 20px 0 8px; }
+    .content-wrapper p { font-size: 0.95rem; color: var(--text-muted); line-height: 1.8; margin-bottom: 16px; }
+    .content-wrapper ul, .content-wrapper ol { padding-left: 24px; margin-bottom: 16px; }
+    .content-wrapper ul li, .content-wrapper ol li { font-size: 0.95rem; color: var(--text-muted); line-height: 1.8; margin-bottom: 8px; }
+    .content-wrapper a { color: var(--gold); text-decoration: none; }
+    .content-wrapper a:hover { text-decoration: underline; }
+    .content-wrapper strong { color: var(--text-dark); }
+    .content-wrapper pre { background: #1e293b; color: #e2e8f0; padding: 16px; border-radius: 8px; overflow-x: auto; margin: 16px 0; font-size: 13px; }
+    .content-wrapper code { background: #f1f5f9; color: #e11d48; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+    .content-wrapper pre code { background: transparent; color: #e2e8f0; padding: 0; }
+    .content-wrapper blockquote { border-left: 4px solid var(--gold); padding: 8px 16px; margin: 16px 0; background: #fef7f0; border-radius: 0 8px 8px 0; }
+    .content-wrapper table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    .content-wrapper table th, .content-wrapper table td { border: 1px solid var(--border-color); padding: 10px 14px; text-align: left; font-size: 0.9rem; }
+    .content-wrapper table th { background: #f8fafc; font-weight: 600; color: var(--text-dark); }
+    .content-wrapper img { max-width: 100%; border-radius: 8px; margin: 12px 0; }
+    .content-wrapper hr { border: none; border-top: 1px solid var(--border-color); margin: 24px 0; }
+
+    .highlight-box {
+        background: #fef7f0;
+        border-left: 4px solid var(--gold);
+        padding: 16px 20px;
+        border-radius: 0 8px 8px 0;
+        margin: 20px 0;
+    }
+
+    .highlight-box p {
+        margin: 0;
+        font-weight: 500;
+        color: var(--text-dark);
+    }
+
+    .last-updated {
+        text-align: center;
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border-color);
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+
+    .last-updated p {
+        margin-bottom: 5px;
+    }
+
+    .default-content {
+        text-align: center;
+        padding: 40px;
+        color: var(--text-muted);
+    }
+    .default-content i { font-size: 3rem; display: block; margin-bottom: 12px; opacity: 0.3; }
+
+    @media (max-width: 768px) {
+        .page-header-title { font-size: 1.8rem; }
+        .content-section { padding: 40px 0; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="page-header-section">
+    <div class="container">
+        <h1 class="page-header-title" style="color: #e2e8f0;">Privacy Policy</h1>
+        <p class="page-header-subtitle">How we collect, use, and protect your personal information</p>
+    </div>
+</section>
+
+<section class="content-section">
+    <div class="container">
+        <div class="content-wrapper">
+            <div class="highlight-box">
+                <p><strong>Your Privacy Matters:</strong> At AI Governance Academy, we are committed to protecting your personal data and respecting your privacy rights under UK GDPR.</p>
+            </div>
+            
+            {% if privacy_policy %}
+                {{ privacy_policy|safe }}
+            {% else %}
+                <!-- Default UK GDPR Privacy Policy -->
+                <h1>Privacy Policy</h1>
+                
+                <h2>1. Introduction</h2>
+                <p>AI Governance Academy ("we", "our", "us") is committed to protecting and respecting your privacy. This policy explains how we collect, use, and protect your personal information when you use our website and services.</p>
+                
+                <h2>2. Data Controller</h2>
+                <p>The data controller responsible for your personal information is:</p>
+                <p><strong>AI Governance Academy</strong><br>
+                128 City Road, London, EC1V 2NX, United Kingdom<br>
+                Email: info@aiga.ac</p>
+                
+                <h2>3. Information We Collect</h2>
+                <p>We may collect the following types of personal information:</p>
+                <ul>
+                    <li><strong>Identity data:</strong> Name, username, date of birth</li>
+                    <li><strong>Contact data:</strong> Email address, phone number, postal address</li>
+                    <li><strong>Account data:</strong> Login credentials, course enrollments, progress</li>
+                    <li><strong>Payment data:</strong> Transaction details (processed securely via payment providers)</li>
+                    <li><strong>Technical data:</strong> IP address, browser type, device information</li>
+                    <li><strong>Usage data:</strong> Pages visited, courses viewed, time spent</li>
+                </ul>
+                
+                <h2>4. How We Use Your Information</h2>
+                <p>We use your personal information for the following purposes:</p>
+                <ul>
+                    <li>To provide and maintain our services</li>
+                    <li>To manage your account and course enrollments</li>
+                    <li>To process payments</li>
+                    <li>To send course-related communications</li>
+                    <li>To improve our website and services</li>
+                    <li>To comply with legal obligations</li>
+                </ul>
+                
+                <h2>5. Legal Basis for Processing (UK GDPR)</h2>
+                <p>Under UK GDPR, we rely on the following legal bases:</p>
+                <ul>
+                    <li><strong>Contract:</strong> To provide services you have requested</li>
+                    <li><strong>Consent:</strong> Where you have given explicit consent</li>
+                    <li><strong>Legitimate interests:</strong> To improve our services and prevent fraud</li>
+                    <li><strong>Legal obligation:</strong> To comply with applicable laws</li>
+                </ul>
+                
+                <h2>6. Your Rights</h2>
+                <p>Under UK GDPR, you have the following rights:</p>
+                <ul>
+                    <li>Right to access your personal data</li>
+                    <li>Right to rectification (correct inaccurate data)</li>
+                    <li>Right to erasure ("right to be forgotten")</li>
+                    <li>Right to restrict processing</li>
+                    <li>Right to data portability</li>
+                    <li>Right to object to processing</li>
+                    <li>Right to withdraw consent</li>
+                </ul>
+                
+                <h2>7. Data Retention</h2>
+                <p>We retain your personal information only for as long as necessary to fulfil the purposes outlined in this policy, or as required by law.</p>
+                
+                <h2>8. Data Security</h2>
+                <p>We implement appropriate technical and organisational measures to protect your personal information against unauthorised access, loss, or misuse.</p>
+                
+                <h2>9. Third-Party Services</h2>
+                <p>We may share your information with:</p>
+                <ul>
+                    <li>Payment processors (e.g., Stripe, PayPal)</li>
+                    <li>Email service providers</li>
+                    <li>Analytics services</li>
+                    <li>Legal authorities where required by law</li>
+                </ul>
+                
+                <h2>10. Cookies</h2>
+                <p>We use cookies to improve your browsing experience. You can control cookie settings through your browser.</p>
+                
+                <h2>11. Contact Us</h2>
+                <p>If you have any questions about this privacy policy or wish to exercise your rights, please contact us:</p>
+                <p><strong>Email:</strong> info@aiga.ac<br>
+                <strong>Address:</strong> 128 City Road, London, EC1V 2NX, United Kingdom</p>
+            {% endif %}
+            
+            <div class="last-updated">
+                {% if privacy_last_updated %}
+                <p>Last updated: {{ privacy_last_updated|date:"F d, Y" }}</p>
+                {% else %}
+                <p>Last updated: {% now "F d, Y" %}</p>
+                {% endif %}
+                <p>&copy; {% now "Y" %} AI Governance Academy. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
