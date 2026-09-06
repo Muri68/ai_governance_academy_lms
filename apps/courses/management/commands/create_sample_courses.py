@@ -149,7 +149,6 @@ class Command(BaseCommand):
                 'discount_price': 39.99,
                 'is_free': False,
                 'status': 'published',
-                'is_featured': True,
                 'has_certificate': True,
                 'published_at': timezone.now(),
             }
@@ -518,7 +517,6 @@ class Command(BaseCommand):
                 'discount_price': 69.99,
                 'is_free': False,
                 'status': 'published',
-                'is_featured': True,
                 'has_certificate': True,
                 'published_at': timezone.now(),
             }
@@ -717,7 +715,6 @@ class Command(BaseCommand):
                 'price': 0.00,
                 'is_free': True,
                 'status': 'published',
-                'is_featured': True,
                 'has_certificate': True,
                 'published_at': timezone.now(),
             }
@@ -895,7 +892,6 @@ class Command(BaseCommand):
                 'discount_price': 44.99,
                 'is_free': False,
                 'status': 'published',
-                'is_featured': False,
                 'has_certificate': True,
                 'published_at': timezone.now(),
             }
