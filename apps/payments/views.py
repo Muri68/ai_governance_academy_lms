@@ -526,175 +526,129 @@ def payment_cancel(request):
 
 @csrf_exempt
 def stripe_webhook(request):
-    """Handle Stripe webhook events"""
+
+    if request.method != 'POST':
+        return HttpResponse(status=405)
+
     payload = request.body
     sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
     endpoint_secret = settings.STRIPE_WEBHOOK_SECRET
-    
-    # Add detailed logging
-    if not sig_header:
-        print("❌ No Stripe signature header found")
-        return HttpResponse(status=400)
-    
+
     try:
         event = stripe.Webhook.construct_event(
-            payload, sig_header, endpoint_secret
+            payload,
+            sig_header,
+            endpoint_secret
         )
-        print(f"✅ Webhook received: {event['type']}")
-    except ValueError as e:
-        print(f"❌ Invalid payload: {str(e)}")
+    except ValueError:
         return HttpResponse(status=400)
-    except stripe.error.SignatureVerificationError as e:
-        print(f"❌ Invalid signature: {str(e)}")
+    except stripe.error.SignatureVerificationError:
         return HttpResponse(status=400)
-    except Exception as e:
-        print(f"❌ Webhook error: {str(e)}")
-        return HttpResponse(status=400)
-    
-    # Handle different event types
+
     try:
-        if event['type'] == 'checkout.session.completed':
-            session = event['data']['object']
-            print(f"📦 Processing checkout.session.completed for session {session['id']}")
-            print(f"📦 Payment status: {session.get('payment_status')}")
-            print(f"📦 Metadata: {session.get('metadata', {})}")
-            
-            # Process regardless of payment_status - Stripe only sends this when paid
+        event_type = event['type']
+        session = event['data']['object']
+
+        print(f"📦 Stripe event: {event_type}")
+
+        if event_type == 'checkout.session.completed':
             handle_successful_payment(session)
-            
-        elif event['type'] == 'checkout.session.async_payment_succeeded':
-            session = event['data']['object']
-            print(f"📦 Processing async_payment_succeeded for session {session['id']}")
+
+        elif event_type == 'checkout.session.async_payment_succeeded':
             handle_successful_payment(session)
-            
-        elif event['type'] == 'checkout.session.async_payment_failed':
-            session = event['data']['object']
+
+        elif event_type == 'checkout.session.async_payment_failed':
             handle_failed_payment_from_session(session)
-            
-        elif event['type'] == 'checkout.session.expired':
-            session = event['data']['object']
+
+        elif event_type == 'checkout.session.expired':
             handle_expired_session(session)
-            
-        elif event['type'] == 'payment_intent.payment_failed':
-            payment_intent = event['data']['object']
-            handle_failed_payment(payment_intent)
-            
-        elif event['type'] == 'payment_intent.succeeded':
-            payment_intent = event['data']['object']
-            handle_payment_intent_succeeded(payment_intent)
-            
-        elif event['type'] == 'charge.refunded':
-            charge = event['data']['object']
-            handle_refunded_payment(charge)
-            
-        elif event['type'] == 'charge.dispute.created':
-            dispute = event['data']['object']
-            handle_dispute_created(dispute)
-            
-        elif event['type'] == 'payment_intent.canceled':
-            payment_intent = event['data']['object']
-            handle_payment_canceled(payment_intent)
-        
-        print(f"✅ Successfully processed: {event['type']}")
-        
+
+        elif event_type == 'payment_intent.payment_failed':
+            handle_failed_payment(session)
+
+        elif event_type == 'payment_intent.succeeded':
+            handle_payment_intent_succeeded(session)
+
+        elif event_type == 'charge.refunded':
+            handle_refunded_payment(session)
+
+        elif event_type == 'charge.dispute.created':
+            handle_dispute_created(session)
+
+        elif event_type == 'payment_intent.canceled':
+            handle_payment_canceled(session)
+
+        return HttpResponse(status=200)
+
     except Exception as e:
-        print(f"❌ Error processing webhook event {event['type']}: {str(e)}")
         import traceback
+        print("❌ STRIPE WEBHOOK PROCESSING ERROR")
+        print(str(e))
         traceback.print_exc()
-    
-    # Always return 200 to acknowledge receipt
-    return HttpResponse(status=200)
+
+        # IMPORTANT: Stripe will retry the event
+        return HttpResponse(status=500)
 
 
 def handle_successful_payment(session):
-    """Process successful payment from webhook"""
-    print(f"🔍 Processing successful payment for session: {session['id']}")
-    
-    metadata = session.get('metadata', {})
-    user_id = metadata.get('user_id')
-    course_id = metadata.get('course_id')
-    
-    print(f"🔍 Metadata - user_id: {user_id}, course_id: {course_id}")
-    
-    # If no metadata, try to find by session ID
-    if not user_id or not course_id:
-        print("❌ No metadata found, trying to find payment by session ID")
-        payment = Payment.objects.filter(stripe_session_id=session['id']).first()
-        if payment:
-            user_id = payment.user_id
-            course_id = payment.course_id
-            print(f"✅ Found payment - user_id: {user_id}, course_id: {course_id}")
-        else:
-            print("❌ No payment found for session")
-            return
-    
-    from django.contrib.auth import get_user_model
-    User = get_user_model()
-    
-    try:
-        user = User.objects.get(id=user_id)
-        course = Course.objects.get(id=course_id)
-        
-        print(f"✅ User found: {user.email}")
-        print(f"✅ Course found: {course.title}")
-        
-        # Get or create payment
-        payment = Payment.objects.filter(stripe_session_id=session['id']).first()
-        if payment:
-            print(f"✅ Existing payment found: ID={payment.id}, Status={payment.status}")
-            if payment.status != 'completed':
-                payment.stripe_payment_intent_id = session.get('payment_intent')
-                payment.status = 'completed'
-                payment.save()
-                print(f"✅ Payment updated to completed")
-        else:
-            # Create payment if it doesn't exist
-            payment = Payment.objects.create(
-                user=user,
-                course=course,
-                stripe_session_id=session['id'],
-                stripe_payment_intent_id=session.get('payment_intent'),
-                amount=float(course.discount_price or course.price),
-                currency='gbp',
-                status='completed',
-                payment_method='card',
-            )
-            print(f"✅ New payment created: ID={payment.id}")
-        
-        # Create or update enrollment
-        enrollment, created = Enrollment.objects.get_or_create(
-            student=user,
-            course=course,
-            defaults={'status': 'active'}
+    """Process a successful Stripe Checkout Session."""
+
+    print(f"🔍 Processing successful payment: {session['id']}")
+
+    payment = Payment.objects.filter(
+        stripe_session_id=session['id']
+    ).select_related('user', 'course').first()
+
+    if not payment:
+        print(
+            f"❌ Payment not found for Stripe session: "
+            f"{session['id']}"
         )
-        
-        if created:
-            print(f"✅ New enrollment created: ID={enrollment.id}")
-        else:
-            print(f"✅ Existing enrollment found: ID={enrollment.id}, Status={enrollment.status}")
-            if enrollment.status != 'active':
-                enrollment.status = 'active'
-                enrollment.save()
-                print(f"✅ Enrollment updated to active")
-        
-        # Link payment to enrollment
-        if payment and enrollment:
-            payment.enrollment = enrollment
-            payment.save()
-            print(f"✅ Payment linked to enrollment")
-        
-        # Send success email
-        send_payment_success_email(user, course, payment)
-        print(f"✅ Success email sent to {user.email}")
-        
-    except User.DoesNotExist:
-        print(f"❌ User {user_id} not found")
-    except Course.DoesNotExist:
-        print(f"❌ Course {course_id} not found")
-    except Exception as e:
-        print(f"❌ Error in handle_successful_payment: {str(e)}")
-        import traceback
-        traceback.print_exc()
+        return
+
+    print(
+        f"✅ Found Payment #{payment.id} "
+        f"(current status: {payment.status})"
+    )
+
+    # Update payment
+    payment.status = 'completed'
+
+    if session.get('payment_intent'):
+        payment.stripe_payment_intent_id = session['payment_intent']
+
+    payment.save()
+
+    print(f"✅ Payment #{payment.id} marked as completed")
+
+    # Create/activate enrollment
+    enrollment, created = Enrollment.objects.get_or_create(
+        student=payment.user,
+        course=payment.course,
+        defaults={'status': 'active'}
+    )
+
+    if not created and enrollment.status != 'active':
+        enrollment.status = 'active'
+        enrollment.save(update_fields=['status'])
+
+    # Link payment to enrollment
+    payment.enrollment = enrollment
+    payment.save(update_fields=['enrollment'])
+
+    print(
+        f"✅ Enrollment #{enrollment.id} "
+        f"{'created' if created else 'activated'}"
+    )
+
+    # Send confirmation email
+    send_payment_success_email(
+        payment.user,
+        payment.course,
+        payment
+    )
+
+    print("✅ Payment processing completed successfully")
 
 
 def handle_failed_payment_from_session(session):
@@ -932,7 +886,6 @@ def payment_history(request):
     
     context = {
         'payments': payments,
-        'total_spent': round(total_spent, 2),
         'completed_count': payments.filter(status='completed').count(),
         'pending_count': payments.filter(status='pending').count(),
         'failed_count': payments.filter(status='failed').count(),
