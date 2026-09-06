@@ -9,7 +9,10 @@ class Payment(models.Model):
         ('pending', 'Pending'),
         ('completed', 'Completed'),
         ('failed', 'Failed'),
+        ('cancelled', 'Cancelled'),
+        ('expired', 'Expired'),
         ('refunded', 'Refunded'),
+        ('disputed', 'Disputed'),
     ]
     
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='payments')
@@ -23,27 +26,12 @@ class Payment(models.Model):
     currency = models.CharField(max_length=10, default='gbp')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     
-    payment_method = models.CharField(max_length=50, blank=True, null=True)
+    payment_method = models.CharField(max_length=50, default='card')
     receipt_url = models.URLField(max_length=500, blank=True, null=True)
 
     refund_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     refunded_at = models.DateTimeField(null=True, blank=True)
     dispute_reason = models.CharField(max_length=50, blank=True, null=True)
-    payment_method = models.CharField(max_length=50, default='card')
-    
-    status = models.CharField(
-        max_length=20,
-        choices=[
-            ('pending', 'Pending'),
-            ('completed', 'Completed'),
-            ('failed', 'Failed'),
-            ('cancelled', 'Cancelled'),
-            ('expired', 'Expired'),
-            ('refunded', 'Refunded'),
-            ('disputed', 'Disputed'),
-        ],
-        default='pending'
-    )
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -52,7 +40,7 @@ class Payment(models.Model):
         ordering = ['-created_at']
     
     def __str__(self):
-        return f"{self.user.email} - {self.course.title if self.course else 'N/A'} - ${self.amount}"
+        return f"{self.user.email} - {self.course.title if self.course else 'N/A'} - £{self.amount}"
 
 
 class Coupon(models.Model):

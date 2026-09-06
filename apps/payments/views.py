@@ -240,129 +240,119 @@ Thank you,
         print(f"❌ Refund email sending failed: {str(e)}")
 
 
-@login_required
 def payment_success(request):
-    """Handle successful payment return from Stripe"""
+    """Handle successful payment return from Stripe - NO login required"""
     session_id = request.GET.get('session_id')
     course_id = request.GET.get('course_id')
+    
+    print(f"🔍 Payment success page loaded - Session: {session_id}, Course: {course_id}")
     
     if not session_id or not course_id:
         messages.error(request, 'Invalid payment session.')
         return redirect('frontend:index')
     
-    # Default values
     course = None
     payment = None
     enrollment = None
     
     try:
-        # Get the course first
+        # Get course
         try:
             course = Course.objects.get(id=course_id)
         except Course.DoesNotExist:
             course = None
         
-        # Try to retrieve Stripe session
+        # Retrieve Stripe session to verify payment
         try:
             session = stripe.checkout.Session.retrieve(session_id)
-            payment_status = session.payment_status
+            payment_status = session.get('payment_status')
+            print(f"🔍 Stripe payment status: {payment_status}")
             
-            # Only process if payment is actually complete
-            if payment_status == 'paid':
-                # Process payment record
+            # Get user from metadata
+            metadata = session.get('metadata', {})
+            user_id = metadata.get('user_id')
+            
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            
+            if user_id:
                 try:
-                    payment = Payment.objects.filter(stripe_session_id=session_id).first()
-                    if payment:
-                        if payment.status != 'completed':
-                            payment.status = 'completed'
-                            if 'payment_intent' in session:
-                                payment.stripe_payment_intent_id = session.get('payment_intent')
-                            payment.save()
-                    elif course:
-                        payment = Payment.objects.create(
-                            user=request.user,
-                            course=course,
-                            stripe_session_id=session_id,
-                            amount=float(course.discount_price or course.price),
-                            currency='gbp',
-                            status='completed',
-                        )
-                        if 'payment_intent' in session:
-                            payment.stripe_payment_intent_id = session.get('payment_intent')
-                            payment.save()
-                except Exception as e:
-                    print(f"Payment record error: {str(e)}")
-                    payment = None
-                
-                # Process enrollment
-                if course:
-                    try:
-                        enrollment, created = Enrollment.objects.get_or_create(
-                            student=request.user,
-                            course=course,
-                            defaults={'status': 'active'}
-                        )
-                        
-                        if not created and enrollment.status != 'active':
-                            enrollment.status = 'active'
-                            enrollment.save()
-                        
-                        if payment and enrollment:
-                            payment.enrollment = enrollment
-                            payment.save()
-                    except Exception as e:
-                        print(f"Enrollment error: {str(e)}")
-                        enrollment = None
-                
-                # Send email
-                if course and payment:
-                    send_payment_success_email(request.user, course, payment)
-                
-                # Show success message
-                if course:
-                    messages.success(request, f'Payment successful! You are now enrolled in "{course.title}".')
-                else:
-                    messages.success(request, 'Payment successful!')
+                    user = User.objects.get(id=user_id)
+                except User.DoesNotExist:
+                    user = request.user if request.user.is_authenticated else None
             else:
-                # Payment not complete yet
-                messages.warning(request, 'Your payment is still being processed. You will be notified once it completes.')
-        except Exception as e:
-            print(f"Error retrieving Stripe session: {str(e)}")
-            # If we can't retrieve the session, try to process anyway
-            try:
+                user = request.user if request.user.is_authenticated else None
+            
+            # Process payment if status is paid
+            if payment_status == 'paid' and user:
                 payment = Payment.objects.filter(stripe_session_id=session_id).first()
-                if payment and payment.status != 'completed':
-                    # Don't mark as completed if we can't verify with Stripe
-                    pass
-            except:
-                pass
-            messages.info(request, 'Payment verification in progress. Please check your email for confirmation.')
-        
-        return render(request, 'payments/payment_success.html', {
-            'course': course,
-            'payment': payment,
-            'enrollment': enrollment,
-        })
+                if payment:
+                    if payment.status != 'completed':
+                        payment.status = 'completed'
+                        payment.stripe_payment_intent_id = session.get('payment_intent')
+                        payment.save()
+                        print(f"✅ Payment {payment.id} updated to completed")
+                else:
+                    payment = Payment.objects.create(
+                        user=user,
+                        course=course,
+                        stripe_session_id=session_id,
+                        stripe_payment_intent_id=session.get('payment_intent'),
+                        amount=float(course.discount_price or course.price) if course else 0,
+                        currency='gbp',
+                        status='completed',
+                        payment_method='card',
+                    )
+                    print(f"✅ Payment created for session {session_id}")
+                
+                # Create enrollment
+                if course and user:
+                    enrollment, created = Enrollment.objects.get_or_create(
+                        student=user,
+                        course=course,
+                        defaults={'status': 'active'}
+                    )
+                    
+                    if not created and enrollment.status != 'active':
+                        enrollment.status = 'active'
+                        enrollment.save()
+                    
+                    if payment:
+                        payment.enrollment = enrollment
+                        payment.save()
+                    
+                    print(f"✅ Enrollment created/updated for user {user.id} in course {course.id}")
+                    
+                    # Send email only if not already sent
+                    if not payment.receipt_url:  # Use receipt_url as flag for email sent
+                        send_payment_success_email(user, course, payment)
+                        payment.receipt_url = session.get('receipt_url', '')
+                        payment.save()
+                        print(f"✅ Success email sent")
+                
+                messages.success(request, f'Payment successful! You are now enrolled in "{course.title}".')
+            else:
+                messages.warning(request, 'Your payment is being processed. You will be notified by email once confirmed.')
+                
+        except stripe.error.StripeError as e:
+            print(f"❌ Stripe error: {str(e)}")
+            messages.info(request, 'Payment verification in progress. Please check your email.')
+        except Exception as e:
+            print(f"❌ Error: {str(e)}")
+            messages.info(request, 'Payment verification in progress. Please check your email.')
         
     except Exception as e:
         import traceback
         print("=== PAYMENT SUCCESS ERROR ===")
         print(traceback.format_exc())
         print("============================")
-        
-        messages.info(request, 'Payment verification in progress. Please check your email for confirmation.')
-        
-        if not course:
-            try:
-                course = Course.objects.get(id=course_id)
-            except:
-                course = None
-        
-        return render(request, 'payments/payment_success.html', {
-            'course': course,
-            'payment': payment,
-            'enrollment': enrollment,
-        })
+        messages.info(request, 'Payment verification in progress. Please check your email.')
+    
+    return render(request, 'payments/payment_success.html', {
+        'course': course,
+        'payment': payment,
+        'enrollment': enrollment,
+    })
 
 
 @login_required
@@ -556,7 +546,6 @@ def stripe_webhook(request):
         return HttpResponse(status=400)
     except stripe.error.SignatureVerificationError as e:
         print(f"❌ Invalid signature: {str(e)}")
-        print(f"   Expected secret starting with: {endpoint_secret[:10]}...")
         return HttpResponse(status=400)
     except Exception as e:
         print(f"❌ Webhook error: {str(e)}")
@@ -566,14 +555,16 @@ def stripe_webhook(request):
     try:
         if event['type'] == 'checkout.session.completed':
             session = event['data']['object']
-            # Only process if payment is actually complete
-            if session.get('payment_status') == 'paid':
-                handle_successful_payment(session)
-            elif session.get('payment_status') == 'unpaid':
-                print(f"⚠️ Session {session['id']} completed but payment is unpaid")
-                
+            print(f"📦 Processing checkout.session.completed for session {session['id']}")
+            print(f"📦 Payment status: {session.get('payment_status')}")
+            print(f"📦 Metadata: {session.get('metadata', {})}")
+            
+            # Process regardless of payment_status - Stripe only sends this when paid
+            handle_successful_payment(session)
+            
         elif event['type'] == 'checkout.session.async_payment_succeeded':
             session = event['data']['object']
+            print(f"📦 Processing async_payment_succeeded for session {session['id']}")
             handle_successful_payment(session)
             
         elif event['type'] == 'checkout.session.async_payment_failed':
@@ -617,13 +608,25 @@ def stripe_webhook(request):
 
 def handle_successful_payment(session):
     """Process successful payment from webhook"""
+    print(f"🔍 Processing successful payment for session: {session['id']}")
+    
     metadata = session.get('metadata', {})
     user_id = metadata.get('user_id')
     course_id = metadata.get('course_id')
     
+    print(f"🔍 Metadata - user_id: {user_id}, course_id: {course_id}")
+    
+    # If no metadata, try to find by session ID
     if not user_id or not course_id:
-        print(f"❌ Missing metadata in session: {metadata}")
-        return
+        print("❌ No metadata found, trying to find payment by session ID")
+        payment = Payment.objects.filter(stripe_session_id=session['id']).first()
+        if payment:
+            user_id = payment.user_id
+            course_id = payment.course_id
+            print(f"✅ Found payment - user_id: {user_id}, course_id: {course_id}")
+        else:
+            print("❌ No payment found for session")
+            return
     
     from django.contrib.auth import get_user_model
     User = get_user_model()
@@ -632,13 +635,18 @@ def handle_successful_payment(session):
         user = User.objects.get(id=user_id)
         course = Course.objects.get(id=course_id)
         
+        print(f"✅ User found: {user.email}")
+        print(f"✅ Course found: {course.title}")
+        
+        # Get or create payment
         payment = Payment.objects.filter(stripe_session_id=session['id']).first()
         if payment:
+            print(f"✅ Existing payment found: ID={payment.id}, Status={payment.status}")
             if payment.status != 'completed':
                 payment.stripe_payment_intent_id = session.get('payment_intent')
                 payment.status = 'completed'
                 payment.save()
-                print(f"✅ Payment {payment.id} marked as completed")
+                print(f"✅ Payment updated to completed")
         else:
             # Create payment if it doesn't exist
             payment = Payment.objects.create(
@@ -649,27 +657,40 @@ def handle_successful_payment(session):
                 amount=float(course.discount_price or course.price),
                 currency='gbp',
                 status='completed',
+                payment_method='card',
             )
-            print(f"✅ Payment created for session {session['id']}")
+            print(f"✅ New payment created: ID={payment.id}")
         
+        # Create or update enrollment
         enrollment, created = Enrollment.objects.get_or_create(
             student=user,
             course=course,
             defaults={'status': 'active'}
         )
         
-        if not created and enrollment.status != 'active':
-            enrollment.status = 'active'
-            enrollment.save()
+        if created:
+            print(f"✅ New enrollment created: ID={enrollment.id}")
+        else:
+            print(f"✅ Existing enrollment found: ID={enrollment.id}, Status={enrollment.status}")
+            if enrollment.status != 'active':
+                enrollment.status = 'active'
+                enrollment.save()
+                print(f"✅ Enrollment updated to active")
         
-        if payment:
+        # Link payment to enrollment
+        if payment and enrollment:
             payment.enrollment = enrollment
             payment.save()
-            send_payment_success_email(user, course, payment)
-            print(f"✅ Enrollment active for user {user_id} in course {course_id}")
-            
-    except (User.DoesNotExist, Course.DoesNotExist) as e:
-        print(f"❌ User or Course not found: {str(e)}")
+            print(f"✅ Payment linked to enrollment")
+        
+        # Send success email
+        send_payment_success_email(user, course, payment)
+        print(f"✅ Success email sent to {user.email}")
+        
+    except User.DoesNotExist:
+        print(f"❌ User {user_id} not found")
+    except Course.DoesNotExist:
+        print(f"❌ Course {course_id} not found")
     except Exception as e:
         print(f"❌ Error in handle_successful_payment: {str(e)}")
         import traceback
