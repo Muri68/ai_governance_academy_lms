@@ -86,7 +86,7 @@ Thank you,
                 to=[user.email],
             )
             email.attach_alternative(html_message, "text/html")
-            email.send(fail_silently=False)  # Set to False to see errors
+            email.send(fail_silently=False)
             
             print(f"✅ Payment success email sent to {user.email}")
             
@@ -105,7 +105,6 @@ Thank you,
         
     except Exception as e:
         print(f"❌ Email sending failed completely: {str(e)}")
-        # Try one more time with minimal settings
         try:
             send_mail(
                 f'Payment Confirmation - {course.title}',
@@ -141,7 +140,6 @@ Thank you,
 {site_settings.get('site_name', 'AI GOVERNANCE ACADEMY')}
         """
         
-        # Try HTML email
         try:
             context = {
                 'user': user,
@@ -202,7 +200,6 @@ Thank you,
 {site_settings.get('site_name', 'AI GOVERNANCE ACADEMY')}
         """
         
-        # Try HTML email
         try:
             context = {
                 'user': user,
@@ -260,88 +257,139 @@ def payment_success(request):
         # Get course
         try:
             course = Course.objects.get(id=course_id)
+            print(f"✅ Course found: {course.title}")
         except Course.DoesNotExist:
             course = None
+            print(f"❌ Course {course_id} not found")
         
         # Retrieve Stripe session to verify payment
         try:
             session = stripe.checkout.Session.retrieve(session_id)
-            payment_status = session.get('payment_status')
+            
+            # FIXED: Access attributes directly, don't convert to dict
+            payment_status = session.payment_status if hasattr(session, 'payment_status') else None
             print(f"🔍 Stripe payment status: {payment_status}")
             
-            # Get user from metadata
-            metadata = session.get('metadata', {})
-            user_id = metadata.get('user_id')
+            # Get metadata - access directly
+            metadata = {}
+            if hasattr(session, 'metadata') and session.metadata:
+                # Stripe metadata is a dict-like object
+                try:
+                    metadata = dict(session.metadata)
+                except:
+                    # Fallback: try to access as dict
+                    metadata = session.metadata if isinstance(session.metadata, dict) else {}
+            
+            user_id = metadata.get('user_id') if metadata else None
+            metadata_course_id = metadata.get('course_id') if metadata else None
+            
+            print(f"🔍 Metadata - user_id: {user_id}, course_id: {metadata_course_id}")
             
             from django.contrib.auth import get_user_model
             User = get_user_model()
             
+            # Get user
+            user = None
             if user_id:
                 try:
                     user = User.objects.get(id=user_id)
+                    print(f"✅ User found from metadata: {user.email}")
                 except User.DoesNotExist:
+                    print(f"❌ User {user_id} not found")
                     user = request.user if request.user.is_authenticated else None
             else:
                 user = request.user if request.user.is_authenticated else None
+                if user:
+                    print(f"✅ Using authenticated user: {user.email}")
+                else:
+                    print(f"❌ No user found - not authenticated and no user_id in metadata")
             
             # Process payment if status is paid
-            if payment_status == 'paid' and user:
+            if payment_status == 'paid' and user and course:
+                print(f"✅ Processing payment for user {user.email} and course {course.title}")
+                
                 payment = Payment.objects.filter(stripe_session_id=session_id).first()
+                
+                # Access attributes directly
+                payment_intent_id = session.payment_intent if hasattr(session, 'payment_intent') else None
+                receipt_url = session.receipt_url if hasattr(session, 'receipt_url') else None
+                amount_total = session.amount_total if hasattr(session, 'amount_total') else 0
+                
                 if payment:
+                    print(f"✅ Existing payment found: ID={payment.id}, Status={payment.status}")
                     if payment.status != 'completed':
                         payment.status = 'completed'
-                        payment.stripe_payment_intent_id = session.get('payment_intent')
+                        if payment_intent_id:
+                            payment.stripe_payment_intent_id = payment_intent_id
+                        if receipt_url:
+                            payment.receipt_url = receipt_url
                         payment.save()
                         print(f"✅ Payment {payment.id} updated to completed")
                 else:
+                    if amount_total:
+                        amount = Decimal(str(amount_total)) / Decimal('100')
+                    else:
+                        amount = Decimal(str(course.discount_price or course.price))
+                    
                     payment = Payment.objects.create(
                         user=user,
                         course=course,
                         stripe_session_id=session_id,
-                        stripe_payment_intent_id=session.get('payment_intent'),
-                        amount=float(course.discount_price or course.price) if course else 0,
-                        currency='gbp',
+                        stripe_payment_intent_id=payment_intent_id,
+                        amount=amount,
+                        currency=session.currency if hasattr(session, 'currency') else 'gbp',
                         status='completed',
                         payment_method='card',
                     )
-                    print(f"✅ Payment created for session {session_id}")
+                    print(f"✅ New payment created: ID={payment.id}")
                 
-                # Create enrollment
-                if course and user:
-                    enrollment, created = Enrollment.objects.get_or_create(
-                        student=user,
-                        course=course,
-                        defaults={'status': 'active'}
-                    )
-                    
-                    if not created and enrollment.status != 'active':
+                # Create or update enrollment
+                enrollment, created = Enrollment.objects.get_or_create(
+                    student=user,
+                    course=course,
+                    defaults={'status': 'active'}
+                )
+                
+                if created:
+                    print(f"✅ New enrollment created: ID={enrollment.id}")
+                else:
+                    print(f"✅ Existing enrollment found: ID={enrollment.id}, Status={enrollment.status}")
+                    if enrollment.status != 'active':
                         enrollment.status = 'active'
                         enrollment.save()
-                    
-                    if payment:
-                        payment.enrollment = enrollment
-                        payment.save()
-                    
-                    print(f"✅ Enrollment created/updated for user {user.id} in course {course.id}")
-                    
-                    # Send email only if not already sent
-                    if not payment.receipt_url:  # Use receipt_url as flag for email sent
-                        send_payment_success_email(user, course, payment)
-                        payment.receipt_url = session.get('receipt_url', '')
-                        payment.save()
-                        print(f"✅ Success email sent")
+                        print(f"✅ Enrollment updated to active")
+                
+                # Link payment to enrollment
+                if payment:
+                    payment.enrollment = enrollment
+                    payment.save()
+                    print(f"✅ Payment linked to enrollment")
+                
+                # Send success email
+                try:
+                    send_payment_success_email(user, course, payment)
+                    print(f"✅ Success email sent to {user.email}")
+                except Exception as e:
+                    print(f"⚠️ Could not send email: {str(e)}")
                 
                 messages.success(request, f'Payment successful! You are now enrolled in "{course.title}".')
+                
+            elif payment_status == 'paid' and (not user or not course):
+                print(f"⚠️ Payment is paid but missing user or course")
+                messages.warning(request, 'Payment was successful but enrollment could not be completed. Please contact support.')
             else:
+                print(f"⚠️ Payment status is '{payment_status}', not marking as complete")
                 messages.warning(request, 'Your payment is being processed. You will be notified by email once confirmed.')
                 
         except stripe.error.StripeError as e:
             print(f"❌ Stripe error: {str(e)}")
             messages.info(request, 'Payment verification in progress. Please check your email.')
         except Exception as e:
-            print(f"❌ Error: {str(e)}")
+            print(f"❌ Error in payment_success: {str(e)}")
+            import traceback
+            traceback.print_exc()
             messages.info(request, 'Payment verification in progress. Please check your email.')
-        
+    
     except Exception as e:
         import traceback
         print("=== PAYMENT SUCCESS ERROR ===")
@@ -527,7 +575,7 @@ def payment_cancel(request):
 
 @csrf_exempt
 def stripe_webhook(request):
-
+    """Handle Stripe webhook events"""
     if request.method != 'POST':
         return HttpResponse(status=405)
 
@@ -548,36 +596,36 @@ def stripe_webhook(request):
 
     try:
         event_type = event['type']
-        session = event['data']['object']
+        event_object = event['data']['object']
 
         print(f"📦 Stripe event: {event_type}")
 
         if event_type == 'checkout.session.completed':
-            handle_successful_payment(session)
+            handle_successful_payment(event_object)
 
         elif event_type == 'checkout.session.async_payment_succeeded':
-            handle_successful_payment(session)
+            handle_successful_payment(event_object)
 
         elif event_type == 'checkout.session.async_payment_failed':
-            handle_failed_payment_from_session(session)
+            handle_failed_payment_from_session(event_object)
 
         elif event_type == 'checkout.session.expired':
-            handle_expired_session(session)
+            handle_expired_session(event_object)
 
         elif event_type == 'payment_intent.payment_failed':
-            handle_failed_payment(session)
+            handle_failed_payment(event_object)
 
         elif event_type == 'payment_intent.succeeded':
-            handle_payment_intent_succeeded(session)
+            handle_payment_intent_succeeded(event_object)
 
         elif event_type == 'charge.refunded':
-            handle_refunded_payment(session)
+            handle_refunded_payment(event_object)
 
         elif event_type == 'charge.dispute.created':
-            handle_dispute_created(session)
+            handle_dispute_created(event_object)
 
         elif event_type == 'payment_intent.canceled':
-            handle_payment_canceled(session)
+            handle_payment_canceled(event_object)
 
         return HttpResponse(status=200)
 
@@ -586,24 +634,24 @@ def stripe_webhook(request):
         print("❌ STRIPE WEBHOOK PROCESSING ERROR")
         print(str(e))
         traceback.print_exc()
-
-        # IMPORTANT: Stripe will retry the event
         return HttpResponse(status=500)
-
 
 
 def handle_successful_payment(session):
     """Process a successful Stripe Checkout Session."""
-
     print(f"🔍 Processing successful Stripe session: {session.id}")
 
-    # Convert StripeObject to normal dictionary
-    session_data = session.to_dict_recursive()
+    # Access attributes directly
+    session_id = session.id if hasattr(session, 'id') else None
+    payment_intent_id = session.payment_intent if hasattr(session, 'payment_intent') else None
 
-    session_id = session_data.get('id')
-    payment_intent_id = session_data.get('payment_intent')
-
-    metadata = session_data.get('metadata') or {}
+    # Get metadata
+    metadata = {}
+    if hasattr(session, 'metadata') and session.metadata:
+        try:
+            metadata = dict(session.metadata)
+        except:
+            metadata = session.metadata if isinstance(session.metadata, dict) else {}
 
     user_id = metadata.get('user_id')
     course_id = metadata.get('course_id')
@@ -616,34 +664,19 @@ def handle_successful_payment(session):
     if not session_id:
         raise ValueError("Stripe session has no ID")
 
-    # ---------------------------------------------------------
     # Find existing Payment
-    # ---------------------------------------------------------
     payment = Payment.objects.filter(
         stripe_session_id=session_id
-    ).select_related(
-        'user',
-        'course'
-    ).first()
+    ).select_related('user', 'course').first()
 
-    # ---------------------------------------------------------
     # If Payment does not exist, create it
-    # ---------------------------------------------------------
     if not payment:
-
-        print(
-            f"⚠️ No Payment found for session {session_id}"
-        )
+        print(f"⚠️ No Payment found for session {session_id}")
 
         if not user_id:
-            raise ValueError(
-                "Stripe metadata does not contain user_id"
-            )
-
+            raise ValueError("Stripe metadata does not contain user_id")
         if not course_id:
-            raise ValueError(
-                "Stripe metadata does not contain course_id"
-            )
+            raise ValueError("Stripe metadata does not contain course_id")
 
         from django.contrib.auth import get_user_model
         User = get_user_model()
@@ -651,9 +684,8 @@ def handle_successful_payment(session):
         user = User.objects.get(id=user_id)
         course = Course.objects.get(id=course_id)
 
-        amount_total = session_data.get('amount_total', 0)
-
-        amount = Decimal(amount_total) / Decimal('100')
+        amount_total = session.amount_total if hasattr(session, 'amount_total') else 0
+        amount = Decimal(str(amount_total)) / Decimal('100')
 
         payment = Payment.objects.create(
             user=user,
@@ -661,83 +693,57 @@ def handle_successful_payment(session):
             stripe_session_id=session_id,
             stripe_payment_intent_id=payment_intent_id,
             amount=amount,
-            currency=session_data.get('currency', 'gbp').lower(),
+            currency=session.currency if hasattr(session, 'currency') else 'gbp',
             status='completed',
             payment_method='card',
         )
 
-        print(
-            f"✅ Created Payment #{payment.id} "
-            f"as COMPLETED"
-        )
-
-    # ---------------------------------------------------------
-    # Existing Payment
-    # ---------------------------------------------------------
+        print(f"✅ Created Payment #{payment.id} as COMPLETED")
     else:
-
-        print(
-            f"✅ Found Payment #{payment.id} "
-            f"with status: {payment.status}"
-        )
-
+        print(f"✅ Found Payment #{payment.id} with status: {payment.status}")
         payment.status = 'completed'
-
         if payment_intent_id:
             payment.stripe_payment_intent_id = payment_intent_id
-
         payment.save()
+        print(f"✅ Payment #{payment.id} marked as COMPLETED")
 
-        print(
-            f"✅ Payment #{payment.id} marked as COMPLETED"
-        )
-
-    # ---------------------------------------------------------
     # Create / activate enrollment
-    # ---------------------------------------------------------
     if payment.course:
-
         enrollment, created = Enrollment.objects.get_or_create(
             student=payment.user,
             course=payment.course,
-            defaults={
-                'status': 'active'
-            }
+            defaults={'status': 'active'}
         )
 
         if not created and enrollment.status != 'active':
             enrollment.status = 'active'
             enrollment.save(update_fields=['status'])
 
-        print(
-            f"✅ Enrollment #{enrollment.id} "
-            f"{'created' if created else 'activated'}"
-        )
+        print(f"✅ Enrollment #{enrollment.id} {'created' if created else 'activated'}")
 
         # Link payment to enrollment
         if payment.enrollment_id != enrollment.id:
             payment.enrollment = enrollment
             payment.save(update_fields=['enrollment'])
 
-    # ---------------------------------------------------------
     # Send confirmation email
-    # ---------------------------------------------------------
-    send_payment_success_email(
-        payment.user,
-        payment.course,
-        payment
-    )
+    send_payment_success_email(payment.user, payment.course, payment)
 
-    print(
-        f"🎉 SUCCESS: Payment #{payment.id} "
-        f"completed successfully."
-    )
-
+    print(f"🎉 SUCCESS: Payment #{payment.id} completed successfully.")
 
 
 def handle_failed_payment_from_session(session):
     """Handle async payment failure from checkout session"""
-    metadata = session.get('metadata', {})
+    # Access attributes directly
+    session_id = session.id if hasattr(session, 'id') else None
+    
+    metadata = {}
+    if hasattr(session, 'metadata') and session.metadata:
+        try:
+            metadata = dict(session.metadata)
+        except:
+            metadata = session.metadata if isinstance(session.metadata, dict) else {}
+    
     user_id = metadata.get('user_id')
     course_id = metadata.get('course_id')
     
@@ -751,7 +757,7 @@ def handle_failed_payment_from_session(session):
         user = User.objects.get(id=user_id)
         course = Course.objects.get(id=course_id)
         
-        payment = Payment.objects.filter(stripe_session_id=session['id']).first()
+        payment = Payment.objects.filter(stripe_session_id=session_id).first()
         if payment:
             payment.status = 'failed'
             payment.save()
@@ -766,7 +772,9 @@ def handle_failed_payment_from_session(session):
 
 def handle_expired_session(session):
     """Handle expired checkout session"""
-    payment = Payment.objects.filter(stripe_session_id=session['id']).first()
+    session_id = session.id if hasattr(session, 'id') else None
+    
+    payment = Payment.objects.filter(stripe_session_id=session_id).first()
     if payment and payment.status == 'pending':
         payment.status = 'expired'
         payment.save()
@@ -776,49 +784,53 @@ def handle_expired_session(session):
 
 def handle_failed_payment(payment_intent):
     """Handle failed payment"""
+    payment_intent_id = payment_intent.id if hasattr(payment_intent, 'id') else None
+    
     payment = Payment.objects.filter(
-        stripe_payment_intent_id=payment_intent['id']
+        stripe_payment_intent_id=payment_intent_id
     ).first()
     
     if payment:
         payment.status = 'failed'
         payment.save()
-        error_message = payment_intent.get('last_payment_error', {}).get('message', 'Payment failed')
+        
+        error_message = 'Payment failed'
+        if hasattr(payment_intent, 'last_payment_error') and payment_intent.last_payment_error:
+            last_error = payment_intent.last_payment_error
+            if hasattr(last_error, 'message'):
+                error_message = last_error.message
+            elif isinstance(last_error, dict):
+                error_message = last_error.get('message', 'Payment failed')
+        
         send_payment_failed_email(payment.user, payment.course, error_message)
         print(f"✅ Payment {payment.id} marked as failed")
-    else:
-        # Try to find by session ID from metadata
-        session_id = payment_intent.get('metadata', {}).get('checkout_session_id')
-        if session_id:
-            payment = Payment.objects.filter(stripe_session_id=session_id).first()
-            if payment:
-                payment.status = 'failed'
-                payment.stripe_payment_intent_id = payment_intent['id']
-                payment.save()
-                error_message = payment_intent.get('last_payment_error', {}).get('message', 'Payment failed')
-                send_payment_failed_email(payment.user, payment.course, error_message)
-                print(f"✅ Payment {payment.id} marked as failed (by session ID)")
 
 
 def handle_payment_intent_succeeded(payment_intent):
     """Handle successful payment intent"""
-    # Try to find payment by payment intent ID first
+    payment_intent_id = payment_intent.id if hasattr(payment_intent, 'id') else None
+    
     payment = Payment.objects.filter(
-        stripe_payment_intent_id=payment_intent['id']
+        stripe_payment_intent_id=payment_intent_id
     ).first()
     
-    # If not found, try to find by session ID from metadata
     if not payment:
-        session_id = payment_intent.get('metadata', {}).get('checkout_session_id')
+        metadata = {}
+        if hasattr(payment_intent, 'metadata') and payment_intent.metadata:
+            try:
+                metadata = dict(payment_intent.metadata)
+            except:
+                metadata = payment_intent.metadata if isinstance(payment_intent.metadata, dict) else {}
+        
+        session_id = metadata.get('checkout_session_id')
         if session_id:
             payment = Payment.objects.filter(stripe_session_id=session_id).first()
     
     if payment and payment.status != 'completed':
         payment.status = 'completed'
-        payment.stripe_payment_intent_id = payment_intent['id']
+        payment.stripe_payment_intent_id = payment_intent_id
         payment.save()
         
-        # Create or update enrollment
         if payment.course and payment.user:
             enrollment, created = Enrollment.objects.get_or_create(
                 student=payment.user,
@@ -839,14 +851,16 @@ def handle_payment_intent_succeeded(payment_intent):
 
 def handle_refunded_payment(charge):
     """Handle refunded payment"""
-    payment_intent_id = charge.get('payment_intent')
+    payment_intent_id = charge.payment_intent if hasattr(charge, 'payment_intent') else None
+    amount_refunded = charge.amount_refunded if hasattr(charge, 'amount_refunded') else 0
+    
     if payment_intent_id:
         payment = Payment.objects.filter(
             stripe_payment_intent_id=payment_intent_id
         ).first()
         
         if payment:
-            refund_amount = float(charge.get('amount_refunded', 0)) / 100
+            refund_amount = float(amount_refunded) / 100
             payment.status = 'refunded'
             payment.refund_amount = refund_amount
             payment.refunded_at = timezone.now()
@@ -862,11 +876,12 @@ def handle_refunded_payment(charge):
 
 def handle_dispute_created(dispute):
     """Handle payment dispute created"""
-    charge_id = dispute.get('charge')
+    charge_id = dispute.charge if hasattr(dispute, 'charge') else None
+    
     if charge_id:
         try:
             charge = stripe.Charge.retrieve(charge_id)
-            payment_intent_id = charge.get('payment_intent')
+            payment_intent_id = charge.payment_intent if hasattr(charge, 'payment_intent') else None
             
             if payment_intent_id:
                 payment = Payment.objects.filter(
@@ -875,7 +890,7 @@ def handle_dispute_created(dispute):
                 
                 if payment:
                     payment.status = 'disputed'
-                    payment.dispute_reason = dispute.get('reason', '')
+                    payment.dispute_reason = dispute.reason if hasattr(dispute, 'reason') else ''
                     payment.save()
                     
                     site_settings = get_site_settings_for_email()
@@ -895,8 +910,10 @@ def handle_dispute_created(dispute):
 
 def handle_payment_canceled(payment_intent):
     """Handle payment intent canceled"""
+    payment_intent_id = payment_intent.id if hasattr(payment_intent, 'id') else None
+    
     payment = Payment.objects.filter(
-        stripe_payment_intent_id=payment_intent['id']
+        stripe_payment_intent_id=payment_intent_id
     ).first()
     
     if payment and payment.status == 'pending':
@@ -970,6 +987,7 @@ def payment_history(request):
     
     context = {
         'payments': payments,
+        'total_spent': round(total_spent, 2),
         'completed_count': payments.filter(status='completed').count(),
         'pending_count': payments.filter(status='pending').count(),
         'failed_count': payments.filter(status='failed').count(),
