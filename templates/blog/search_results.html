@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Search Results - {{ query }}{% endblock %}
+
+{% block content %}
+<div style="background: linear-gradient(160deg, #0a1929 0%, #0d2137 30%, #0f2944 60%, #0c1e2e 100%); min-height: 100vh; padding: 60px 0;">
+    <div class="container">
+        <a href="{% url 'blog:home' %}" style="display: inline-flex; align-items: center; gap: 8px; color: #d4a77d; text-decoration: none; font-size: 0.9rem; margin-bottom: 30px;">
+            <i class="fas fa-arrow-left"></i> Back to Blog
+        </a>
+        
+        <div style="text-align: center; margin-bottom: 50px;">
+            <h1 style="font-size: 2rem; font-weight: 700; color: #ffffff; margin-bottom: 10px;">Search Results</h1>
+            <p style="color: #94a3b8; font-size: 1.1rem;">
+                {% if query %}
+                Found <strong style="color: #d4a77d;">{{ posts.paginator.count }}</strong> result{{ posts.paginator.count|pluralize }} for "<strong style="color: #ffffff;">{{ query }}</strong>"
+                {% else %}
+                Enter a search term to find articles
+                {% endif %}
+            </p>
+        </div>
+        
+        {% if posts %}
+        <div class="row">
+            {% for post in posts %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; overflow: hidden; height: 100%;">
+                    {% if post.featured_image %}
+                    <img src="{{ post.featured_image.url }}" alt="{{ post.title }}" style="width: 100%; height: 200px; object-fit: cover;">
+                    {% endif %}
+                    <div style="padding: 20px;">
+                        <h2 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 10px;">
+                            <a href="{{ post.get_absolute_url }}" style="color: #ffffff; text-decoration: none;">{{ post.title }}</a>
+                        </h2>
+                        <p style="color: #94a3b8; font-size: 0.85rem; line-height: 1.6; margin-bottom: 15px;">{{ post.excerpt|truncatewords:20 }}</p>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #64748b;">
+                            <span>{{ post.author.get_full_name|default:post.author.email }}</span>
+                            <span>{{ post.reading_time }} min read</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        {% if posts.has_other_pages %}
+        <ul style="display: flex; justify-content: center; gap: 8px; list-style: none; padding: 0; margin-top: 40px;">
+            {% if posts.has_previous %}
+            <li><a href="?q={{ query }}&page={{ posts.previous_page_number }}" style="display: flex; align-items: center; justify-content: center; min-width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,0.05); color: #94a3b8; text-decoration: none;">&laquo;</a></li>
+            {% endif %}
+            <li><span style="display: flex; align-items: center; justify-content: center; min-width: 40px; height: 40px; padding: 0 15px; border-radius: 10px; background: #ad7a49; color: white;">Page {{ posts.number }} of {{ posts.paginator.num_pages }}</span></li>
+            {% if posts.has_next %}
+            <li><a href="?q={{ query }}&page={{ posts.next_page_number }}" style="display: flex; align-items: center; justify-content: center; min-width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,0.05); color: #94a3b8; text-decoration: none;">&raquo;</a></li>
+            {% endif %}
+        </ul>
+        {% endif %}
+        
+        {% else %}
+        <div style="text-align: center; padding: 60px 20px;">
+            <i class="fas fa-search" style="font-size: 4rem; color: #475569; margin-bottom: 20px;"></i>
+            <h3 style="color: #ffffff; font-size: 1.5rem; margin-bottom: 10px;">No results found</h3>
+            <p style="color: #94a3b8;">Try different keywords or browse all articles</p>
+            <a href="{% url 'blog:home' %}" style="display: inline-block; margin-top: 20px; padding: 10px 24px; background: #ad7a49; color: white; border-radius: 8px; text-decoration: none;">Browse All Articles</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

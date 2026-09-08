@@ -1,0 +1,197 @@
+{% extends "dashboard/admin/admin_base.html" %}
+{% load static %}
+
+{% block title %}{% if is_edit %}Edit Category{% else %}Add Category{% endif %}{% endblock %}
+{% block page_title %}{% if is_edit %}Edit Category{% else %}Add Category{% endif %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .breadcrumb-row { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; margin-bottom: 8px; }
+    .breadcrumb-row a { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+    .breadcrumb-row a:hover { color: var(--accent-blue); }
+    .breadcrumb-row .separator { color: var(--text-muted); }
+    .breadcrumb-row .current { color: var(--text-dark); font-weight: 600; }
+    .page-subtitle { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 24px; }
+
+    .form-card { background: var(--card-bg); border-radius: 16px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); border: 1px solid var(--border-color); max-width: 600px; }
+    .form-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border-color); }
+    .form-card-header .icon-circle { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.9rem; flex-shrink: 0; }
+    .icon-circle.orange { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .form-card-header h3 { font-size: 0.95rem; font-weight: 600; color: var(--text-dark); margin: 0; }
+
+    .form-group { margin-bottom: 18px; }
+    .form-group:last-child { margin-bottom: 0; }
+    .form-group label { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 600; color: var(--text-dark); margin-bottom: 6px; }
+    .form-group label .required-dot { color: #ef4444; font-weight: 700; }
+    .form-group label .optional { font-size: 0.65rem; color: var(--text-muted); font-weight: 400; }
+    .form-control { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border-color); border-radius: 10px; font-size: 0.85rem; font-family: 'Poppins', sans-serif; color: var(--text-dark); background: #f8fafc; outline: none; transition: all 0.2s; }
+    .form-control:focus { border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.08); background: white; }
+    .form-control::placeholder { color: #94a3b8; }
+    .form-control.error { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08); }
+    textarea.form-control { resize: vertical; min-height: 80px; line-height: 1.6; }
+    .hint { font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+
+    .toggle-row { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+    .toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #cbd5e1; border-radius: 24px; transition: 0.3s; }
+    .toggle-slider:before { content: ""; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+    .toggle-switch input:checked + .toggle-slider { background: #10b981; }
+    .toggle-switch input:checked + .toggle-slider:before { transform: translateX(20px); }
+    .toggle-label { font-size: 0.82rem; color: var(--text-dark); font-weight: 500; }
+
+    .color-picker-wrapper { display: flex; align-items: center; gap: 10px; }
+    .color-preview { width: 40px; height: 40px; border-radius: 8px; border: 2px solid #e5e7eb; cursor: pointer; }
+    .color-input { flex: 1; }
+
+    .form-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-color); }
+    .btn { padding: 11px 24px; border-radius: 10px; font-size: 0.88rem; font-weight: 600; cursor: pointer; border: none; font-family: 'Poppins', sans-serif; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
+    .btn-primary { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3); }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4); }
+    .btn-secondary { background: white; color: var(--text-dark); border: 1px solid var(--border-color); }
+    .btn-secondary:hover { background: #f8fafc; }
+
+    .icon-options { display: flex; flex-wrap: wrap; gap: 8px; }
+    .icon-option { width: 40px; height: 40px; border: 2px solid #e5e7eb; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; font-size: 1.2rem; background: #f8fafc; }
+    .icon-option:hover { border-color: #f59e0b; background: #fef3c7; }
+    .icon-option.selected { border-color: #f59e0b; background: #fef3c7; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2); }
+
+    @media (max-width: 768px) { 
+        .form-actions { flex-direction: column; }
+        .form-actions .btn { justify-content: center; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-row">
+    <a href="{% url 'dashboard:blog_categories' %}"><i class="fas fa-arrow-left"></i> Categories</a>
+    <span class="separator">/</span>
+    <span class="current">{% if is_edit %}Edit Category{% else %}Add Category{% endif %}</span>
+</div>
+<p class="page-subtitle">{% if is_edit %}Update category details.{% else %}Create a new blog category.{% endif %}</p>
+
+{% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" style="border-radius:12px;margin-bottom:16px;font-size:0.85rem;">{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    {% endfor %}
+{% endif %}
+
+<form method="POST" id="categoryForm">
+    {% csrf_token %}
+    
+    <div class="form-card">
+        <div class="form-card-header">
+            <div class="icon-circle orange"><i class="fas fa-folder"></i></div>
+            <h3>Category Details</h3>
+        </div>
+        
+        <div class="form-group">
+            <label>Category Name <span class="required-dot">*</span></label>
+            <input type="text" name="name" class="form-control" placeholder="e.g., AI Governance" required value="{{ category.name|default:'' }}">
+        </div>
+        
+        <div class="form-group">
+            <label>Slug <span class="optional">(optional)</span></label>
+            <input type="text" name="slug" class="form-control" placeholder="Auto-generated if left empty" value="{{ category.slug|default:'' }}">
+            <div class="hint"><i class="fas fa-info-circle"></i> Leave empty to auto-generate from name</div>
+        </div>
+        
+        <div class="form-group">
+            <label>Description <span class="optional">(optional)</span></label>
+            <textarea name="description" class="form-control" rows="3" placeholder="Brief description of this category">{{ category.description|default:'' }}</textarea>
+        </div>
+        
+        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div class="form-group">
+                <label>Icon <span class="optional">(optional)</span></label>
+                <input type="text" name="icon" class="form-control" placeholder="e.g., fa-robot" value="{{ category.icon|default:'' }}" id="iconInput">
+                <div class="hint"><i class="fas fa-info-circle"></i> Font Awesome class name</div>
+                
+                <div class="icon-options" style="margin-top: 10px;">
+                    <div class="icon-option" data-icon="fa-robot" onclick="selectIcon(this)"><i class="fas fa-robot"></i></div>
+                    <div class="icon-option" data-icon="fa-brain" onclick="selectIcon(this)"><i class="fas fa-brain"></i></div>
+                    <div class="icon-option" data-icon="fa-shield-alt" onclick="selectIcon(this)"><i class="fas fa-shield-alt"></i></div>
+                    <div class="icon-option" data-icon="fa-balance-scale" onclick="selectIcon(this)"><i class="fas fa-balance-scale"></i></div>
+                    <div class="icon-option" data-icon="fa-cogs" onclick="selectIcon(this)"><i class="fas fa-cogs"></i></div>
+                    <div class="icon-option" data-icon="fa-chart-line" onclick="selectIcon(this)"><i class="fas fa-chart-line"></i></div>
+                    <div class="icon-option" data-icon="fa-lock" onclick="selectIcon(this)"><i class="fas fa-lock"></i></div>
+                    <div class="icon-option" data-icon="fa-file-contract" onclick="selectIcon(this)"><i class="fas fa-file-contract"></i></div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Color</label>
+                <div class="color-picker-wrapper">
+                    <div class="color-preview" id="colorPreview" style="background-color: {{ category.color|default:'#ad7a49' }};" onclick="document.getElementById('colorInput').click()"></div>
+                    <input type="color" name="color" id="colorInput" class="form-control color-input" value="{{ category.color|default:'#ad7a49' }}" onchange="updateColorPreview(this.value)">
+                </div>
+                <div class="hint"><i class="fas fa-info-circle"></i> Used for category badges</div>
+            </div>
+        </div>
+        
+        <div class="toggle-row">
+            <label class="toggle-switch">
+                <input type="checkbox" name="is_active" {% if not is_edit or category.is_active %}checked{% endif %}>
+                <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label"><i class="fas fa-check-circle" style="color:#10b981;"></i> Active Category</span>
+        </div>
+    </div>
+    
+    <div class="form-actions">
+        <a href="{% url 'dashboard:blog_categories' %}" class="btn btn-secondary"><i class="fas fa-times"></i> Cancel</a>
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-check-circle"></i> 
+            {% if is_edit %}Update Category{% else %}Create Category{% endif %}
+        </button>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function selectIcon(element) {
+        // Remove selected class from all icons
+        document.querySelectorAll('.icon-option').forEach(function(icon) {
+            icon.classList.remove('selected');
+        });
+        
+        // Add selected class to clicked icon
+        element.classList.add('selected');
+        
+        // Update the input field
+        var iconInput = document.getElementById('iconInput');
+        if (iconInput) {
+            iconInput.value = element.getAttribute('data-icon');
+        }
+    }
+    
+    function updateColorPreview(color) {
+        var preview = document.getElementById('colorPreview');
+        if (preview) {
+            preview.style.backgroundColor = color;
+        }
+    }
+    
+    // Form validation
+    document.getElementById('categoryForm').addEventListener('submit', function(e) {
+        var nameInput = this.querySelector('[name="name"]');
+        if (!nameInput.value.trim()) {
+            e.preventDefault();
+            nameInput.classList.add('error');
+            nameInput.focus();
+            alert('Please enter a category name.');
+        }
+    });
+    
+    // Set initial selected icon if editing
+    {% if category and category.icon %}
+    document.querySelectorAll('.icon-option').forEach(function(icon) {
+        if (icon.getAttribute('data-icon') === '{{ category.icon }}') {
+            icon.classList.add('selected');
+        }
+    });
+    {% endif %}
+</script>
+{% endblock %}

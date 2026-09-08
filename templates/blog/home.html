@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Blog & Insights - AI Governance Academy{% endblock %}
+
+{% block meta_description %}Explore articles, insights, and expert perspectives on AI governance, ethics, compliance, and responsible AI development.{% endblock %}
+
+{% block og_title %}Blog & Insights - AI Governance Academy{% endblock %}
+{% block og_description %}Expert articles on AI compliance, ethics, and governance.{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root { --navy: #0c1e2e; --navy-light: #142a3e; --gold: #ad7a49; --gold-dark: #b07d55; --gold-light: #d4a77d; --cream: #e8e4df; --text-light: #a0b0c0; --white: #ffffff; }
+
+    .blog-search-section { background: linear-gradient(135deg, #f8f9fa 0%, #e8ecf1 100%); padding: 50px 0 60px 0; }
+    .blog-category-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 15px; margin-bottom: 25px; font-size: 15px; }
+    .blog-category-nav .label { font-weight: 700; color: #212529; display: flex; align-items: center; gap: 6px; }
+    .blog-category-nav .label i { color: #c4c4c4; font-size: 13px; }
+    .blog-category-nav .nav-item { color: #6b7280; text-decoration: none; position: relative; font-weight: 500; transition: all 0.3s ease; padding: 4px 0; }
+    .blog-category-nav .nav-item:hover, .blog-category-nav .nav-item.active { color: var(--gold); font-weight: 600; }
+    .blog-category-nav .nav-item::after { content: ''; position: absolute; bottom: 0; left: 0; width: 0; height: 2px; background: var(--gold); transition: width 0.3s ease; }
+    .blog-category-nav .nav-item:hover::after, .blog-category-nav .nav-item.active::after { width: 100%; }
+    .blog-category-nav .divider { color: #d1d5db; font-size: 12px; }
+    .blog-header-title { font-size: 42px; font-weight: 700; color: #111827; margin-bottom: 10px; }
+    .blog-header-subtitle { font-size: 20px; font-weight: 500; color: #374151; margin-bottom: 5px; margin-top: 10px; }
+    .blog-header-desc { color: #6b7280; font-size: 16px; margin-bottom: 30px; max-width: 600px; line-height: 1.6; }
+    .blog-filters-wrapper { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; justify-content: space-between; }
+
+    .blog-filter-tabs { display: flex; gap: 0; background-color: #e2e8f0; border-radius: 6px; overflow: hidden; }
+    .blog-filter-tabs a { padding: 10px 18px; font-size: 15px; font-weight: 500; color: #4a5568; text-decoration: none; transition: all 0.3s ease; white-space: nowrap; }
+    .blog-filter-tabs a:hover { color: #1a202c; background-color: #cbd5e0; }
+    .blog-filter-tabs a.active { background-color: #2d2d2d; color: #ffffff; }
+    .blog-filter-tabs a:not(:last-child) { border-right: 1px solid rgba(0,0,0,0.08); }
+
+    .search-input-wrapper { flex-grow: 1; max-width: 450px; position: relative; }
+    .search-input-wrapper .form-control { background-color: #ffffff; border: 1.5px solid #e5e7eb; border-radius: 50px; padding: 11px 50px 11px 22px; font-size: 15px; color: #374151; transition: all 0.3s ease; }
+    .search-input-wrapper .form-control:focus { background-color: #ffffff; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(173,122,73,0.1); }
+    .search-input-wrapper .search-btn { position: absolute; right: 5px; top: 37%; transform: translateY(-50%); background: var(--gold); border: none; padding: 8px 14px; border-radius: 50px; color: white; cursor: pointer; transition: all 0.3s ease; }
+    .search-input-wrapper .search-btn:hover { background: var(--gold-dark); }
+
+    .dots-dropdown { position: relative; display: inline-block; }
+    .dots-dropdown-content { display: none; position: absolute; right: 0; top: 100%; background: white; min-width: 200px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); border-radius: 8px; z-index: 1000; padding: 8px 0; }
+    .dots-dropdown-content a { display: block; padding: 10px 20px; font-size: 14px; color: #374151; text-decoration: none; transition: all 0.2s ease; }
+    .dots-dropdown-content a:hover { background-color: #fef7f0; color: #ad7a49; }
+    .dots-dropdown:hover .dots-dropdown-content { display: block; }
+    .dots-menu { color: #a0aec0; cursor: pointer; font-size: 18px; padding: 4px 8px; border: none; background: none; text-decoration: none; }
+
+    /* Featured Post Section */
+    .featured-post-section { background: linear-gradient(160deg, #0a1929 0%, #0d2137 30%, #0f2944 60%, #0c1e2e 100%); padding: 80px 0; position: relative; overflow: hidden; }
+    .featured-post-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; overflow: hidden; transition: all 0.3s ease; }
+    .featured-post-card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.3); border-color: rgba(173,122,73,0.3); }
+    .featured-post-image { height: 280px; overflow: hidden; }
+    .featured-post-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+    .featured-post-card:hover .featured-post-image img { transform: scale(1.05); }
+    .featured-post-content { padding: 25px; }
+    .featured-post-badge { display: inline-block; background: rgba(173,122,73,0.2); color: #d4a77d; padding: 5px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+    .featured-post-title { font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 12px; line-height: 1.3; }
+    .featured-post-title a { color: #fff; text-decoration: none; transition: color 0.3s; }
+    .featured-post-title a:hover { color: #d4a77d; }
+    .featured-post-excerpt { color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 15px; }
+    .featured-post-meta { display: flex; align-items: center; gap: 15px; color: #64748b; font-size: 12px; }
+    .featured-post-meta span { display: flex; align-items: center; gap: 5px; }
+    .featured-post-meta i { color: #ad7a49; }
+
+    /* Blog Cards */
+    .blog-cards-section { background: #f8fafc; padding: 60px 0; }
+    .blog-cards-header { text-align: center; margin-bottom: 40px; }
+    .blog-cards-title { font-size: 32px; font-weight: 700; color: #0c1e2e; margin-bottom: 10px; }
+    .blog-cards-subtitle { font-size: 16px; color: #6b7280; max-width: 550px; margin: 0 auto; }
+
+    .blog-card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 15px rgba(0,0,0,0.06); transition: all 0.3s ease; height: 100%; display: flex; flex-direction: column; }
+    .blog-card:hover { transform: translateY(-5px); box-shadow: 0 12px 35px rgba(0,0,0,0.1); }
+    .blog-card-image { height: 200px; overflow: hidden; position: relative; }
+    .blog-card-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+    .blog-card:hover .blog-card-image img { transform: scale(1.05); }
+    .blog-card-category { position: absolute; top: 12px; left: 12px; background: #ad7a49; color: #fff; padding: 5px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .blog-card-content { padding: 20px; flex: 1; display: flex; flex-direction: column; }
+    .blog-card-title { font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 10px; line-height: 1.4; }
+    .blog-card-title a { color: #1e293b; text-decoration: none; transition: color 0.3s; }
+    .blog-card-title a:hover { color: #ad7a49; }
+    .blog-card-excerpt { color: #6b7280; font-size: 14px; line-height: 1.6; margin-bottom: 15px; flex: 1; }
+    .blog-card-footer { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #f1f5f9; padding-top: 15px; font-size: 12px; color: #64748b; }
+    .blog-card-author { display: flex; align-items: center; gap: 8px; }
+    .blog-card-author-avatar { width: 28px; height: 28px; border-radius: 50%; background: #e2e8f0; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 12px; font-weight: 600; }
+    .blog-card-read-time { display: flex; align-items: center; gap: 5px; }
+
+    .results-count { font-size: 14px; color: #6b7280; margin-bottom: 25px; text-align: center; }
+    .results-count strong { color: #111827; font-weight: 600; }
+    .empty-posts { text-align: center; padding: 80px 20px; }
+    .empty-posts i { font-size: 4rem; color: #d1d5db; margin-bottom: 16px; }
+
+    @media (max-width: 767px) { 
+        .blog-header-title { font-size: 28px; } 
+        .blog-header-subtitle { font-size: 17px; } 
+        .blog-filters-wrapper { flex-direction: column; align-items: stretch; } 
+        .search-input-wrapper { max-width: 100%; } 
+        .featured-post-image { height: 200px; }
+        .featured-post-title { font-size: 18px; }
+        .blog-card-image { height: 180px; }
+        .blog-cards-title { font-size: 26px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ===================== SEARCH & CATEGORY SECTION ===================== -->
+<div class="blog-search-section">
+    <div class="container">
+        <div class="blog-category-nav">
+            <span class="label">Blog Categories <i class="bi bi-chevron-right"></i></span>
+            <div class="d-flex align-items-center flex-wrap gap-2">
+                <a href="{% url 'blog:home' %}" class="nav-item {% if not current_category %}active{% endif %}">All Posts</a>
+                <span class="divider">|</span>
+                {% for category in categories %}
+                    {% if forloop.counter <= 4 %}
+                    <a href="{% url 'blog:category_detail' slug=category.slug %}" class="nav-item {% if current_category == category.slug %}active{% endif %}">{{ category.name }}</a>
+                    <span class="divider">|</span>
+                    {% endif %}
+                {% endfor %}
+                {% if categories|length > 4 %}
+                <div class="dots-dropdown">
+                    <a href="#" class="dots-menu" onclick="return false;"><i class="bi bi-three-dots-vertical"></i></a>
+                    <div class="dots-dropdown-content">
+                        {% for category in categories %}
+                            {% if forloop.counter > 4 %}
+                            <a href="{% url 'blog:category_detail' slug=category.slug %}">{{ category.name }}</a>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <h1 class="blog-header-title">Blog & Insights</h1>
+        <p class="blog-header-subtitle">Expert Perspectives on AI Governance</p>
+        <p class="blog-header-desc">Stay informed with the latest articles, insights, and best practices in AI ethics, compliance, and responsible AI development.</p>
+
+        <div class="blog-filters-wrapper">
+            <div class="blog-filter-tabs">
+                <a href="{% url 'blog:home' %}" class="{% if not request.GET.tag %}active{% endif %}">All Posts</a>
+                <a href="{% url 'blog:home' %}?tag=featured" class="{% if request.GET.tag == 'featured' %}active{% endif %}">Featured</a>
+                <a href="{% url 'blog:home' %}?tag=ai-governance" class="{% if request.GET.tag == 'ai-governance' %}active{% endif %}">AI Governance</a>
+                <a href="{% url 'blog:home' %}?tag=compliance" class="{% if request.GET.tag == 'compliance' %}active{% endif %}">Compliance</a>
+            </div>
+
+            <div class="search-input-wrapper">
+                <form method="GET" action="{% url 'blog:search' %}">
+                    <input type="text" name="q" class="form-control" placeholder="Search articles..." value="{{ query|default:'' }}">
+                    <button type="submit" class="search-btn"><i class="bi bi-search"></i></button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== FEATURED POSTS SECTION ===================== -->
+{% comment %} {% if featured_posts %}
+<section class="featured-post-section">
+    <div class="container">
+        <div class="row">
+            {% for post in featured_posts|slice:":2" %}
+            <div class="col-lg-6 mb-4">
+                <div class="featured-post-card">
+                    <div class="featured-post-image">
+                        {% if post.featured_image %}
+                        <img src="{{ post.featured_image.url }}" alt="{{ post.title }}" loading="lazy">
+                        {% else %}
+                        <img src="https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=600&h=400&fit=crop" alt="{{ post.title }}" loading="lazy">
+                        {% endif %}
+                    </div>
+                    <div class="featured-post-content">
+                        <span class="featured-post-badge">⭐ Featured Article</span>
+                        <h2 class="featured-post-title">
+                            <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+                        </h2>
+                        <p class="featured-post-excerpt">{{ post.excerpt|truncatewords:25 }}</p>
+                        <div class="featured-post-meta">
+                            <span><i class="fas fa-user"></i> {{ post.author.get_full_name|default:post.author.email }}</span>
+                            <span><i class="fas fa-calendar"></i> {{ post.published_at|date:"M d, Y" }}</span>
+                            <span><i class="fas fa-clock"></i> {{ post.reading_time }} min read</span>
+                            <span><i class="fas fa-eye"></i> {{ post.views_count }} views</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %} {% endcomment %}
+
+<!-- ===================== RECENT POSTS SECTION ===================== -->
+<section class="blog-cards-section">
+    <div class="container">
+        <div class="blog-cards-header">
+            <h2 class="blog-cards-title">Recent Articles</h2>
+            <p class="blog-cards-subtitle">Latest insights and expert perspectives on AI governance, ethics, and compliance</p>
+        </div>
+
+        {% if recent_posts %}
+        <div class="results-count">Showing <strong>{{ recent_posts|length }}</strong> recent articles</div>
+        <div class="row">
+            {% for post in recent_posts %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="blog-card">
+                    <div class="blog-card-image">
+                        {% if post.featured_image %}
+                        <img src="{{ post.featured_image.url }}" alt="{{ post.title }}" loading="lazy">
+                        {% else %}
+                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=250&fit=crop" alt="{{ post.title }}" loading="lazy">
+                        {% endif %}
+                        {% if post.category %}
+                        <span class="blog-card-category">{{ post.category.name }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="blog-card-content">
+                        <h3 class="blog-card-title">
+                            <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+                        </h3>
+                        <p class="blog-card-excerpt">{{ post.excerpt|truncatewords:20 }}</p>
+                        <div class="blog-card-footer">
+                            <div class="blog-card-author">
+                                <div class="blog-card-author-avatar">
+                                    {{ post.author.get_full_name|default:post.author.email|slice:":1"|upper }}
+                                </div>
+                                <span>{{ post.author.get_full_name|default:post.author.email }}</span>
+                            </div>
+                            <div class="blog-card-read-time">
+                                <i class="fas fa-clock"></i>
+                                <span>{{ post.reading_time }} min</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-posts">
+            <i class="fas fa-newspaper"></i>
+            <h3>No Articles Yet</h3>
+            <p>Check back soon for new content!</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- ===================== TAGS SECTION ===================== -->
+{% if tags %}
+<section class="py-5" style="background: #fff;">
+    <div class="container">
+        <h3 class="text-center mb-4" style="font-weight: 700; color: #0c1e2e;">Popular Topics</h3>
+        <div class="text-center">
+            {% for tag in tags %}
+            <a href="{% url 'blog:tag_detail' slug=tag.slug %}" class="d-inline-block m-1 px-3 py-2 rounded-pill" style="background: #f1f5f9; color: #6b7280; text-decoration: none; font-size: 13px; transition: all 0.3s;" onmouseover="this.style.background='#ad7a49'; this.style.color='#fff';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#6b7280';">
+                #{{ tag.name }} <span style="opacity: 0.6;">({{ tag.post_count }})</span>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+{% endblock %}

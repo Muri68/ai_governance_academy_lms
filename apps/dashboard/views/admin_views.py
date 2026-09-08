@@ -2323,3 +2323,431 @@ def manage_final_exam(request, course_id):
     }
     
     return render(request, 'dashboard/admin/manage_final_exam.html', context)
+
+
+from apps.blog.models import Post, Category, Tag, Comment
+from django.core.paginator import Paginator
+from django.utils.text import slugify
+
+
+
+@login_required
+@superadmin_required
+def admin_blog_dashboard(request):
+    """Blog management dashboard"""
+    posts = Post.objects.all().select_related('author', 'category').prefetch_related('tags')
+    categories = Category.objects.all().annotate(post_count=Count('posts'))
+    tags = Tag.objects.all().annotate(post_count=Count('posts'))
+    comments = Comment.objects.all().select_related('post', 'author')
+    
+    # Statistics
+    total_posts = posts.count()
+    published_posts = posts.filter(status='published').count()
+    draft_posts = posts.filter(status='draft').count()
+    pending_posts = posts.filter(status='pending').count()
+    total_comments = comments.count()
+    pending_comments = comments.filter(is_approved=False).count()
+    total_views = posts.aggregate(total=Sum('views_count'))['total'] or 0
+    
+    context = {
+        'posts': posts[:10],
+        'categories': categories,
+        'tags': tags,
+        'comments': comments[:10],
+        'total_posts': total_posts,
+        'published_posts': published_posts,
+        'draft_posts': draft_posts,
+        'pending_posts': pending_posts,
+        'total_comments': total_comments,
+        'pending_comments': pending_comments,
+        'total_views': total_views,
+    }
+    return render(request, 'dashboard/admin/blog_dashboard.html', context)
+
+
+@login_required
+@superadmin_required
+def admin_blog_posts(request):
+    """List all blog posts for management"""
+    status_filter = request.GET.get('status', '')
+    category_filter = request.GET.get('category', '')
+    search_query = request.GET.get('search', '')
+    
+    posts = Post.objects.all().select_related('author', 'category').prefetch_related('tags')
+    
+    if status_filter:
+        posts = posts.filter(status=status_filter)
+    if category_filter:
+        posts = posts.filter(category__slug=category_filter)
+    if search_query:
+        posts = posts.filter(
+            Q(title__icontains=search_query) |
+            Q(excerpt__icontains=search_query)
+        )
+    
+    posts = posts.order_by('-created_at')
+    
+    paginator = Paginator(posts, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    categories = Category.objects.filter(is_active=True)
+    
+    context = {
+        'posts': page_obj,
+        'categories': categories,
+        'status_filter': status_filter,
+        'category_filter': category_filter,
+        'search_query': search_query,
+    }
+    return render(request, 'dashboard/admin/blog_posts.html', context)
+
+
+@login_required
+@superadmin_required
+def admin_blog_post_add(request):
+    """Add new blog post"""
+    if request.method == 'POST':
+        title = request.POST.get('title', '').strip()
+        slug = request.POST.get('slug', '').strip() or slugify(title)
+        author_id = request.POST.get('author')
+        category_id = request.POST.get('category')
+        related_course_id = request.POST.get('related_course')
+        excerpt = request.POST.get('excerpt', '').strip()
+        content = request.POST.get('content', '').strip()
+        status = request.POST.get('status', 'draft')
+        is_featured = request.POST.get('is_featured') == 'on'
+        meta_title = request.POST.get('meta_title', '').strip()
+        meta_description = request.POST.get('meta_description', '').strip()
+        meta_keywords = request.POST.get('meta_keywords', '').strip()
+        tag_ids = request.POST.getlist('tags')
+        
+        # Handle new tags
+        import json
+        from django.utils.text import slugify as slugify_func
+        
+        new_tags_json = request.POST.get('new_tags', '[]')
+        try:
+            new_tags_list = json.loads(new_tags_json)
+        except (json.JSONDecodeError, TypeError):
+            new_tags_list = []
+        
+        if not title:
+            messages.error(request, 'Post title is required.')
+            return redirect('dashboard:blog_post_add')
+        
+        try:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            author = User.objects.get(id=author_id)
+        except (User.DoesNotExist, ValueError):
+            author = request.user
+        
+        # Create new tags
+        for tag_name in new_tags_list:
+            tag_name = tag_name.strip()
+            if tag_name:
+                tag, created = Tag.objects.get_or_create(
+                    name=tag_name,
+                    defaults={'slug': slugify_func(tag_name)}
+                )
+                if tag.id not in tag_ids:
+                    tag_ids.append(str(tag.id))
+        
+        post = Post.objects.create(
+            title=title,
+            slug=slugify_func(slug) if slug else slugify_func(title),
+            author=author,
+            excerpt=excerpt,
+            content=content,
+            status=status,
+            is_featured=is_featured,
+            meta_title=meta_title,
+            meta_description=meta_description,
+            meta_keywords=meta_keywords,
+        )
+        
+        if category_id:
+            try:
+                post.category = Category.objects.get(id=category_id)
+            except Category.DoesNotExist:
+                pass
+        
+        if related_course_id:
+            try:
+                post.related_course = Course.objects.get(id=related_course_id)
+            except Course.DoesNotExist:
+                pass
+        
+        if 'featured_image' in request.FILES:
+            post.featured_image = request.FILES['featured_image']
+        
+        post.save()
+        
+        if tag_ids:
+            post.tags.set(tag_ids)
+        
+        messages.success(request, f'Blog post "{title}" created successfully.')
+        return redirect('dashboard:blog_posts')
+    
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    authors = User.objects.filter(is_staff=True)
+    categories = Category.objects.filter(is_active=True)
+    tags = Tag.objects.all()
+    courses = Course.objects.filter(status='published')
+    
+    context = {
+        'authors': authors,
+        'categories': categories,
+        'tags': tags,
+        'courses': courses,
+    }
+    return render(request, 'dashboard/admin/blog_post_form.html', context)
+
+
+@login_required
+@superadmin_required
+def admin_blog_post_edit(request, post_id):
+    """Edit blog post"""
+    post = get_object_or_404(Post, id=post_id)
+    
+    if request.method == 'POST':
+        import json
+        from django.utils.text import slugify as slugify_func
+        
+        title = request.POST.get('title', '').strip()
+        post.title = title
+        
+        slug = request.POST.get('slug', '').strip()
+        post.slug = slugify_func(slug) if slug else slugify_func(title)
+        
+        post.excerpt = request.POST.get('excerpt', '').strip()
+        post.content = request.POST.get('content', '').strip()
+        post.status = request.POST.get('status', 'draft')
+        post.is_featured = request.POST.get('is_featured') == 'on'
+        post.meta_title = request.POST.get('meta_title', '').strip()
+        post.meta_description = request.POST.get('meta_description', '').strip()
+        post.meta_keywords = request.POST.get('meta_keywords', '').strip()
+        
+        category_id = request.POST.get('category')
+        if category_id:
+            try:
+                post.category = Category.objects.get(id=category_id)
+            except Category.DoesNotExist:
+                post.category = None
+        else:
+            post.category = None
+        
+        related_course_id = request.POST.get('related_course')
+        if related_course_id:
+            try:
+                post.related_course = Course.objects.get(id=related_course_id)
+            except Course.DoesNotExist:
+                post.related_course = None
+        else:
+            post.related_course = None
+        
+        if 'featured_image' in request.FILES:
+            post.featured_image = request.FILES['featured_image']
+        
+        post.save()
+        
+        # Handle tags
+        tag_ids = request.POST.getlist('tags')
+        
+        # Handle new tags
+        new_tags_json = request.POST.get('new_tags', '[]')
+        try:
+            new_tags_list = json.loads(new_tags_json)
+        except (json.JSONDecodeError, TypeError):
+            new_tags_list = []
+        
+        # Create new tags
+        for tag_name in new_tags_list:
+            tag_name = tag_name.strip()
+            if tag_name:
+                tag, created = Tag.objects.get_or_create(
+                    name=tag_name,
+                    defaults={'slug': slugify_func(tag_name)}
+                )
+                if str(tag.id) not in tag_ids:
+                    tag_ids.append(str(tag.id))
+        
+        post.tags.set(tag_ids)
+        
+        messages.success(request, f'Blog post "{title}" updated successfully.')
+        return redirect('dashboard:blog_posts')
+    
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    authors = User.objects.filter(is_staff=True)
+    categories = Category.objects.filter(is_active=True)
+    tags = Tag.objects.all()
+    courses = Course.objects.filter(status='published')
+    
+    context = {
+        'post': post,
+        'authors': authors,
+        'categories': categories,
+        'tags': tags,
+        'courses': courses,
+        'is_edit': True,
+    }
+    return render(request, 'dashboard/admin/blog_post_form.html', context)
+
+
+@login_required
+@superadmin_required
+def admin_blog_post_action(request, post_id, action):
+    """Perform actions on blog posts"""
+    post = get_object_or_404(Post, id=post_id)
+    
+    if action == 'publish':
+        post.status = 'published'
+        post.published_at = timezone.now()
+        post.save()
+        messages.success(request, f'Post "{post.title}" published successfully.')
+    elif action == 'unpublish':
+        post.status = 'draft'
+        post.save()
+        messages.success(request, f'Post "{post.title}" unpublished.')
+    elif action == 'archive':
+        post.status = 'archived'
+        post.save()
+        messages.success(request, f'Post "{post.title}" archived.')
+    elif action == 'feature':
+        post.is_featured = True
+        post.save()
+        messages.success(request, f'Post "{post.title}" marked as featured.')
+    elif action == 'unfeature':
+        post.is_featured = False
+        post.save()
+        messages.success(request, f'Post "{post.title}" removed from featured.')
+    elif action == 'delete':
+        post.delete()
+        messages.success(request, 'Post deleted successfully.')
+    
+    return redirect('dashboard:blog_posts')
+
+
+@login_required
+@superadmin_required
+def admin_blog_categories(request):
+    """Manage blog categories"""
+    categories = Category.objects.all().annotate(post_count=Count('posts'))
+    
+    context = {
+        'categories': categories,
+    }
+    return render(request, 'dashboard/admin/blog_categories.html', context)
+
+
+@login_required
+@superadmin_required
+def admin_blog_category_add(request):
+    """Add new category"""
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        slug = request.POST.get('slug', '').strip() or slugify(name)
+        description = request.POST.get('description', '').strip()
+        icon = request.POST.get('icon', '').strip()
+        color = request.POST.get('color', '#ad7a49')
+        is_active = request.POST.get('is_active') == 'on'
+        
+        if not name:
+            messages.error(request, 'Category name is required.')
+            return redirect('dashboard:blog_category_add')
+        
+        Category.objects.create(
+            name=name,
+            slug=slug,
+            description=description,
+            icon=icon,
+            color=color,
+            is_active=is_active,
+        )
+        
+        messages.success(request, f'Category "{name}" created successfully.')
+        return redirect('dashboard:blog_categories')
+    
+    return render(request, 'dashboard/admin/blog_category_form.html')
+
+
+@login_required
+@superadmin_required
+def admin_blog_category_edit(request, category_id):
+    """Edit category"""
+    category = get_object_or_404(Category, id=category_id)
+    
+    if request.method == 'POST':
+        category.name = request.POST.get('name', '').strip()
+        category.slug = request.POST.get('slug', '').strip() or slugify(category.name)
+        category.description = request.POST.get('description', '').strip()
+        category.icon = request.POST.get('icon', '').strip()
+        category.color = request.POST.get('color', '#ad7a49')
+        category.is_active = request.POST.get('is_active') == 'on'
+        category.save()
+        
+        messages.success(request, f'Category "{category.name}" updated successfully.')
+        return redirect('dashboard:blog_categories')
+    
+    context = {
+        'category': category,
+        'is_edit': True,
+    }
+    return render(request, 'dashboard/admin/blog_category_form.html', context)
+
+
+@login_required
+@superadmin_required
+def admin_blog_category_action(request, category_id, action):
+    """Perform actions on categories"""
+    category = get_object_or_404(Category, id=category_id)
+    
+    if action == 'activate':
+        category.is_active = True
+        category.save()
+        messages.success(request, f'Category "{category.name}" activated.')
+    elif action == 'deactivate':
+        category.is_active = False
+        category.save()
+        messages.success(request, f'Category "{category.name}" deactivated.')
+    elif action == 'delete':
+        category.delete()
+        messages.success(request, 'Category deleted successfully.')
+    
+    return redirect('dashboard:blog_categories')
+
+
+@login_required
+@superadmin_required
+def admin_blog_comments(request):
+    """Manage blog comments"""
+    comments = Comment.objects.all().select_related('post', 'author')
+    
+    context = {
+        'comments': comments,
+    }
+    return render(request, 'dashboard/admin/blog_comments.html', context)
+
+
+@login_required
+@superadmin_required
+def admin_blog_comment_action(request, comment_id, action):
+    """Perform actions on comments"""
+    comment = get_object_or_404(Comment, id=comment_id)
+    
+    if action == 'approve':
+        comment.is_approved = True
+        comment.save()
+        messages.success(request, 'Comment approved.')
+    elif action == 'unapprove':
+        comment.is_approved = False
+        comment.save()
+        messages.success(request, 'Comment unapproved.')
+    elif action == 'delete':
+        comment.delete()
+        messages.success(request, 'Comment deleted.')
+    
+    return redirect('dashboard:blog_comments')

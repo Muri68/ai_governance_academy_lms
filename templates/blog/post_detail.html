@@ -1,0 +1,572 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ post.meta_title|default:post.title }}{% endblock %}
+
+{% block meta_description %}{{ post.meta_description|default:post.excerpt }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --blog-bg: #0c1e2e;
+        --blog-card-bg: #142a3e;
+        --blog-text: #e2e8f0;
+        --blog-text-muted: #94a3b8;
+        --gold: #ad7a49;
+        --gold-light: #d4a77d;
+    }
+
+    .blog-post-wrapper {
+        background: linear-gradient(160deg, #0a1929 0%, #0d2137 30%, #0f2944 60%, #0c1e2e 100%);
+        min-height: 100vh;
+        padding: 60px 0;
+    }
+
+    .blog-post-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+
+    .blog-post-header {
+        margin-bottom: 40px;
+    }
+
+    .blog-post-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 20px;
+        line-height: 1.2;
+    }
+
+    .blog-post-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        color: var(--gold-light);
+        font-size: 0.9rem;
+        padding-bottom: 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .blog-post-meta span {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .blog-post-meta i {
+        color: var(--gold);
+    }
+
+    .blog-post-category {
+        display: inline-block;
+        background: rgba(173, 122, 73, 0.2);
+        color: var(--gold-light);
+        padding: 5px 14px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 15px;
+    }
+
+    .blog-post-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+
+    .blog-post-tag {
+        background: rgba(255, 255, 255, 0.05);
+        color: #cbd5e0;
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.75rem;
+        text-decoration: none;
+        transition: all 0.3s;
+    }
+
+    .blog-post-tag:hover {
+        background: rgba(173, 122, 73, 0.2);
+        color: var(--gold-light);
+    }
+
+    .blog-post-featured-image {
+        width: 100%;
+        border-radius: 16px;
+        margin-bottom: 40px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    /* ============ BLOG CONTENT STYLES ============ */
+    .blog-post-content {
+        color: var(--blog-text);
+        font-size: 1.05rem;
+        line-height: 1.8;
+        letter-spacing: 0.01em;
+    }
+
+    .blog-post-content h1,
+    .blog-post-content h2,
+    .blog-post-content h3,
+    .blog-post-content h4,
+    .blog-post-content h5,
+    .blog-post-content h6 {
+        color: #ffffff;
+        font-weight: 700;
+        margin-top: 2em;
+        margin-bottom: 0.8em;
+        line-height: 1.3;
+    }
+
+    .blog-post-content h1 { font-size: 2rem; }
+    .blog-post-content h2 { font-size: 1.75rem; }
+    .blog-post-content h3 { font-size: 1.5rem; }
+    .blog-post-content h4 { font-size: 1.25rem; }
+    .blog-post-content h5 { font-size: 1.1rem; }
+    .blog-post-content h6 { font-size: 1rem; }
+
+    .blog-post-content p {
+        margin-bottom: 1.5em;
+        color: var(--blog-text);
+    }
+
+    .blog-post-content a {
+        color: var(--gold-light);
+        text-decoration: none;
+        border-bottom: 1px solid rgba(173, 122, 73, 0.3);
+        transition: all 0.3s;
+    }
+
+    .blog-post-content a:hover {
+        color: var(--gold);
+        border-bottom-color: var(--gold);
+    }
+
+    /* Lists */
+    .blog-post-content ul,
+    .blog-post-content ol {
+        display: block !important;
+        margin: 1em 0 1.5em 0;
+        padding-left: 2em;
+    }
+
+    .blog-post-content ul {
+        list-style: disc !important;
+    }
+
+    .blog-post-content ol {
+        list-style: decimal !important;
+    }
+
+    .blog-post-content li {
+        display: list-item !important;
+        margin-bottom: 0.5em;
+        color: var(--blog-text);
+        line-height: 1.7;
+    }
+
+    .blog-post-content ul ul,
+    .blog-post-content ol ol,
+    .blog-post-content ul ol,
+    .blog-post-content ol ul {
+        margin-top: 0.5em;
+        margin-bottom: 0.5em;
+    }
+
+    .blog-post-content ul ul {
+        list-style: circle !important;
+    }
+
+    .blog-post-content ul ul ul {
+        list-style: square !important;
+    }
+
+    .blog-post-content ol ol {
+        list-style: lower-alpha !important;
+    }
+
+    .blog-post-content ol ol ol {
+        list-style: lower-roman !important;
+    }
+
+    /* Blockquotes */
+    .blog-post-content blockquote {
+        border-left: 4px solid var(--gold);
+        background: rgba(173, 122, 73, 0.1);
+        margin: 1.5em 0;
+        padding: 20px 25px;
+        border-radius: 0 10px 10px 0;
+        color: #cbd5e0;
+        font-style: italic;
+    }
+
+    .blog-post-content blockquote p {
+        margin-bottom: 0;
+        color: #cbd5e0;
+    }
+
+    /* Code blocks */
+    .blog-post-content pre {
+        background: #1e293b;
+        color: #e2e8f0;
+        padding: 20px;
+        border-radius: 10px;
+        overflow-x: auto;
+        margin: 1.5em 0;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .blog-post-content code {
+        background: #1e293b;
+        color: #e2e8f0;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.9em;
+        font-family: 'Courier New', monospace;
+    }
+
+    .blog-post-content pre code {
+        background: transparent;
+        padding: 0;
+        border-radius: 0;
+    }
+
+    /* Tables */
+    .blog-post-content table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1.5em 0;
+        font-size: 0.95rem;
+    }
+
+    .blog-post-content table th,
+    .blog-post-content table td {
+        padding: 12px 15px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        text-align: left;
+    }
+
+    .blog-post-content table th {
+        background: rgba(173, 122, 73, 0.3);
+        color: #ffffff;
+        font-weight: 600;
+    }
+
+    .blog-post-content table tr:nth-child(even) {
+        background: rgba(255, 255, 255, 0.03);
+    }
+
+    .blog-post-content table tr:hover {
+        background: rgba(173, 122, 73, 0.1);
+    }
+
+    /* Images */
+    .blog-post-content img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 10px;
+        margin: 1.5em 0;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .blog-post-content figure {
+        margin: 1.5em 0;
+    }
+
+    .blog-post-content figcaption {
+        text-align: center;
+        color: var(--blog-text-muted);
+        font-size: 0.85rem;
+        margin-top: 10px;
+    }
+
+    /* Horizontal rule */
+    .blog-post-content hr {
+        border: none;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.2);
+        margin: 2em 0;
+    }
+
+    /* Strong and emphasis */
+    .blog-post-content strong {
+        color: #ffffff;
+        font-weight: 700;
+    }
+
+    .blog-post-content em {
+        color: #cbd5e0;
+        font-style: italic;
+    }
+
+    /* Related posts section */
+    .related-posts-section {
+        margin-top: 60px;
+        padding-top: 40px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .related-posts-title {
+        color: #ffffff;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 30px;
+    }
+
+    .related-post-card {
+        background: var(--blog-card-bg);
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.3s;
+        height: 100%;
+    }
+
+    .related-post-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .related-post-image {
+        height: 160px;
+        overflow: hidden;
+    }
+
+    .related-post-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .related-post-content {
+        padding: 20px;
+    }
+
+    .related-post-title {
+        color: #ffffff;
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+        line-height: 1.4;
+    }
+
+    .related-post-title a {
+        color: #ffffff;
+        text-decoration: none;
+        transition: color 0.3s;
+    }
+
+    .related-post-title a:hover {
+        color: var(--gold-light);
+    }
+
+    .related-post-meta {
+        color: var(--blog-text-muted);
+        font-size: 0.8rem;
+    }
+
+    /* Comments section */
+    .comments-section {
+        margin-top: 60px;
+        padding-top: 40px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .comments-title {
+        color: #ffffff;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 30px;
+    }
+
+    .comment-form textarea {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+        border-radius: 10px;
+        padding: 15px;
+        width: 100%;
+        font-family: 'Poppins', sans-serif;
+    }
+
+    .comment-form textarea::placeholder {
+        color: #64748b;
+    }
+
+    .comment-form textarea:focus {
+        outline: none;
+        border-color: var(--gold);
+    }
+
+    .comment-item {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 15px;
+    }
+
+    .comment-author {
+        color: #ffffff;
+        font-weight: 600;
+    }
+
+    .comment-date {
+        color: var(--blog-text-muted);
+        font-size: 0.8rem;
+    }
+
+    .comment-content {
+        color: var(--blog-text);
+        margin-top: 10px;
+    }
+
+    .comment-reply {
+        margin-left: 40px;
+        margin-top: 10px;
+    }
+
+    @media (max-width: 768px) {
+        .blog-post-title {
+            font-size: 2rem;
+        }
+
+        .blog-post-container {
+            padding: 0 15px;
+        }
+
+        .blog-post-meta {
+            gap: 12px;
+            font-size: 0.8rem;
+        }
+
+        .blog-post-content {
+            font-size: 0.95rem;
+        }
+
+        .comment-reply {
+            margin-left: 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="blog-post-wrapper">
+    <div class="blog-post-container">
+        <article>
+            <!-- Post Header -->
+            <header class="blog-post-header">
+                {% if post.category %}
+                <span class="blog-post-category">{{ post.category.name }}</span>
+                {% endif %}
+                
+                <h1 class="blog-post-title">{{ post.title }}</h1>
+                
+                <div class="blog-post-meta">
+                    <span><i class="fas fa-user"></i> {{ post.author.get_full_name|default:post.author.email }}</span>
+                    <span><i class="fas fa-calendar"></i> {{ post.published_at|date:"F d, Y" }}</span>
+                    <span><i class="fas fa-clock"></i> {{ post.reading_time }} min read</span>
+                    <span><i class="fas fa-eye"></i> {{ post.views_count }} views</span>
+                </div>
+                
+                {% if post.tags.all %}
+                <div class="blog-post-tags">
+                    {% for tag in post.tags.all %}
+                    <a href="{{ tag.get_absolute_url }}" class="blog-post-tag">#{{ tag.name }}</a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </header>
+            
+            <!-- Featured Image -->
+            {% if post.featured_image %}
+            <img src="{{ post.featured_image.url }}" class="blog-post-featured-image" alt="{{ post.title }}">
+            {% endif %}
+            
+            <!-- Post Content -->
+            <div class="blog-post-content">
+                {{ post.content|safe }}
+            </div>
+        </article>
+        
+        <!-- Related Posts -->
+        {% if related_posts %}
+        <section class="related-posts-section">
+            <h2 class="related-posts-title">Related Articles</h2>
+            <div class="row">
+                {% for related in related_posts %}
+                <div class="col-md-4 mb-4">
+                    <div class="related-post-card">
+                        {% if related.featured_image %}
+                        <div class="related-post-image">
+                            <img src="{{ related.featured_image.url }}" alt="{{ related.title }}" loading="lazy">
+                        </div>
+                        {% endif %}
+                        <div class="related-post-content">
+                            <h3 class="related-post-title">
+                                <a href="{{ related.get_absolute_url }}">{{ related.title }}</a>
+                            </h3>
+                            <div class="related-post-meta">
+                                <span><i class="fas fa-clock"></i> {{ related.reading_time }} min read</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+        
+        <!-- Comments Section -->
+        <section class="comments-section">
+            <h2 class="comments-title">Comments ({{ comments.count }})</h2>
+            
+            {% if user.is_authenticated %}
+            <form method="post" action="{% url 'blog:add_comment' post.slug %}" class="comment-form mb-4">
+                {% csrf_token %}
+                <div class="form-group mb-3">
+                    <textarea name="content" rows="3" placeholder="Share your thoughts..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-paper-plane"></i> Post Comment
+                </button>
+            </form>
+            {% else %}
+            <p style="color: #94a3b8;">Please <a href="{% url 'login' %}" style="color: #d4a77d;">login</a> to leave a comment.</p>
+            {% endif %}
+            
+            {% for comment in comments %}
+            <div class="comment-item">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="comment-author">{{ comment.author.get_full_name|default:comment.author.email }}</span>
+                    <span class="comment-date">{{ comment.created_at|date:"M d, Y" }}</span>
+                </div>
+                <div class="comment-content">{{ comment.content }}</div>
+                
+                <!-- Replies -->
+                {% for reply in comment.replies.all %}
+                <div class="comment-reply">
+                    <div class="comment-item">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="comment-author">{{ reply.author.get_full_name|default:reply.author.email }}</span>
+                            <span class="comment-date">{{ reply.created_at|date:"M d, Y" }}</span>
+                        </div>
+                        <div class="comment-content">{{ reply.content }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% empty %}
+            <p style="color: #94a3b8;">No comments yet. Be the first to comment!</p>
+            {% endfor %}
+        </section>
+    </div>
+</div>
+{% endblock %}

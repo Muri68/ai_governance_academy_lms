@@ -700,6 +700,12 @@
                 </li>
                 
                 <li>
+                    <a href="{% url 'dashboard:blog_dashboard' %}" class="{% if  request.resolver_match.url_name == 'blog_dashboard' or request.resolver_match.url_name == 'blog_posts' or request.resolver_match.url_name == 'blog_post_add' or request.resolver_match.url_name == 'blog_post_edit' or request.resolver_match.url_name == 'blog_categories' or request.resolver_match.url_name == 'blog_category_add' or request.resolver_match.url_name == 'blog_category_edit' or request.resolver_match.url_name == 'blog_comments' %}active{% endif %}">
+                        <i class="fas fa-newspaper"></i> Manage Blog
+                    </a>
+                </li>
+                
+                <li>
                     <a href="{% url 'dashboard:newsletter_dashboard' %}" class="{% if 'newsletter' in request.resolver_match.url_name %}active{% endif %}">
                         <i class="fas fa-newspaper"></i> Newsletter
                     </a>
@@ -935,6 +941,7 @@
             });
         });
     </script>
+    <script src="{% static 'tinymce/tinymce.min.js' %}"></script>
 
     {% block extra_js %}{% endblock  %}
 </body>

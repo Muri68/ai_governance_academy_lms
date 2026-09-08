@@ -50,7 +50,7 @@
                         <li class="{% if request.resolver_match.url_name == 'index' %}active{% endif %}">
                             <a href="{% url 'frontend:index' %}">Home</a>
                         </li>
-                        <li class="{% if request.resolver_match.url_name == 'courses' %}active{% endif %}">
+                        <li class="{% if request.resolver_match.url_name == 'courses' or request.resolver_match.url_name == 'course_detail' or request.resolver_match.url_name == 'course_learning' %}active{% endif %}">
                             <a href="{% url 'frontend:courses' %}">Courses</a>
                         </li>
                         <li class="{% if request.resolver_match.url_name == 'about' %}active{% endif %}">
@@ -58,6 +58,9 @@
                         </li>
                         <li class="{% if request.resolver_match.url_name == 'contact' %}active{% endif %}">
                             <a href="{% url 'frontend:contact' %}">Contact</a>
+                        </li>
+                        <li class="{% if request.resolver_match.url_name == 'home' or request.resolver_match.url_name == 'post_detail' or request.resolver_match.url_name == 'search' or request.resolver_match.url_name == 'category_detail' or request.resolver_match.url_name == 'tag_detail' %} active{% endif %}">
+                            <a href="{% url "blog:home" %}">Blog</a>
                         </li>
                     </ul>
                 </div>

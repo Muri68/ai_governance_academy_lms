@@ -37,6 +37,7 @@ urlpatterns = [
     path('dashboard/', include('apps.dashboard.urls', namespace='dashboard')),
     path('courses/', include('apps.courses.urls', namespace='courses')),
     path('payments/', include('apps.payments.urls', namespace='payments')),
+    path('blog/', include('apps.blog.urls', namespace='blog')),
     path('', include('apps.frontend.urls', namespace='frontend')),
 
     # SEO URLs

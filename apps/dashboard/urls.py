@@ -80,5 +80,19 @@ urlpatterns = [
     path('newsletter/subscriber/<int:subscriber_id>/delete/', admin_views.delete_subscriber, name='delete_subscriber'),
     
     path('test-email/', viewss.test_email, name='test_email'),
+
+
+    # Admin URLs
+    path('blog/dashboard/', admin_views.admin_blog_dashboard, name='blog_dashboard'),
+    path('blog/posts/', admin_views.admin_blog_posts, name='blog_posts'),
+    path('blog/posts/add/', admin_views.admin_blog_post_add, name='blog_post_add'),
+    path('blog/posts/<int:post_id>/edit/', admin_views.admin_blog_post_edit, name='blog_post_edit'),
+    path('blog/posts/<int:post_id>/<str:action>/', admin_views.admin_blog_post_action, name='blog_post_action'),
+    path('blog/categories/', admin_views.admin_blog_categories, name='blog_categories'),
+    path('blog/categories/add/', admin_views.admin_blog_category_add, name='blog_category_add'),
+    path('blog/categories/<int:category_id>/edit/', admin_views.admin_blog_category_edit, name='blog_category_edit'),
+    path('blog/categories/<int:category_id>/<str:action>/', admin_views.admin_blog_category_action, name='blog_category_action'),
+    path('blog/comments/', admin_views.admin_blog_comments, name='blog_comments'),
+    path('blog/comments/<int:comment_id>/<str:action>/', admin_views.admin_blog_comment_action, name='blog_comment_action'),
         
 ]

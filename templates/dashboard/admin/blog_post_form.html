@@ -1,0 +1,481 @@
+{% extends "dashboard/admin/admin_base.html" %}
+{% load static %}
+
+{% block title %}{% if is_edit %}Edit Post{% else %}Add Post{% endif %}{% endblock %}
+{% block page_title %}{% if is_edit %}Edit Post{% else %}Add Post{% endif %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .breadcrumb-row { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; margin-bottom: 8px; }
+    .breadcrumb-row a { color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+    .breadcrumb-row a:hover { color: var(--accent-blue); }
+    .breadcrumb-row .separator { color: var(--text-muted); }
+    .breadcrumb-row .current { color: var(--text-dark); font-weight: 600; }
+    .page-subtitle { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 24px; }
+
+    .form-grid { display: grid; grid-template-columns: 1.5fr 0.8fr; gap: 20px; align-items: start; }
+    .form-card { background: var(--card-bg); border-radius: 16px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); border: 1px solid var(--border-color); margin-bottom: 20px; }
+    .form-card:last-child { margin-bottom: 0; }
+    .form-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border-color); }
+    .form-card-header .icon-circle { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.9rem; flex-shrink: 0; }
+    .icon-circle.blue { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+    .icon-circle.green { background: linear-gradient(135deg, #10b981, #059669); }
+    .icon-circle.purple { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+    .icon-circle.orange { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .form-card-header h3 { font-size: 0.95rem; font-weight: 600; color: var(--text-dark); margin: 0; }
+    .form-card-header .badge { font-size: 0.65rem; padding: 4px 10px; border-radius: 12px; font-weight: 500; margin-left: auto; }
+    .badge-required { background: #fee2e2; color: #991b1b; }
+    .badge-optional { background: #f0fdf4; color: #166534; }
+
+    .form-group { margin-bottom: 18px; }
+    .form-group:last-child { margin-bottom: 0; }
+    .form-group label { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 600; color: var(--text-dark); margin-bottom: 6px; }
+    .form-group label .required-dot { color: #ef4444; font-weight: 700; }
+    .form-group label .optional { font-size: 0.65rem; color: var(--text-muted); font-weight: 400; }
+    .form-control { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border-color); border-radius: 10px; font-size: 0.85rem; font-family: 'Poppins', sans-serif; color: var(--text-dark); background: #f8fafc; outline: none; transition: all 0.2s; }
+    .form-control:focus { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.08); background: white; }
+    .form-control::placeholder { color: #94a3b8; }
+    .form-control.error { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08); }
+    textarea.form-control { resize: vertical; min-height: 100px; line-height: 1.6; }
+    select.form-control { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236b7280' viewBox='0 0 12 12'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 40px; cursor: pointer; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    .hint { font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+
+    .toggle-row { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+    .toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #cbd5e1; border-radius: 24px; transition: 0.3s; }
+    .toggle-slider:before { content: ""; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+    .toggle-switch input:checked + .toggle-slider { background: #10b981; }
+    .toggle-switch input:checked + .toggle-slider:before { transform: translateX(20px); }
+    .toggle-label { font-size: 0.82rem; color: var(--text-dark); font-weight: 500; }
+
+    .upload-area { border: 2px dashed #d1d5db; border-radius: 12px; padding: 32px 24px; text-align: center; cursor: pointer; transition: all 0.2s; background: #f8fafc; position: relative; overflow: hidden; }
+    .upload-area:hover { border-color: #10b981; background: rgba(16, 185, 129, 0.03); }
+    .upload-area.has-image { border-style: solid; border-color: #10b981; padding: 0; }
+    .upload-area i { font-size: 2.5rem; color: #94a3b8; margin-bottom: 10px; }
+    .upload-area .upload-title { font-weight: 600; font-size: 0.85rem; color: var(--text-dark); }
+    .upload-area .upload-subtitle { font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; }
+    .upload-area input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .upload-preview { position: relative; }
+    .upload-preview img { width: 100%; height: 200px; object-fit: cover; display: block; }
+    .upload-preview .change-btn { position: absolute; bottom: 10px; right: 10px; background: white; padding: 6px 14px; border-radius: 8px; font-size: 0.75rem; font-weight: 500; cursor: pointer; border: 1px solid #e5e7eb; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 6px; color: var(--text-dark); }
+
+    .tags-container { display: flex; flex-wrap: wrap; gap: 8px; }
+    .tag-checkbox { display: none; }
+    .tag-label { padding: 8px 16px; border: 1.5px solid #e5e7eb; border-radius: 20px; font-size: 0.75rem; cursor: pointer; transition: all 0.2s; background: #f8fafc; }
+    .tag-checkbox:checked + .tag-label { background: #10b981; color: white; border-color: #10b981; }
+
+    .form-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-color); }
+    .btn { padding: 11px 24px; border-radius: 10px; font-size: 0.88rem; font-weight: 600; cursor: pointer; border: none; font-family: 'Poppins', sans-serif; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
+    .btn-primary { background: linear-gradient(135deg, #10b981, #059669); color: white; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4); }
+    .btn-secondary { background: white; color: var(--text-dark); border: 1px solid var(--border-color); }
+    .btn-secondary:hover { background: #f8fafc; }
+
+    @media (max-width: 1024px) { .form-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 768px) { 
+        .form-row, .form-row-3 { grid-template-columns: 1fr; } 
+        .form-actions { flex-direction: column; }
+        .form-actions .btn { justify-content: center; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-row">
+    <a href="{% url 'dashboard:blog_posts' %}"><i class="fas fa-arrow-left"></i> Blog Posts</a>
+    <span class="separator">/</span>
+    <span class="current">{% if is_edit %}Edit Post{% else %}Add Post{% endif %}</span>
+</div>
+<p class="page-subtitle">{% if is_edit %}Update blog post details and content.{% else %}Create a new blog post with rich content.{% endif %}</p>
+
+{% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" style="border-radius:12px;margin-bottom:16px;font-size:0.85rem;">{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    {% endfor %}
+{% endif %}
+
+<form method="POST" enctype="multipart/form-data" id="blogPostForm">
+    {% csrf_token %}
+    
+    <div class="form-grid">
+        <div>
+            <!-- Content Card -->
+            <div class="form-card">
+                <div class="form-card-header">
+                    <div class="icon-circle blue"><i class="fas fa-edit"></i></div>
+                    <h3>Post Content</h3>
+                    <span class="badge badge-required">Required</span>
+                </div>
+                
+                <div class="form-group">
+                    <label>Post Title <span class="required-dot">*</span></label>
+                    <input type="text" name="title" class="form-control" placeholder="Enter post title..." required value="{{ post.title|default:'' }}">
+                </div>
+                
+                <div class="form-group">
+                    <label>Slug <span class="optional">(optional)</span></label>
+                    <input type="text" name="slug" class="form-control" placeholder="Auto-generated if left empty" value="{{ post.slug|default:'' }}">
+                    <div class="hint"><i class="fas fa-info-circle"></i> Leave empty to auto-generate from title</div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Excerpt / Summary <span class="optional">(optional)</span></label>
+                    <textarea name="excerpt" class="form-control" rows="3" placeholder="Brief summary shown in blog listing (max 500 characters)">{{ post.excerpt|default:'' }}</textarea>
+                    <div class="hint"><i class="fas fa-info-circle"></i> This appears in blog cards and search results</div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Content</label>
+                    <textarea name="content" id="postContent" class="form-control" rows="20" placeholder="Write your blog post content here...">{{ post.content|default:'' }}</textarea>
+                    <div class="hint"><i class="fas fa-info-circle"></i> Use the editor toolbar for formatting, images, code blocks, and more</div>
+                </div>
+            </div>
+            
+            <!-- SEO Card -->
+            <div class="form-card">
+                <div class="form-card-header">
+                    <div class="icon-circle purple"><i class="fas fa-search"></i></div>
+                    <h3>SEO Settings</h3>
+                    <span class="badge badge-optional">Optional</span>
+                </div>
+                
+                <div class="form-group">
+                    <label>Meta Title</label>
+                    <input type="text" name="meta_title" class="form-control" placeholder="SEO title (max 200 characters)" value="{{ post.meta_title|default:'' }}">
+                </div>
+                
+                <div class="form-group">
+                    <label>Meta Description</label>
+                    <textarea name="meta_description" class="form-control" rows="3" placeholder="SEO description (max 300 characters)">{{ post.meta_description|default:'' }}</textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>Meta Keywords</label>
+                    <input type="text" name="meta_keywords" class="form-control" placeholder="Comma separated keywords" value="{{ post.meta_keywords|default:'' }}">
+                </div>
+            </div>
+        </div>
+        
+        <div>
+            <!-- Publishing Card -->
+            <div class="form-card">
+                <div class="form-card-header">
+                    <div class="icon-circle green"><i class="fas fa-rocket"></i></div>
+                    <h3>Publishing</h3>
+                </div>
+                
+                <div class="form-group">
+                    <label>Author</label>
+                    <select name="author" class="form-control" required>
+                        <option value="">Select author...</option>
+                        {% for author in authors %}
+                        <option value="{{ author.id }}" {% if post.author.id == author.id %}selected{% endif %}>{{ author.get_full_name|default:author.email }}</option>                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Status</label>
+                    <select name="status" class="form-control">
+                        <option value="draft" {% if post.status == 'draft' %}selected{% endif %}>💾 Draft</option>
+                        <option value="pending" {% if post.status == 'pending' %}selected{% endif %}>🔍 Pending Review</option>
+                        <option value="published" {% if post.status == 'published' %}selected{% endif %}>🚀 Published</option>
+                    </select>
+                </div>
+                
+                <div class="toggle-row">
+                    <label class="toggle-switch">
+                        <input type="checkbox" name="is_featured" {% if post.is_featured %}checked{% endif %}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span class="toggle-label"><i class="fas fa-star" style="color:#f59e0b;"></i> Featured Post</span>
+                </div>
+            </div>
+            
+            <!-- Organization Card -->
+            <div class="form-card">
+                <div class="form-card-header">
+                    <div class="icon-circle orange"><i class="fas fa-folder"></i></div>
+                    <h3>Organization</h3>
+                </div>
+                
+                <div class="form-group">
+                    <label>Category</label>
+                    <select name="category" class="form-control">
+                        <option value="">Select category...</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}" {% if post.category.id == category.id %}selected{% endif %}>{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Related Course <span class="optional">(optional)</span></label>
+                    <select name="related_course" class="form-control">
+                        <option value="">Select course...</option>
+                        {% for course in courses %}
+                        <option value="{{ course.id }}" {% if post.related_course.id == course.id %}selected{% endif %}>{{ course.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Tags</label>
+                    
+                    <!-- Existing tags -->
+                    <div class="tags-container mb-2">
+                        {% for tag in tags %}
+                        <input type="checkbox" name="tags" value="{{ tag.id }}" id="tag-{{ tag.id }}" class="tag-checkbox" {% if post and tag in post.tags.all %}checked{% endif %}>
+                        <label for="tag-{{ tag.id }}" class="tag-label">{{ tag.name }}</label>
+                        {% empty %}
+                        <span style="font-size:0.8rem;color:var(--text-muted);">No tags yet. Create tags below.</span>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Add new tag -->
+                    <div style="display:flex;gap:8px;margin-top:10px;">
+                        <input type="text" id="newTagInput" class="form-control" placeholder="Enter new tag name..." style="flex:1;padding:8px 12px;font-size:0.78rem;">
+                        <button type="button" class="btn btn-secondary" onclick="addNewTag()" style="padding:8px 16px;font-size:0.78rem;white-space:nowrap;">
+                            <i class="fas fa-plus"></i> Add Tag
+                        </button>
+                    </div>
+                    <div class="hint"><i class="fas fa-info-circle"></i> Select existing tags or add new ones</div>
+                    
+                    <!-- Hidden input to store new tags -->
+                    <input type="hidden" name="new_tags" id="newTagsInput" value="[]">
+                </div>
+            </div>
+            
+            <!-- Featured Image Card -->
+            <div class="form-card">
+                <div class="form-card-header">
+                    <div class="icon-circle blue"><i class="fas fa-image"></i></div>
+                    <h3>Featured Image</h3>
+                </div>
+                
+                {% if is_edit and post.featured_image %}
+                <div style="margin-bottom:12px;">
+                    <img src="{{ post.featured_image.url }}" style="width:100%;border-radius:10px;margin-bottom:8px;">
+                    <span style="font-size:0.75rem;color:var(--text-muted);">Current image</span>
+                </div>
+                {% endif %}
+                
+                <div class="upload-area {% if post.featured_image %}has-image{% endif %}" id="imageArea">
+                    {% if post.featured_image %}
+                    <div class="upload-preview">
+                        <img src="{{ post.featured_image.url }}" alt="Featured image">
+                        <button type="button" class="change-btn" onclick="event.stopPropagation(); document.getElementById('imageInput').click()">
+                            <i class="fas fa-pen"></i> Change Image
+                        </button>
+                    </div>
+                    {% else %}
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <div class="upload-title">Upload Featured Image</div>
+                    <div class="upload-subtitle">PNG, JPG or WEBP (Max 2MB)</div>
+                    {% endif %}
+                    <input type="file" name="featured_image" id="imageInput" accept="image/*" onchange="previewImage(this)">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="form-actions">
+        <a href="{% url 'dashboard:blog_posts' %}" class="btn btn-secondary"><i class="fas fa-times"></i> Cancel</a>
+        <button type="submit" class="btn btn-primary" id="submitBtn">
+            <i class="fas fa-check-circle"></i> 
+            {% if is_edit %}Update Post{% else %}{% if post.status == 'draft' %}Save Draft{% else %}Publish Post{% endif %}{% endif %}
+        </button>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize TinyMCE for post content
+    tinymce.init({
+        selector: '#postContent',
+        height: 500,
+        menubar: true,
+        plugins: [
+            'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+            'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+            'insertdatetime', 'media', 'table', 'help', 'wordcount',
+            'codesample', 'emoticons', 'template', 'paste'
+        ],
+        toolbar: 'undo redo | blocks | ' +
+            'bold italic underline strikethrough | ' +
+            'forecolor backcolor | ' +
+            'alignleft aligncenter alignright alignjustify | ' +
+            'bullist numlist outdent indent | ' +
+            'link image media table | ' +
+            'codesample emoticons | ' +
+            'removeformat | code | help',
+        content_style: 'body { font-family: Poppins, sans-serif; font-size: 14px; line-height: 1.6; color: #1e293b; } ' +
+            'pre { background: #1e293b; color: #e2e8f0; padding: 16px; border-radius: 8px; } ' +
+            'code { background: #f1f5f9; color: #e11d48; padding: 2px 6px; border-radius: 4px; } ' +
+            'img { max-width: 100%; height: auto; } ' +
+            'h1, h2, h3, h4, h5, h6 { color: #0f172a; margin-top: 1.5em; margin-bottom: 0.5em; } ' +
+            'p { margin-bottom: 1em; } ' +
+            'a { color: #ad7a49; } ' +
+            'table { border-collapse: collapse; width: 100%; margin-bottom: 1em; } ' +
+            'table td, table th { border: 1px solid #ddd; padding: 8px; } ' +
+            'table tr:nth-child(even) { background-color: #f2f2f2; } ' +
+            'table tr:hover { background-color: #ddd; } ' +
+            'table th { padding-top: 12px; padding-bottom: 12px; text-align: left; background-color: #ad7a49; color: white; }',
+        codesample_languages: [
+            { text: 'HTML/XML', value: 'markup' },
+            { text: 'JavaScript', value: 'javascript' },
+            { text: 'Python', value: 'python' },
+            { text: 'CSS', value: 'css' },
+            { text: 'PHP', value: 'php' },
+            { text: 'Java', value: 'java' },
+            { text: 'SQL', value: 'sql' },
+            { text: 'Bash', value: 'bash' },
+            { text: 'JSON', value: 'json' },
+            { text: 'Markdown', value: 'markdown' }
+        ],
+        image_advtab: true,
+        image_caption: true,
+        image_title: true,
+        automatic_uploads: true,
+        paste_data_images: true,
+        branding: false,
+        promotion: false,
+        setup: function(editor) {
+            editor.on('change', function() {
+                editor.save();
+            });
+        }
+    });
+
+    // Preview image upload
+    function previewImage(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var area = document.getElementById('imageArea');
+                if (!area) return;
+                
+                area.classList.add('has-image');
+                area.innerHTML = '<div class="upload-preview">' +
+                    '<img src="' + e.target.result + '" alt="Preview">' +
+                    '<button type="button" class="change-btn" onclick="event.stopPropagation(); document.getElementById(\'imageInput\').click()">' +
+                    '<i class="fas fa-pen"></i> Change Image</button></div>' +
+                    '<input type="file" name="featured_image" id="imageInput" accept="image/*" onchange="previewImage(this)" style="position:absolute;inset:0;opacity:0;cursor:pointer;">';
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // Form validation
+    document.getElementById('blogPostForm').addEventListener('submit', function(e) {
+        if (tinymce.get('postContent')) {
+            tinymce.get('postContent').save();
+        }
+        
+        var titleInput = this.querySelector('[name="title"]');
+        if (!titleInput.value.trim()) {
+            e.preventDefault();
+            titleInput.classList.add('error');
+            titleInput.focus();
+            alert('Please enter a post title.');
+        }
+    });
+
+    // Add new tag functionality
+    function addNewTag() {
+        const input = document.getElementById('newTagInput');
+        const newTagsInput = document.getElementById('newTagsInput');
+        
+        if (!input || !newTagsInput) return;
+        
+        const tagName = input.value.trim();
+        if (!tagName) {
+            alert('Please enter a tag name.');
+            input.focus();
+            return;
+        }
+        
+        // Get existing new tags
+        let newTags = [];
+        try {
+            newTags = JSON.parse(newTagsInput.value || '[]');
+        } catch(e) {
+            newTags = [];
+        }
+        
+        // Check if tag already exists in new tags
+        if (newTags.includes(tagName)) {
+            alert('This tag is already added.');
+            input.value = '';
+            input.focus();
+            return;
+        }
+        
+        // Check if tag already exists in existing tags
+        const existingTagLabels = document.querySelectorAll('.tag-label');
+        for (let label of existingTagLabels) {
+            if (label.textContent.trim().toLowerCase() === tagName.toLowerCase()) {
+                alert('This tag already exists. Please select it from the list above.');
+                input.value = '';
+                input.focus();
+                return;
+            }
+        }
+        
+        // Add to new tags array
+        newTags.push(tagName);
+        newTagsInput.value = JSON.stringify(newTags);
+        
+        // Add visual tag
+        const tagsContainer = document.querySelector('.tags-container');
+        if (tagsContainer) {
+            // Remove "No tags yet" message if present
+            const emptyMessage = tagsContainer.querySelector('span[style*="text-muted"]');
+            if (emptyMessage) emptyMessage.remove();
+            
+            const tagSpan = document.createElement('span');
+            tagSpan.className = 'tag-label';
+            tagSpan.style.cssText = 'background: #10b981; color: white; border-color: #10b981; display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 20px; font-size: 0.75rem; cursor: default;';
+            tagSpan.innerHTML = tagName + ' <button type="button" onclick="removeNewTag(this, \'' + tagName.replace(/'/g, "\\'") + '\')" style="background:none;border:none;color:white;cursor:pointer;font-size:0.8rem;padding:0;margin-left:2px;">×</button>';
+            tagsContainer.appendChild(tagSpan);
+        }
+        
+        // Clear input
+        input.value = '';
+        input.focus();
+    }
+
+    function removeNewTag(button, tagName) {
+        const newTagsInput = document.getElementById('newTagsInput');
+        if (!newTagsInput) return;
+        
+        let newTags = [];
+        try {
+            newTags = JSON.parse(newTagsInput.value || '[]');
+        } catch(e) {
+            newTags = [];
+        }
+        
+        newTags = newTags.filter(t => t !== tagName);
+        newTagsInput.value = JSON.stringify(newTags);
+        
+        button.parentElement.remove();
+    }
+
+    // Allow pressing Enter in tag input to add tag
+    document.addEventListener('DOMContentLoaded', function() {
+        const tagInput = document.getElementById('newTagInput');
+        if (tagInput) {
+            tagInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addNewTag();
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
