@@ -2751,3 +2751,169 @@ def admin_blog_comment_action(request, comment_id, action):
         messages.success(request, 'Comment deleted.')
     
     return redirect('dashboard:blog_comments')
+
+
+
+
+
+@login_required
+@superadmin_required
+def manage_course_categories(request):
+    """Manage course categories"""
+    categories = CourseCategory.objects.all().annotate(
+        num_courses=Count('courses')
+    ).order_by('name')
+    
+    # Stats
+    total_categories = categories.count()
+    active_categories = categories.filter(is_active=True).count()
+    inactive_categories = categories.filter(is_active=False).count()
+    categories_with_courses = categories.filter(num_courses__gt=0).count()
+    
+    context = {
+        'categories': categories,
+        'total_categories': total_categories,
+        'active_categories': active_categories,
+        'inactive_categories': inactive_categories,
+        'categories_with_courses': categories_with_courses,
+    }
+    return render(request, 'dashboard/admin/course_categories.html', context)
+
+
+@login_required
+@superadmin_required
+def add_course_category(request):
+    """Add a new course category"""
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        slug = request.POST.get('slug', '').strip()
+        description = request.POST.get('description', '').strip()
+        icon = request.POST.get('icon', '').strip()
+        is_active = request.POST.get('is_active') == 'on'
+        
+        if not name:
+            messages.error(request, 'Category name is required.')
+            return redirect('dashboard:add_course_category')
+        
+        if CourseCategory.objects.filter(name__iexact=name).exists():
+            messages.error(request, f'A category named "{name}" already exists.')
+            return redirect('dashboard:add_course_category')
+        
+        if not slug:
+            slug = slugify(name)
+        else:
+            slug = slugify(slug)
+        
+        # Ensure unique slug
+        base_slug = slug
+        counter = 1
+        while CourseCategory.objects.filter(slug=slug).exists():
+            slug = f"{base_slug}-{counter}"
+            counter += 1
+        
+        category = CourseCategory.objects.create(
+            name=name,
+            slug=slug,
+            description=description,
+            icon=icon,
+            is_active=is_active,
+        )
+        
+        if 'image' in request.FILES:
+            category.image = request.FILES['image']
+            category.save()
+        
+        messages.success(request, f'Category "{name}" created successfully.')
+        return redirect('dashboard:course_categories')
+    
+    return render(request, 'dashboard/admin/course_category_form.html')
+
+
+@login_required
+@superadmin_required
+def edit_course_category(request, category_id):
+    """Edit a course category"""
+    category = get_object_or_404(CourseCategory, id=category_id)
+    
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        slug = request.POST.get('slug', '').strip()
+        description = request.POST.get('description', '').strip()
+        icon = request.POST.get('icon', '').strip()
+        is_active = request.POST.get('is_active') == 'on'
+        
+        if not name:
+            messages.error(request, 'Category name is required.')
+            return redirect('dashboard:edit_course_category', category_id=category.id)
+        
+        # Check for duplicate name (excluding current category)
+        if CourseCategory.objects.filter(name__iexact=name).exclude(id=category.id).exists():
+            messages.error(request, f'A category named "{name}" already exists.')
+            return redirect('dashboard:edit_course_category', category_id=category.id)
+        
+        category.name = name
+        category.description = description
+        category.icon = icon
+        category.is_active = is_active
+        
+        if slug:
+            new_slug = slugify(slug)
+            # Check for duplicate slug (excluding current category)
+            if CourseCategory.objects.filter(slug=new_slug).exclude(id=category.id).exists():
+                messages.warning(request, 'That slug is already in use. Keeping the existing slug.')
+            else:
+                category.slug = new_slug
+        else:
+            # Only regenerate slug if name changed
+            if category.name != name:
+                new_slug = slugify(name)
+                if CourseCategory.objects.filter(slug=new_slug).exclude(id=category.id).exists():
+                    new_slug = f"{new_slug}-{category.id}"
+                category.slug = new_slug
+        
+        if 'image' in request.FILES:
+            category.image = request.FILES['image']
+        
+        category.save()
+        
+        messages.success(request, f'Category "{name}" updated successfully.')
+        return redirect('dashboard:course_categories')
+    
+    context = {
+        'category': category,
+        'is_edit': True,
+    }
+    return render(request, 'dashboard/admin/course_category_form.html', context)
+
+
+@login_required
+@superadmin_required
+def course_category_action(request, category_id, action):
+    """Perform actions on a course category"""
+    category = get_object_or_404(CourseCategory, id=category_id)
+    
+    if action == 'activate':
+        category.is_active = True
+        category.save()
+        messages.success(request, f'Category "{category.name}" activated.')
+    
+    elif action == 'deactivate':
+        category.is_active = False
+        category.save()
+        messages.success(request, f'Category "{category.name}" deactivated.')
+    
+    elif action == 'delete':
+        # Check if category has courses
+        course_count = category.courses.count()
+        if course_count > 0:
+            messages.error(
+                request, 
+                f'Cannot delete "{category.name}" because it has {course_count} course(s). '
+                f'Please reassign or delete those courses first.'
+            )
+        else:
+            name = category.name
+            category.delete()
+            messages.success(request, f'Category "{name}" deleted successfully.')
+    
+    return redirect('dashboard:course_categories')

@@ -30,6 +30,16 @@ class CourseCategory(models.Model):
     @property
     def course_count(self):
         return self.courses.filter(status='published').count()
+    
+    @property
+    def total_course_count(self):
+        """Total courses in this category (all statuses)"""
+        return self.courses.count()
+    
+    @property
+    def can_delete(self):
+        """Check if category can be deleted (no courses assigned)"""
+        return self.courses.count() == 0
 
 
 from django.db import models

@@ -94,5 +94,11 @@ urlpatterns = [
     path('blog/categories/<int:category_id>/<str:action>/', admin_views.admin_blog_category_action, name='blog_category_action'),
     path('blog/comments/', admin_views.admin_blog_comments, name='blog_comments'),
     path('blog/comments/<int:comment_id>/<str:action>/', admin_views.admin_blog_comment_action, name='blog_comment_action'),
+
+    # Course Categories
+    path('courses/categories/', admin_views.manage_course_categories, name='course_categories'),
+    path('courses/categories/add/', admin_views.add_course_category, name='add_course_category'),
+    path('courses/categories/<int:category_id>/edit/', admin_views.edit_course_category, name='edit_course_category'),
+    path('courses/categories/<int:category_id>/<str:action>/', admin_views.course_category_action, name='course_category_action'),
         
 ]
