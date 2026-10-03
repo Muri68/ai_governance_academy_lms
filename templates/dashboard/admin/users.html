@@ -1,5 +1,6 @@
 {% extends "dashboard/admin/admin_base.html" %}
 {% load static %}
+{% load phone_extras %} 
 
 {% block title %}Users{% endblock %}
 {% block page_title %}Users{% endblock %}
@@ -365,38 +366,38 @@
         <div class="stat-icon blue"><i class="fas fa-users"></i></div>
         <div class="stat-info">
             <h3>Total Users</h3>
-            <div class="value">{{ total_users|default:"1,200" }}</div>
+            <div class="value">{{ total_users|default:"0" }}</div>
         </div>
     </div>
     <div class="stat-card green" data-role="STUDENT" id="statStudent">
         <div class="stat-icon green"><i class="fas fa-user-graduate"></i></div>
         <div class="stat-info">
             <h3>Students</h3>
-            <div class="value">{{ total_students|default:"1,100" }}</div>
+            <div class="value">{{ total_students|default:"0" }}</div>
         </div>
     </div>
     <div class="stat-card purple" data-role="INSTRUCTOR" id="statInstructor">
         <div class="stat-icon purple"><i class="fas fa-chalkboard-user"></i></div>
         <div class="stat-info">
             <h3>Instructors</h3>
-            <div class="value">{{ total_instructors|default:"80" }}</div>
+            <div class="value">{{ total_instructors|default:"0" }}</div>
         </div>
     </div>
     <div class="stat-card orange" data-role="ADMIN" id="statAdmin">
         <div class="stat-icon orange"><i class="fas fa-user-shield"></i></div>
         <div class="stat-info">
             <h3>Admins</h3>
-            <div class="value">{{ total_admins|default:"20" }}</div>
+            <div class="value">{{ total_admins|default:"0" }}</div>
         </div>
     </div>
 </div>
 
 <!-- Role Tabs -->
 <div class="role-tabs" id="roleTabs">
-    <button class="role-tab" data-role="all">All Users <span class="count">{{ total_users|default:"1200" }}</span></button>
-    <button class="role-tab active" data-role="STUDENT">Students <span class="count">{{ total_students|default:"1100" }}</span></button>
-    <button class="role-tab" data-role="INSTRUCTOR">Instructors <span class="count">{{ total_instructors|default:"80" }}</span></button>
-    <button class="role-tab" data-role="ADMIN">Admins <span class="count">{{ total_admins|default:"20" }}</span></button>
+    <button class="role-tab" data-role="all">All Users <span class="count">{{ total_users|default:"0" }}</span></button>
+    <button class="role-tab active" data-role="STUDENT">Students <span class="count">{{ total_students|default:"0" }}</span></button>
+    <button class="role-tab" data-role="INSTRUCTOR">Instructors <span class="count">{{ total_instructors|default:"0" }}</span></button>
+    <button class="role-tab" data-role="ADMIN">Admins <span class="count">{{ total_admins|default:"0" }}</span></button>
 </div>
 
 <!-- Filter & Add Row -->
@@ -406,7 +407,6 @@
             <option value="">All Status</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
-            <option value="pending">Pending</option>
         </select>
         <span class="results-text" id="resultsCount">Showing all students</span>
     </div>
@@ -423,6 +423,7 @@
                 <tr>
                     <th>User</th>
                     <th>Email</th>
+                    <th>Phone</th>
                     <th>Role</th>
                     <th>Status</th>
                     <th>Joined On</th>
@@ -445,6 +446,15 @@
                             </div>
                         </td>
                         <td data-label="Email"><span class="user-email-cell">{{ u.email }}</span></td>
+                        <td data-label="Phone">
+                            {% if u.phone %}
+                                <span title="{{ u.phone|country_name }}" style="white-space: nowrap;">
+                                    {{ u.phone|country_flag }} {{ u.phone }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
                         <td data-label="Role">
                             <span class="role-badge {{ u.user_type|lower }}">{{ u.get_user_type_display }}</span>
                         </td>
@@ -460,15 +470,15 @@
                         <td data-label="Actions">
                             <div class="action-btns">
                                 {% if u.user_type == 'STUDENT' %}
-                                <a class="action-btn view text-decoration-none" style="text-decoration: none;" href="{% url 'dashboard:student_detail' u.id %}" title="View Profile">
+                                <a class="action-btn view text-decoration-none" href="{% url 'dashboard:student_detail' u.id %}" title="View Profile">
                                     <i class="fas fa-eye"></i>
                                 </a>
                                 {% elif u.user_type == 'INSTRUCTOR' %}
-                                <a class="action-btn view text-decoration-none" style="text-decoration: none;" href="{% url 'dashboard:instructor_detail' u.id %}" title="View Profile">
+                                <a class="action-btn view text-decoration-none" href="{% url 'dashboard:instructor_detail' u.id %}" title="View Profile">
                                     <i class="fas fa-eye"></i>
                                 </a>
                                 {% elif u.user_type == 'ADMIN' %}
-                                <button class="action-btn view text-decoration-none" title="View Profile" disabled style="opacity:0.3;">
+                                <button class="action-btn view" title="View Profile" disabled style="opacity:0.3;">
                                     <i class="fas fa-eye"></i>
                                 </button>
                                 {% endif %}
@@ -483,51 +493,12 @@
                     </tr>
                     {% endfor %}
                 {% else %}
-                    <!-- Sample data -->
-                    <tr data-role="STUDENT" data-status="active">
-                        <td data-label="User"><div class="user-cell"><div class="user-avatar-default student">CW</div><span class="user-name">Cameron Williamson</span></div></td>
-                        <td data-label="Email"><span class="user-email-cell">cameron.w@example.com</span></td>
-                        <td data-label="Role"><span class="role-badge student">Student</span></td>
-                        <td data-label="Status"><span class="status-badge active">Active</span></td>
-                        <td data-label="Joined On">Jul 02, 2025</td>
-                        <td data-label="Last Active">Today</td>
-                        <td data-label="Actions"><div class="action-btns"><button class="action-btn view"><i class="fas fa-eye"></i></button><button class="action-btn toggle"><i class="fas fa-user-slash"></i></button></div></td>
-                    </tr>
-                    <tr data-role="STUDENT" data-status="active">
-                        <td data-label="User"><div class="user-cell"><div class="user-avatar-default student">AS</div><span class="user-name">Alice Smith</span></div></td>
-                        <td data-label="Email"><span class="user-email-cell">alice.s@example.com</span></td>
-                        <td data-label="Role"><span class="role-badge student">Student</span></td>
-                        <td data-label="Status"><span class="status-badge active">Active</span></td>
-                        <td data-label="Joined On">Jun 15, 2025</td>
-                        <td data-label="Last Active">Today</td>
-                        <td data-label="Actions"><div class="action-btns"><button class="action-btn view"><i class="fas fa-eye"></i></button><button class="action-btn toggle"><i class="fas fa-user-slash"></i></button></div></td>
-                    </tr>
-                    <tr data-role="STUDENT" data-status="inactive">
-                        <td data-label="User"><div class="user-cell"><div class="user-avatar-default student">BJ</div><span class="user-name">Bob Johnson</span></div></td>
-                        <td data-label="Email"><span class="user-email-cell">bob.j@example.com</span></td>
-                        <td data-label="Role"><span class="role-badge student">Student</span></td>
-                        <td data-label="Status"><span class="status-badge inactive">Inactive</span></td>
-                        <td data-label="Joined On">May 20, 2025</td>
-                        <td data-label="Last Active">Jul 01, 2025</td>
-                        <td data-label="Actions"><div class="action-btns"><button class="action-btn view"><i class="fas fa-eye"></i></button><button class="action-btn toggle"><i class="fas fa-user-check"></i></button></div></td>
-                    </tr>
-                    <tr data-role="STUDENT" data-status="active">
-                        <td data-label="User"><div class="user-cell"><div class="user-avatar-default student">DP</div><span class="user-name">Diana Prince</span></div></td>
-                        <td data-label="Email"><span class="user-email-cell">diana.p@example.com</span></td>
-                        <td data-label="Role"><span class="role-badge student">Student</span></td>
-                        <td data-label="Status"><span class="status-badge active">Active</span></td>
-                        <td data-label="Joined On">Apr 10, 2025</td>
-                        <td data-label="Last Active">Today</td>
-                        <td data-label="Actions"><div class="action-btns"><button class="action-btn view"><i class="fas fa-eye"></i></button><button class="action-btn toggle"><i class="fas fa-user-slash"></i></button></div></td>
-                    </tr>
-                    <tr data-role="STUDENT" data-status="active">
-                        <td data-label="User"><div class="user-cell"><div class="user-avatar-default student">ET</div><span class="user-name">Ethan Thomas</span></div></td>
-                        <td data-label="Email"><span class="user-email-cell">ethan.t@example.com</span></td>
-                        <td data-label="Role"><span class="role-badge student">Student</span></td>
-                        <td data-label="Status"><span class="status-badge active">Active</span></td>
-                        <td data-label="Joined On">Mar 25, 2025</td>
-                        <td data-label="Last Active">Today</td>
-                        <td data-label="Actions"><div class="action-btns"><button class="action-btn view"><i class="fas fa-eye"></i></button><button class="action-btn toggle"><i class="fas fa-user-slash"></i></button></div></td>
+                    <!-- Empty state -->
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-5">
+                            <i class="fas fa-users" style="font-size: 2rem; opacity: 0.3; display: block; margin-bottom: 10px;"></i>
+                            No users found.
+                        </td>
                     </tr>
                 {% endif %}
             </tbody>
@@ -537,15 +508,11 @@
     <!-- Pagination -->
     <div class="pagination-wrapper">
         <div class="showing-text">
-            Showing <span class="highlight" id="showingStart">1</span> to <span class="highlight" id="showingEnd">5</span> of <span class="highlight" id="showingTotal">1,200</span> users
+            Showing <span class="highlight" id="showingStart">1</span> to <span class="highlight" id="showingEnd">0</span> of <span class="highlight" id="showingTotal">0</span> users
         </div>
         <div class="pagination">
             <button class="pagination-btn" disabled><i class="fas fa-chevron-left"></i></button>
             <button class="pagination-btn active">1</button>
-            <button class="pagination-btn">2</button>
-            <button class="pagination-btn">3</button>
-            <button class="pagination-btn ellipsis">...</button>
-            <button class="pagination-btn">67</button>
             <button class="pagination-btn"><i class="fas fa-chevron-right"></i></button>
         </div>
     </div>
