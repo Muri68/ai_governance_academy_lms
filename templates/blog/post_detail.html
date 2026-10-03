@@ -539,7 +539,7 @@
                 </button>
             </form>
             {% else %}
-            <p style="color: #94a3b8;">Please <a href="{% url 'login' %}" style="color: #d4a77d;">login</a> to leave a comment.</p>
+            <p style="color: #94a3b8;">Please <a href="{% url 'accounts:login' %}" style="color: #d4a77d;">login</a> to leave a comment.</p>
             {% endif %}
             
             {% for comment in comments %}

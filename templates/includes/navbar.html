@@ -72,12 +72,12 @@
                     <ul>
                         {% if user.is_authenticated %}
                         <!-- Notification Icon -->
-                        <li>
+                        <!-- <li>
                             <a href="#" class="icon-btn notification-btn">
                                 <i class="fas fa-bell"></i>
                                 <span class="count-badge bg-danger">3</span>
                             </a>
-                        </li>
+                        </li> -->
 
                         <!-- User Avatar Dropdown -->
                         <li class="dropdown">
@@ -229,6 +229,7 @@
             <li><a href="{% url 'frontend:courses' %}">Courses</a></li>
             <li><a href="{% url 'frontend:about' %}">About</a></li>
             <li><a href="{% url 'frontend:contact' %}">Contact</a></li>
+            <li><a href="{% url 'blog:home' %}">Blog</a></li>
         </ul>
     </div>
 

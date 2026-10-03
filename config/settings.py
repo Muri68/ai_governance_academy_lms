@@ -105,7 +105,6 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 # Database
-# # MySQL Configuration using decouple
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.mysql',
