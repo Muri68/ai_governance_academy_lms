@@ -179,6 +179,14 @@ def course_learning(request, course_slug):
                 next_lesson = lesson_list[idx + 1]
         except ValueError:
             pass
+
+    # Pre-render PDF pages for the current content on first load
+    if current_content and current_content.content_type in ('pdf', 'slides') and current_content.pdf_file:
+        if not current_content.total_pages:
+            try:
+                _render_pdf_pages(current_content)
+            except Exception as e:
+                print(f'[PDF RENDER FAIL] content={current_content.id}: {e}')
     
     context = {
         'course': course,
@@ -266,7 +274,15 @@ def load_lesson_content(request, course_slug, lesson_id, content_id):
             notes = progress.notes or ''
     
     # Build content HTML
-    content_html = build_content_html(content, course)
+        # Render PDF pages if needed BEFORE building the HTML
+    if content.content_type in ('pdf', 'slides') and content.pdf_file:
+        if not content.total_pages:
+            try:
+                _render_pdf_pages(content)
+            except Exception as e:
+                print(f'[PDF RENDER FAIL] content={content.id}: {e}')
+
+    content_html = build_content_html(content, course, request)
     
     # Get quiz for this lesson
     quiz = lesson.quizzes.filter(is_active=True).first()
@@ -321,18 +337,186 @@ def load_lesson_content(request, course_slug, lesson_id, content_id):
     return JsonResponse(response_data)
 
 
-def build_content_html(content, course):
-    """Helper function to build HTML for different content types"""
+# ============================================================
+# PDF → IMAGE RENDERING (paid content protection)
+# ============================================================
+
+def _render_pdf_pages(content, target_width_px=1800, force=False):
+    """Render PDF pages to PNG. Saves page count to content.total_pages."""
+    import pymupdf
+
+    pdf_field = content.pdf_file
+    if not pdf_field:
+        return 0
+
+    cache_dir = os.path.join(settings.MEDIA_ROOT, 'pdf_pages', str(content.id))
+    os.makedirs(cache_dir, exist_ok=True)
+    marker = os.path.join(cache_dir, f'.rendered-{target_width_px}')
+
+    if force:
+        for f in os.listdir(cache_dir):
+            try:
+                os.remove(os.path.join(cache_dir, f))
+            except Exception:
+                pass
+
+    if os.path.exists(marker):
+        files = sorted(f for f in os.listdir(cache_dir)
+                       if f.startswith('page-') and f.endswith('.png'))
+        if files:
+            content.total_pages = len(files)
+            content.save(update_fields=['total_pages'])
+            return len(files)
+
+    doc = pymupdf.open(pdf_field.path)
+    for i, page in enumerate(doc):
+        raw_dpi = (target_width_px / page.rect.width) * 72.0
+        dpi = int(round(raw_dpi))
+        dpi = max(72, min(600, dpi))
+        pix = page.get_pixmap(dpi=dpi, alpha=False)
+        pix.save(os.path.join(cache_dir, f'page-{i+1:04d}.png'))
+    doc.close()
+
+    count = len([f for f in os.listdir(cache_dir) if f.endswith('.png')])
+    content.total_pages = count
+    content.save(update_fields=['total_pages'])
+
+    with open(marker, 'w') as f:
+        f.write(str(count))
+
+    print(f'[PDF RENDER] content={content.id} pages={count}')
+    return count
+
+
+@login_required
+def serve_pdf_page_image(request, course_slug, content_id, page_num):
+    """Serve one rendered PDF page as PNG. Enrolled users only."""
+    course = get_object_or_404(Course, slug=course_slug)
+    content = get_object_or_404(LessonContent, id=content_id)
+
+    enrolled = Enrollment.objects.filter(
+        student=request.user, course=course, status__in=['active', 'completed']
+    ).exists()
+    if not enrolled and not content.is_preview:
+        raise Http404("Not enrolled")
+
+    if content.content_type not in ('pdf', 'slides'):
+        raise Http404("Not a PDF")
+
+    if not content.total_pages:
+        try:
+            _render_pdf_pages(content)
+        except Exception as e:
+            raise Http404(f"Render failed: {e}")
+
+    try:
+        pn = int(page_num)
+        if pn < 1 or pn > 9999:
+            raise ValueError
+    except (ValueError, TypeError):
+        raise Http404("Invalid page")
+
+    file_path = os.path.join(
+        settings.MEDIA_ROOT, 'pdf_pages', str(content.id), f'page-{pn:04d}.png'
+    )
+    if not os.path.exists(file_path):
+        raise Http404("Page not found")
+
+    response = FileResponse(open(file_path, 'rb'), content_type='image/png')
+    response['Cache-Control'] = 'private, max-age=3600'
+    response['X-Content-Type-Options'] = 'nosniff'
+    return response
+
+
+@login_required
+def pdf_metadata(request, course_slug, content_id):
+    """
+    Return { total_pages: N } for a PDF. Triggers render on first call.
+    """
+    course = get_object_or_404(Course, slug=course_slug)
+    content = get_object_or_404(LessonContent, id=content_id)
+
+    # Access: must be enrolled (unless preview)
+    enrolled = Enrollment.objects.filter(
+        student=request.user, course=course, status__in=['active', 'completed']
+    ).exists()
+    if not enrolled and not content.is_preview:
+        return JsonResponse({'error': 'Not enrolled'}, status=403)
+
+    if content.content_type not in ('pdf', 'slides'):
+        return JsonResponse({'error': 'Not a PDF'}, status=400)
+
+    try:
+        paths = _render_pdf_pages(content)
+    except Exception as e:
+        return JsonResponse({'error': f'Render failed: {e}'}, status=500)
+
+    return JsonResponse({
+        'total_pages': len(paths),
+        'content_id': content.id,
+    })
+
+
+@login_required
+def serve_pdf_page_image(request, course_slug, content_id, page_num):
+    """
+    Serve one rendered PDF page as PNG. Enrolled users only.
+    """
+    course = get_object_or_404(Course, slug=course_slug)
+    content = get_object_or_404(LessonContent, id=content_id)
+
+    enrolled = Enrollment.objects.filter(
+        student=request.user, course=course, status__in=['active', 'completed']
+    ).exists()
+    if not enrolled and not content.is_preview:
+        raise Http404("Not enrolled")
+
+    # Ensure pages exist
+    if not os.path.exists(os.path.join(
+        settings.MEDIA_ROOT, 'pdf_pages', str(content.id), '.rendered'
+    )):
+        try:
+            _render_pdf_pages(content)
+        except Exception:
+            raise Http404("Unable to render PDF")
+
+    # Sanitize page_num to avoid path traversal
+    try:
+        pn = int(page_num)
+        if pn < 1 or pn > 9999:
+            raise ValueError
+    except (ValueError, TypeError):
+        raise Http404("Invalid page")
+
+    filename = f'page-{pn:04d}.png'
+    file_path = os.path.join(
+        settings.MEDIA_ROOT, 'pdf_pages', str(content.id), filename
+    )
+
+    if not os.path.exists(file_path):
+        raise Http404("Page not found")
+
+    response = FileResponse(open(file_path, 'rb'), content_type='image/png')
+    response['Cache-Control'] = 'private, max-age=3600'
+    response['X-Content-Type-Options'] = 'nosniff'
+    response['Content-Disposition'] = f'inline; filename="{filename}"'
+    return response
+
+
+# ============================================================
+# CONTENT HTML BUILDER
+# ============================================================
+
+def build_content_html(content, course, request=None):
+    """Build HTML for a LessonContent item."""
     content_type = content.content_type
     html = ''
-    
-    # FIX: Use the correct URL pattern
+
     serve_file_url = reverse('courses:serve_file', kwargs={
         'course_slug': course.slug,
         'content_id': content.id
     })
-    
-    # For YouTube videos
+
     if content_type == 'video_url' and content.video_url:
         html = f'''
         <div class="video-player-container">
@@ -360,79 +544,75 @@ def build_content_html(content, course):
         }})();
         </script>
         '''
-    
+
     elif content_type == 'video' and content.video_file:
         html = f'''
         <div class="video-player-container">
             <div class="video-wrapper">
-                <video controls preload="metadata" playsinline style="width:100%;height:100%;" 
-                       controlsList="nodownload" oncontextmenu="return false;">
+                <video controls preload="metadata" playsinline
+                       style="width:100%;height:100%;"
+                       controlsList="nodownload noremoteplayback"
+                       disablePictureInPicture
+                       oncontextmenu="return false;">
                     <source src="{serve_file_url}" type="video/mp4">
                 </video>
             </div>
         </div>
         '''
-    
+
     elif content_type == 'text' and content.text_content:
         html = f'<div class="content-text">{content.text_content}</div>'
-    
-    elif content_type in ['pdf', 'slides'] and content.pdf_file:
-        # Improved PDF viewer
+
+    elif content_type in ('pdf', 'slides') and content.pdf_file:
+        total = content.total_pages or 1
+        page_imgs = ''
+        for n in range(1, total + 1):
+            page_imgs += f'''
+            <div class="pdf-page-block" id="pdfPage-{content.id}-{n}"
+                 style="display:{'block' if n == 1 else 'none'};">
+                <img src="/courses/learn/{course.slug}/pdf-page/{content.id}/{n}/"
+                     alt="Page {n}"
+                     draggable="false"
+                     oncontextmenu="return false;">
+            </div>
+            '''
+
         html = f'''
-        <div class="pdf-container-improved" id="pdf-container-{content.id}" style="width:100%;margin:16px 0;">
-            <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">
-                <div style="background:#0c1e2e;color:white;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;">
-                    <span style="font-size:14px;font-weight:600;">
-                        <i class="fas fa-file-pdf" style="margin-right:8px;color:#ef4444;"></i>
-                        {content.title or 'PDF Document'}
-                    </span>
-                    <div style="display:flex;gap:8px;">
-                        <button onclick="zoomPdf('{content.id}', -0.1)" style="background:rgba(255,255,255,0.1);color:white;border:none;padding:6px 10px;border-radius:4px;cursor:pointer;">
-                            <i class="fas fa-minus"></i>
-                        </button>
-                        <button onclick="zoomPdf('{content.id}', 0.1)" style="background:rgba(255,255,255,0.1);color:white;border:none;padding:6px 10px;border-radius:4px;cursor:pointer;">
-                            <i class="fas fa-plus"></i>
-                        </button>
-                        <button onclick="downloadPdf('{content.id}')" style="background:rgba(255,255,255,0.1);color:white;border:none;padding:6px 10px;border-radius:4px;cursor:pointer;">
-                            <i class="fas fa-download"></i>
-                        </button>
-                    </div>
-                </div>
-                <div style="display:flex;align-items:center;justify-content:center;gap:16px;padding:12px;background:white;border-bottom:1px solid #e5e7eb;">
-                    <button onclick="changePdfPage('{content.id}', -1)" id="pdf-prev-{content.id}" disabled style="background:#0c1e2e;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">
-                        <i class="fas fa-chevron-left"></i> Prev
-                    </button>
-                    <span style="font-size:14px;color:#374151;">
-                        Page <span id="pdf-current-page-{content.id}">1</span> of <span id="pdf-total-pages-{content.id}">?</span>
-                    </span>
-                    <button onclick="changePdfPage('{content.id}', 1)" id="pdf-next-{content.id}" disabled style="background:#0c1e2e;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">
-                        Next <i class="fas fa-chevron-right"></i>
-                    </button>
-                </div>
-                <div id="pdf-scroll-container-{content.id}" style="height:600px;overflow:auto;background:#525659;position:relative;">
-                    <div id="pdf-pages-container-{content.id}" style="display:flex;flex-direction:column;align-items:center;gap:20px;padding:20px;min-height:100%;">
-                        <canvas id="pdf-canvas-{content.id}" style="background:white;box-shadow:0 2px 8px rgba(0,0,0,0.3);"></canvas>
-                    </div>
-                    <div id="pdf-loading-{content.id}" style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(82,86,89,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;">
-                        <i class="fas fa-spinner fa-spin" style="font-size:32px;color:white;margin-bottom:12px;"></i>
-                        <p style="color:white;font-size:14px;">Loading PDF...</p>
-                    </div>
-                    <div id="pdf-error-{content.id}" style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(248,250,252,0.98);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:11;text-align:center;padding:40px;">
-                        <i class="fas fa-file-pdf" style="font-size:48px;color:#ef4444;margin-bottom:16px;"></i>
-                        <h4 style="margin-bottom:8px;">Unable to Load PDF</h4>
-                        <button onclick="retryPdfLoad('{content.id}')" style="background:#0c1e2e;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">
-                            <i class="fas fa-redo"></i> Retry
-                        </button>
-                    </div>
-                </div>
+        <div class="pdf-simple" id="pdfSimple-{content.id}"
+             data-content-id="{content.id}"
+             data-total-pages="{total}"
+             data-current-page="1">
+
+            <div class="pdf-simple-header">
+                <strong><i class="fas fa-file-pdf"></i> {content.title or 'PDF Document'}</strong>
+                <span class="pdf-simple-counter">
+                    Page <span id="pdfCur-{content.id}">1</span> / {total}
+                </span>
+            </div>
+
+            <div class="pdf-simple-body" id="pdfBody-{content.id}">
+                {page_imgs}
+            </div>
+
+            <div class="pdf-simple-nav">
+                <button type="button" onclick="pdfSimplePrev('{content.id}')"
+                        id="pdfPrevBtn-{content.id}" disabled>
+                    <i class="fas fa-chevron-left"></i> Previous
+                </button>
+                <input type="number" min="1" max="{total}" value="1"
+                       id="pdfJump-{content.id}"
+                       onchange="pdfSimpleGo('{content.id}', this.value)">
+                <button type="button" onclick="pdfSimpleNext('{content.id}')"
+                        id="pdfNextBtn-{content.id}">
+                    Next <i class="fas fa-chevron-right"></i>
+                </button>
             </div>
         </div>
-        <script>setTimeout(function(){{ initPdfViewer('{content.id}'); }}, 100);</script>
         '''
-    
+
     elif content_type == 'code' and content.text_content:
         html = f'<div class="code-block"><pre><code>{content.text_content}</code></pre></div>'
-    
+
     elif content_type == 'assignment':
         instructions = content.assignment_instructions or content.text_content or ''
         html = f'''
@@ -444,8 +624,11 @@ def build_content_html(content, course):
             </div>
         </div>
         '''
-    
+
     return html
+
+
+
 
 
 def build_quiz_html(quiz, user):
@@ -869,66 +1052,49 @@ def save_lesson_notes(request, course_slug, lesson_id):
 
 # ===================== FILE SERVING =====================
 
+# ============================================================
+# FILE SERVING (for videos and any non-PDF content)
+# ============================================================
+
 @login_required
 def serve_protected_file(request, course_slug, content_id):
-    """Serve protected course files with proper inline viewing support"""
+    """Serve video files only. PDFs are NEVER served via this endpoint."""
     course = get_object_or_404(Course, slug=course_slug)
     content = get_object_or_404(LessonContent, id=content_id)
-    
-    # Check enrollment or create one
-    enrollment = Enrollment.objects.filter(
+
+    enrolled = Enrollment.objects.filter(
         student=request.user, course=course, status__in=['active', 'completed']
-    ).first()
-    if not enrollment and not content.is_preview:
-        enrollment = Enrollment.objects.create(student=request.user, course=course, status='active')
-    
+    ).exists()
+    if not enrolled and not content.is_preview:
+        raise Http404("Not enrolled")
+
     file_field = None
     mime_type = 'application/octet-stream'
-    
-    if content.content_type == 'pdf' and content.pdf_file:
-        file_field = content.pdf_file
-        mime_type = 'application/pdf'
-    elif content.content_type == 'video' and content.video_file:
+
+    if content.content_type == 'video' and content.video_file:
         file_field = content.video_file
-        file_ext = os.path.splitext(content.video_file.name)[1].lower()
+        ext = os.path.splitext(content.video_file.name)[1].lower()
         mime_map = {'.mp4': 'video/mp4', '.webm': 'video/webm', '.ogg': 'video/ogg'}
-        mime_type = mime_map.get(file_ext, 'video/mp4')
-    elif content.content_type == 'slides' and content.pdf_file:
-        file_field = content.pdf_file
-        mime_type = 'application/pdf'
-    
-    if file_field:
-        try:
-            file_handle = file_field.open('rb')
-            response = FileResponse(file_handle, content_type=mime_type)
-            filename = os.path.basename(file_field.name)
-            encoded_filename = quote(filename)
-            
-            download = request.GET.get('download', '')
-            
-            if download:
-                response['Content-Disposition'] = f'attachment; filename="{encoded_filename}"; filename*=UTF-8\'\'{encoded_filename}'
-            else:
-                # Always use inline for PDFs to ensure they display in browser
-                response['Content-Disposition'] = f'inline; filename="{encoded_filename}"; filename*=UTF-8\'\'{encoded_filename}'
-            
-            # Add CORS headers for PDF.js
-            response['Access-Control-Allow-Origin'] = '*'
-            response['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
-            response['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
-            
-            response['X-Content-Type-Options'] = 'nosniff'
-            response['Accept-Ranges'] = 'bytes'
-            response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-            
-            return response
-            
-        except FileNotFoundError:
-            raise Http404("File not found")
-        except Exception as e:
-            raise Http404(f"Error serving file: {str(e)}")
-    
-    raise Http404("No file available")
+        mime_type = mime_map.get(ext, 'video/mp4')
+
+    # PDFs are explicitly refused here. They are served only as images.
+    if content.content_type in ('pdf', 'slides'):
+        raise Http404("PDFs are served as images only")
+
+    if not file_field:
+        raise Http404("No file available")
+
+    try:
+        file_handle = file_field.open('rb')
+    except FileNotFoundError:
+        raise Http404("File not found")
+
+    response = FileResponse(file_handle, content_type=mime_type)
+    response['Content-Disposition'] = 'inline'
+    response['Accept-Ranges'] = 'bytes'
+    response['X-Content-Type-Options'] = 'nosniff'
+    response['Cache-Control'] = 'private, max-age=300'
+    return response
 
 
 # ===================== REVIEWS =====================

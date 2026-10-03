@@ -445,6 +445,8 @@ class LessonContent(models.Model):
     is_required = models.BooleanField(default=True, help_text="Must complete to finish lesson")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    total_pages = models.PositiveIntegerField(default=0)
     
     class Meta:
         verbose_name = 'Lesson Content'
