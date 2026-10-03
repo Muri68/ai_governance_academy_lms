@@ -13,73 +13,96 @@ from django.utils.html import strip_tags
 from apps.accounts.forms import StudentRegistrationForm, CustomAuthenticationForm
 from apps.accounts.models import CustomUser
 from datetime import timedelta
+import phonenumbers
+from django import forms
+from django.utils.translation import gettext_lazy as _
+
 
 
 class StudentRegistrationView(CreateView):
     form_class = StudentRegistrationForm
     template_name = 'accounts/student/register.html'
     success_url = reverse_lazy('accounts:email_verification_sent')
-    
+
+    # ------------------------------------------------------------------ #
+    #  Pass a region hint to the form (used only when user omits "+")
+    # ------------------------------------------------------------------ #
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        # Adjust the default for your audience.
+        # ISO 3166-1 alpha-2 codes → "GB", "US", "NG", "IN" (never "UK").
+        kwargs['default_region'] = self.request.META.get(
+            'HTTP_CF_IPCOUNTRY', 'GB'
+        ).upper()
+        return kwargs
+
+    # ------------------------------------------------------------------ #
+    #  Save user inactive, create profile, send verification email
+    # ------------------------------------------------------------------ #
     def form_valid(self, form):
-        # Save the user but don't activate
         user = form.save(commit=False)
         user.is_active = False
         user.email_verified = False
+        # user.phone already set by form.save() → cleaned_data['phone']
         user.save()
-        
-        # Create student profile
+
+        # Create student profile (mirrors form.save(); safe because commit=False above)
         from apps.accounts.models import StudentProfile
-        student_id = f"STU{user.date_joined.strftime('%Y%m%d')}{str(user.id)[:8].upper()}"
-        StudentProfile.objects.create(user=user, student_id=student_id)
-        
-        # Send verification email
+        student_id = (
+            f"STU{user.date_joined.strftime('%Y%m%d')}"
+            f"{str(user.id)[:8].upper()}"
+        )
+        StudentProfile.objects.get_or_create(user=user, defaults={'student_id': student_id})
+
         self.send_verification_email(self.request, user)
-        
+
         messages.success(
             self.request,
-            f'Registration successful! Please check your email ({user.email}) to verify your account.'
+            f'Registration successful! Please check your email '
+            f'({user.email}) to verify your account.'
         )
-        
         return redirect(self.success_url)
-    
+
+    # ------------------------------------------------------------------ #
+    #  Email verification mail
+    # ------------------------------------------------------------------ #
     def send_verification_email(self, request, user):
-        """Send verification email to user"""
-        # Generate verification token
         token = user.generate_verification_token()
-        
-        # Build verification URL
         verification_url = request.build_absolute_uri(
             reverse('accounts:verify_email', kwargs={'token': token})
         )
-        
-        # Email context
+
         context = {
             'user': user,
             'verification_url': verification_url,
             'site_name': 'AI Governance Authority',
             'expiry_hours': 48,
         }
-        
-        # Render email templates
+
         try:
-            html_message = render_to_string('accounts/emails/verify_email.html', context)
+            html_message = render_to_string(
+                'accounts/emails/verify_email.html', context
+            )
             plain_message = strip_tags(html_message)
         except Exception:
-            html_message = f"Please verify your email by clicking this link: {verification_url}"
+            html_message = (
+                f"Please verify your email by clicking this link: "
+                f"{verification_url}"
+            )
             plain_message = html_message
-        
-        subject = 'Verify Your Email Address - AI Governance Authority'
-        
-        # Send email
+
         send_mail(
-            subject,
+            'Verify Your Email Address - AI Governance Authority',
             plain_message,
             settings.DEFAULT_FROM_EMAIL,
             [user.email],
             html_message=html_message,
             fail_silently=False,
         )
-    
+
+    # ------------------------------------------------------------------ #
+    #  Block authenticated users from hitting /register/
+    # ------------------------------------------------------------------ #
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
             return redirect('accounts:dashboard')

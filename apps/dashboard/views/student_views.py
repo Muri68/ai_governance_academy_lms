@@ -237,6 +237,7 @@ def student_profile(request):
         user.first_name = request.POST.get('first_name', user.first_name)
         user.last_name = request.POST.get('last_name', user.last_name)
         user.bio = request.POST.get('bio', user.bio)
+        user.phone = request.POST.get('phone', user.phone)
         
         if 'profile_picture' in request.FILES:
             user.profile_picture = request.FILES['profile_picture']

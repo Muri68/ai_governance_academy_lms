@@ -25,6 +25,10 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(max_length=150, blank=True)
     profile_picture = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
     bio = models.TextField(max_length=500, blank=True)
+
+    phone = models.CharField(_('phone number'),max_length=20,unique=True,null=True, blank=True,  # Allow blank in admin/forms (but form will require it)
+        help_text=_('Required. Enter a valid phone number.'),
+    )
     
     # Account status
     is_active = models.BooleanField(default=False)  # Changed to False - requires email verification

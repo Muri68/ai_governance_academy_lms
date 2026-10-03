@@ -37,6 +37,8 @@
         
         <!-- Canonical URL -->
         <link rel="canonical" href="{{ request.build_absolute_uri }}">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/css/intlTelInput.css">
+
         
         {% if google_analytics %}
         <!-- Google Analytics -->
@@ -640,6 +642,7 @@
         </div>
 
         <!-- JS -->
+        <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/js/intlTelInput.min.js"></script>
         <script src="{% static 'assets/js/vendor/modernizr-3.11.2.min.js' %}"></script>
         <script src="{% static 'assets/js/vendor/jquery-3.5.1.min.js' %}"></script>
         <script src="{% static 'assets/js/plugins.min.js' %}"></script>

@@ -504,6 +504,7 @@
         .dashboard-sidebar { grid-template-columns: 1fr; }
     }
 </style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/css/intlTelInput.css">
 {% endblock %}
 
 {% block student_content %}
@@ -594,12 +595,21 @@
                         </div>
                     </div>
 
-                    <!-- Email -->
-                    <div class="form-group">
-                        <label class="form-label">Email Address</label>
-                        <input type="email" class="form-control" value="{{ user.email }}" disabled>
-                        <p class="hint-text"><i class="fas fa-info-circle"></i> Email cannot be changed. Contact support for assistance.</p>
+                    <div class="form-row">
+                        <!-- Email -->
+                        <div class="form-group">
+                            <label class="form-label">Email Address</label>
+                            <input type="email" name="email" class="form-control" value="{{ user.email }}" readonly>
+                            <p class="hint-text"><i class="fas fa-info-circle"></i> Email cannot be changed. Contact support for assistance.</p>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Phone Number</label>
+                            <input type="tel" name="phone" id="editPhone" class="form-control"
+                                value="{{ user.phone }}" required autocomplete="tel">
+                        </div>
                     </div>
+
+                    
 
                     <!-- Bio -->
                     <div class="form-group">
@@ -979,5 +989,40 @@
         
         processNextStep();
     }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/js/intlTelInput.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const phoneInput = document.querySelector('#editPhone');
+    if (phoneInput && window.intlTelInput) {
+        const iti = window.intlTelInput(phoneInput, {
+            initialCountry: 'auto',
+            geoIpLookup: function (cb) {
+                fetch('https://ipapi.co/json/')
+                    .then(r => r.json())
+                    .then(d => cb(d.country_code))
+                    .catch(() => cb('gb'));
+            },
+            separateDialCode: true,
+            preferredCountries: ['gb', 'us', 'ng', 'in'],
+            utilsScript: 'https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/js/utils.js',
+        });
+
+        // Normalize to E.164 on submit
+        const form = phoneInput.closest('form');
+        form.addEventListener('submit', function (e) {
+            if (phoneInput.value.trim() && !iti.isValidNumber()) {
+                e.preventDefault();
+                phoneInput.classList.add('is-invalid');
+                alert('Please enter a valid phone number.');
+                return;
+            }
+            if (phoneInput.value.trim()) {
+                phoneInput.value = iti.getNumber(); // E.164
+            }
+        });
+    }
+});
 </script>
 {% endblock %}

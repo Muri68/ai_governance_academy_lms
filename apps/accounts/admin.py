@@ -35,14 +35,14 @@ class AdminProfileInline(admin.StackedInline):
 
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
-    list_display = ('email', 'first_name', 'last_name', 'user_type', 'is_active', 'email_verified', 'date_joined')
+    list_display = ('email', 'phone', 'first_name', 'last_name', 'user_type', 'is_active', 'email_verified', 'date_joined')
     list_filter = ('user_type', 'is_active', 'email_verified', 'is_staff', 'date_joined')
-    search_fields = ('email', 'first_name', 'last_name')
+    search_fields = ('email', 'first_name', 'last_name', 'phone')
     ordering = ('-date_joined',)
     
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
-        (_('Personal info'), {'fields': ('first_name', 'last_name', 'bio', 'profile_picture')}),
+        (_('Personal info'), {'fields': ('first_name', 'last_name', 'phone', 'bio', 'profile_picture')}),
         (_('Permissions'), {
             'fields': ('is_active', 'is_staff', 'is_superuser', 'user_type', 'groups', 'user_permissions'),
         }),
@@ -53,7 +53,7 @@ class CustomUserAdmin(UserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'first_name', 'last_name', 'user_type', 'password1', 'password2'),
+            'fields': ('email', 'phone', 'first_name', 'last_name', 'user_type', 'password1', 'password2'),
         }),
     )
     

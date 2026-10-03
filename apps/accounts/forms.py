@@ -3,94 +3,160 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.hashers import make_password
 from django.utils.crypto import get_random_string
 from .models import CustomUser, StudentProfile, InstructorProfile
+from django.utils.translation import gettext_lazy as _
 import string
+import phonenumbers
+
 
 
 class StudentRegistrationForm(UserCreationForm):
     first_name = forms.CharField(
-        max_length=150, 
+        max_length=150,
         required=True,
         widget=forms.TextInput(attrs={
             'class': 'form-control form-control-sm',
             'placeholder': 'Enter your First Name',
-            'id': 'id_first_name'
-        })
+            'id': 'id_first_name',
+        }),
     )
     last_name = forms.CharField(
-        max_length=150, 
+        max_length=150,
         required=True,
         widget=forms.TextInput(attrs={
             'class': 'form-control form-control-sm',
             'placeholder': 'Enter your Last Name',
-            'id': 'id_last_name'
-        })
+            'id': 'id_last_name',
+        }),
     )
     email = forms.EmailField(
         required=True,
         widget=forms.EmailInput(attrs={
             'class': 'form-control form-control-sm',
             'placeholder': 'Enter your Email',
-            'id': 'id_email'
-        })
+            'id': 'id_email',
+        }),
+    )
+    # Raw value from intl-tel-input; expected to arrive as E.164 ("+2348012345678")
+    phone = forms.CharField(
+        label=_("Phone Number"),
+        max_length=20,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'id': 'phone',
+            'autocomplete': 'tel',
+            'placeholder': '+1 (234) 567-8900',
+        }),
     )
     password1 = forms.CharField(
-        label='Password',
+        label=_('Password'),
         strip=False,
         widget=forms.PasswordInput(attrs={
             'class': 'form-control',
             'placeholder': 'Create password',
             'id': 'id_password1',
-            'autocomplete': 'new-password'
-        })
+            'autocomplete': 'new-password',
+        }),
     )
     password2 = forms.CharField(
-        label='Confirm Password',
+        label=_('Confirm Password'),
         strip=False,
         widget=forms.PasswordInput(attrs={
             'class': 'form-control',
             'placeholder': 'Confirm password',
             'id': 'id_password2',
-            'autocomplete': 'new-password'
-        })
+            'autocomplete': 'new-password',
+        }),
     )
-    
+
     class Meta:
         model = CustomUser
-        fields = ('email', 'first_name', 'last_name', 'password1', 'password2')
-    
+        fields = ('email', 'first_name', 'last_name', 'phone', 'password1', 'password2')
+
+    def __init__(self, *args, **kwargs):
+        # Fallback region for numbers entered without a leading "+"
+        # Use ISO 3166-1 alpha-2 codes: "GB" (not "UK"), "US", "NG", "IN", ...
+        self.default_region = kwargs.pop('default_region', 'GB')
+        super().__init__(*args, **kwargs)
+
+    # ------------------------------------------------------------------ #
+    #  Phone — parse, validate, normalize to E.164, enforce uniqueness
+    # ------------------------------------------------------------------ #
+    def clean_phone(self):
+        raw = (self.cleaned_data.get('phone') or '').strip()
+
+        if not raw:
+            raise forms.ValidationError(_("Phone number is required."))
+
+        # Try international parse first (expects leading "+")
+        try:
+            parsed = phonenumbers.parse(raw, None)
+        except phonenumbers.NumberParseException:
+            # Fall back to default region
+            try:
+                parsed = phonenumbers.parse(raw, self.default_region)
+            except phonenumbers.NumberParseException:
+                raise forms.ValidationError(_("Enter a valid phone number."))
+
+        if not phonenumbers.is_valid_number(parsed):
+            raise forms.ValidationError(_("Enter a valid phone number."))
+
+        # Canonical form we store in the DB
+        e164 = phonenumbers.format_number(
+            parsed, phonenumbers.PhoneNumberFormat.E164
+        )  # e.g. "+447911123456"
+
+        # Uniqueness check (exclude self when editing)
+        qs = CustomUser.objects.filter(phone=e164)
+        if self.instance and self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError(
+                _("This phone number is already registered.")
+            )
+
+        return e164
+
     def clean_email(self):
-        email = self.cleaned_data.get('email')
+        email = (self.cleaned_data.get('email') or '').strip().lower()
         if email:
-            email = email.lower()
-            if CustomUser.objects.filter(email=email).exists():
-                raise forms.ValidationError('This email address is already registered.')
+            qs = CustomUser.objects.filter(email=email)
+            if self.instance and self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                raise forms.ValidationError(
+                    _('This email address is already registered.')
+                )
         return email
-    
+
     def clean_first_name(self):
         first_name = self.cleaned_data.get('first_name')
         if first_name:
             return ' '.join(word.capitalize() for word in first_name.strip().split())
         return first_name
-    
+
     def clean_last_name(self):
         last_name = self.cleaned_data.get('last_name')
         if last_name:
             return ' '.join(word.capitalize() for word in last_name.strip().split())
         return last_name
-    
+
     def save(self, commit=True):
         user = super().save(commit=False)
         user.user_type = CustomUser.UserType.STUDENT
-        user.email = self.cleaned_data['email'].lower()
+        user.email = self.cleaned_data['email']
         user.first_name = self.cleaned_data['first_name']
         user.last_name = self.cleaned_data['last_name']
+        user.phone = self.cleaned_data['phone']
         if commit:
             user.save()
             # Create student profile
-            student_id = f"STU{user.date_joined.strftime('%Y%m%d')}{str(user.id)[:8].upper()}"
+            student_id = (
+                f"STU{user.date_joined.strftime('%Y%m%d')}"
+                f"{str(user.id)[:8].upper()}"
+            )
             StudentProfile.objects.create(user=user, student_id=student_id)
         return user
-
+    
 
 class InstructorCreationForm(forms.ModelForm):
     department = forms.CharField(
@@ -123,7 +189,7 @@ class InstructorCreationForm(forms.ModelForm):
     
     class Meta:
         model = CustomUser
-        fields = ('email', 'first_name', 'last_name')
+        fields = ('email', 'first_name', 'last_name', 'phone')
         widgets = {
             'email': forms.EmailInput(attrs={
                 'class': 'form-control',
@@ -141,7 +207,8 @@ class InstructorCreationForm(forms.ModelForm):
                 'id': 'id_last_name'
             }),
         }
-    
+
+
     def clean_email(self):
         email = self.cleaned_data.get('email')
         if email:
