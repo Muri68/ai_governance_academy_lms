@@ -51,6 +51,12 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.views.decorators.http import require_POST
 from apps.dashboard.models import SiteSetting, SiteFileSetting, FAQ
 import os
+from apps.dashboard.forms import InstructorEditForm, AdminEditForm
+from django.contrib import messages
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth import get_user_model
+
+CustomUser = get_user_model()
 
 
 def _get_course(course_id):
@@ -639,6 +645,103 @@ def toggle_user_status(request, user_id):
     if 'instructors' in referer:
         return redirect('dashboard:manage_instructors')
     return redirect('dashboard:manage_users')
+
+
+@login_required
+@admin_required
+def edit_instructor(request, instructor_id):
+    """Edit an instructor's account + profile."""
+    from apps.accounts.models import InstructorProfile
+
+    instructor = get_object_or_404(
+        CustomUser.objects.select_related('instructor_profile'),
+        id=instructor_id,
+        user_type='INSTRUCTOR',
+    )
+
+    profile, _ = InstructorProfile.objects.get_or_create(
+        user=instructor,
+        defaults={'instructor_id': f'INST-{instructor.id.hex[:6].upper()}'},
+    )
+
+    if request.method == 'POST':
+        form = InstructorEditForm(
+            request.POST,
+            request.FILES,
+            instance=instructor,
+            instructor_profile=profile,
+        )
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request,
+                f'Instructor {instructor.get_full_name() or instructor.email} updated successfully.'
+            )
+            return redirect('dashboard:edit_instructor', instructor_id=instructor.id)
+        else:
+            messages.error(request, 'Please fix the errors below.')
+    else:
+        form = InstructorEditForm(
+            instance=instructor,
+            instructor_profile=profile,
+        )
+
+    context = {
+        'form': form,
+        'instructor': instructor,
+        'profile': profile,
+        'editing': True,
+    }
+    return render(request, 'dashboard/admin/edit_instructor.html', context)
+
+
+@login_required
+@admin_required
+def edit_admin(request, admin_id):
+    """Edit an admin's account + profile."""
+    from apps.accounts.models import AdminProfile
+
+    admin_user = get_object_or_404(
+        CustomUser.objects.select_related('admin_profile'),
+        id=admin_id,
+        user_type='ADMIN',
+    )
+
+    profile, _ = AdminProfile.objects.get_or_create(
+        user=admin_user,
+        defaults={'admin_id': 'ADM-0001'},  # save() will auto-generate the ID
+    )
+
+    if request.method == 'POST':
+        form = AdminEditForm(
+            request.POST,
+            request.FILES,
+            instance=admin_user,
+            admin_profile=profile,
+        )
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request,
+                f'Admin {admin_user.get_full_name() or admin_user.email} updated successfully.'
+            )
+            return redirect('dashboard:edit_admin', admin_id=admin_user.id)
+        else:
+            messages.error(request, 'Please fix the errors below.')
+    else:
+        form = AdminEditForm(
+            instance=admin_user,
+            admin_profile=profile,
+        )
+
+    context = {
+        'form': form,
+        'admin_user': admin_user,
+        'profile': profile,
+        'editing': True,
+    }
+    return render(request, 'dashboard/admin/edit_admin.html', context)
+
 
 
 # ===================== COURSE MANAGEMENT VIEWS =====================

@@ -1,0 +1,457 @@
+{% extends "dashboard/admin/admin_base.html" %}
+{% load static %}
+
+{% block title %}Edit Admin - {{ admin_user.get_full_name }}{% endblock %}
+{% block page_title %}Edit Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .breadcrumb-row { display:flex;align-items:center;gap:8px;font-size:0.85rem;margin-bottom:20px; }
+    .breadcrumb-row a { color:var(--text-secondary);text-decoration:none; }
+    .breadcrumb-row a:hover { color:var(--accent-blue); }
+    .breadcrumb-row .current { color:var(--accent-blue);font-weight:600; }
+
+    .form-card { background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-md);padding:28px;box-shadow:var(--shadow-sm); }
+    .form-section { margin-bottom:28px;padding-bottom:24px;border-bottom:1px solid var(--border-color); }
+    .form-section:last-of-type { border-bottom:none;margin-bottom:0;padding-bottom:0; }
+    .form-section h3 { font-size:0.95rem;font-weight:700;color:var(--text-primary);margin:0 0 4px;display:flex;align-items:center;gap:8px; }
+    .form-section h3 i { color:var(--accent-blue); }
+    .form-section .hint { font-size:0.78rem;color:var(--text-muted);margin-bottom:16px; }
+
+    .grid-2 { display:grid;grid-template-columns:1fr 1fr;gap:16px; }
+    .field { display:flex;flex-direction:column;gap:6px; }
+    .field label { font-size:0.78rem;font-weight:600;color:var(--text-secondary); }
+    .field input[type="text"],
+    .field input[type="email"],
+    .field input[type="number"],
+    .field input[type="tel"],
+    .field textarea,
+    .field select {
+        padding:9px 12px;border:1px solid var(--border-color);border-radius:8px;
+        font-family:inherit;font-size:0.85rem;background:#fafbfc;color:var(--text-primary);
+        transition:border-color 0.15s ease;
+    }
+    .field input:focus,.field textarea:focus { outline:none;border-color:var(--accent-blue);background:#fff; }
+    .field textarea { resize:vertical;min-height:70px; }
+    .field .errorlist { list-style:none;padding:0;margin:4px 0 0;font-size:0.75rem;color:#dc2626; }
+    .field .helptext { font-size:0.72rem;color:var(--text-muted); }
+
+    .checkbox-row { display:flex;align-items:center;gap:8px;padding:8px 0; }
+    .checkbox-row input[type="checkbox"] { width:18px;height:18px;cursor:pointer; }
+    .checkbox-row label { font-size:0.85rem;cursor:pointer; }
+
+    .avatar-preview { display:flex;align-items:center;gap:14px;margin-bottom:8px; }
+    .avatar-preview img { width:64px;height:64px;border-radius:50%;object-fit:cover; }
+    .avatar-preview .avatar-default { width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#d97706);color:white;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:700; }
+
+    /* ============ SIGNATURE SECTION ============ */
+    .sig-current,
+    .sig-empty,
+    .sig-new-preview {
+        margin-top: 10px;
+        padding: 16px;
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+        background: #f8fafc;
+    }
+
+    .sig-current-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #334155;
+        margin-bottom: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .sig-current-preview {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .sig-current-preview img {
+        max-width: 260px;
+        max-height: 90px;
+        padding: 10px 16px;
+        background: #0c1e2e;
+        border-radius: 8px;
+        border: 2px solid #ad7a49;
+        object-fit: contain;
+        cursor: zoom-in;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .sig-current-preview img:hover {
+        transform: scale(1.03);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    }
+
+    .sig-current-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        font-size: 0.78rem;
+    }
+
+    .sig-view-link {
+        color: #3b82f6;
+        text-decoration: none;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .sig-view-link:hover { text-decoration: underline; }
+
+    .sig-hint {
+        font-size: 0.72rem;
+        color: #94a3b8;
+    }
+
+    .sig-empty {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.82rem;
+        color: #64748b;
+        background: #fffbeb;
+        border-color: #fde68a;
+    }
+    .sig-empty i { font-size: 1.3rem; color: #f59e0b; }
+
+    .sig-upload-box {
+        margin-top: 14px;
+    }
+
+    .sig-upload-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 16px;
+        background: #f1f5f9;
+        color: #334155;
+        border: 1px dashed #cbd5e1;
+        border-radius: 8px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+    .sig-upload-label:hover {
+        background: #e2e8f0;
+        border-color: #94a3b8;
+        color: #0f172a;
+    }
+
+    /* Hide the raw file input */
+    .sig-upload-box input[type="file"] {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0,0,0,0);
+        border: 0;
+    }
+
+    .sig-new-preview {
+        border-color: #bfdbfe;
+        background: #eff6ff;
+    }
+
+    .sig-new-preview .sig-current-preview img {
+        border-color: #3b82f6;
+    }
+
+    /* Lightbox */
+    .sig-lightbox {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.85);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        padding: 20px;
+    }
+    .sig-lightbox.show { display: flex; }
+    .sig-lightbox-inner {
+        background: #0c1e2e;
+        padding: 30px;
+        border-radius: 12px;
+        max-width: 90vw;
+        max-height: 90vh;
+        position: relative;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .sig-lightbox-inner img {
+        max-width: 70vw;
+        max-height: 70vh;
+        display: block;
+        background: #0c1e2e;
+        padding: 20px;
+        border-radius: 8px;
+    }
+    .sig-lightbox-close {
+        position: absolute;
+        top: -12px;
+        right: -12px;
+        background: #ad7a49;
+        color: white;
+        border: none;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 0.9rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+    .sig-lightbox-close:hover { background: #8b6239; }
+
+    .form-actions { display:flex;align-items:center;gap:10px;margin-top:24px;padding-top:20px;border-top:1px solid var(--border-color); }
+    .btn { padding:10px 20px;border-radius:8px;font-size:0.85rem;font-weight:600;cursor:pointer;text-decoration:none;border:none;display:inline-flex;align-items:center;gap:6px;font-family:inherit;transition:all 0.15s ease; }
+    .btn-primary { background:var(--accent-blue);color:white; }
+    .btn-primary:hover { background:#2563eb; }
+    .btn-secondary { background:#f1f5f9;color:var(--text-primary); }
+    .btn-secondary:hover { background:#e2e8f0; }
+
+    .alert { padding:12px 16px;border-radius:8px;font-size:0.85rem;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px; }
+    .alert-success { background:#d1fae5;color:#065f46;border:1px solid #6ee7b7; }
+    .alert-error { background:#fee2e2;color:#991b1b;border:1px solid #fca5a5; }
+
+    @media (max-width:768px) {
+        .grid-2 { grid-template-columns:1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-row">
+    <a href="{% url 'dashboard:manage_courses' %}"><i class="fas fa-arrow-left"></i> Back</a>
+    <span>/</span>
+    <span class="current">Edit {{ admin_user.get_full_name|default:admin_user.email }}</span>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">
+        <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %}"></i>
+        <span>{{ message }}</span>
+    </div>
+    {% endfor %}
+{% endif %}
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <div class="form-card">
+        <!-- ACCOUNT INFORMATION -->
+        <div class="form-section">
+            <h3><i class="fas fa-user"></i> Account Information</h3>
+            <p class="hint">Basic login and identity details</p>
+
+            <div class="avatar-preview">
+                {% if admin_user.profile_picture %}
+                    <img src="{{ admin_user.profile_picture.url }}" alt="">
+                {% else %}
+                    <div class="avatar-default">{{ admin_user.first_name|slice:":1"|upper|default:"?" }}</div>
+                {% endif %}
+                <div class="field" style="flex:1;">
+                    <label>Change profile picture</label>
+                    {{ form.profile_picture }}
+                </div>
+            </div>
+
+            <div class="grid-2" style="margin-top:16px;">
+                <div class="field">
+                    <label>First Name</label>
+                    {{ form.first_name }}
+                    {{ form.first_name.errors }}
+                </div>
+                <div class="field">
+                    <label>Last Name</label>
+                    {{ form.last_name }}
+                    {{ form.last_name.errors }}
+                </div>
+                <div class="field">
+                    <label>Email</label>
+                    {{ form.email }}
+                    {{ form.email.errors }}
+                </div>
+                <div class="field">
+                    <label>Phone</label>
+                    {{ form.phone }}
+                    {{ form.phone.errors }}
+                </div>
+            </div>
+
+            <div class="field" style="margin-top:16px;">
+                <label>Bio</label>
+                {{ form.bio }}
+                {{ form.bio.errors }}
+            </div>
+
+            <div class="checkbox-row" style="margin-top:12px;">
+                {{ form.is_active }}
+                <label for="{{ form.is_active.id_for_label }}">Active account</label>
+            </div>
+            <div class="checkbox-row">
+                {{ form.is_staff }}
+                <label for="{{ form.is_staff.id_for_label }}">Staff access (Django admin)</label>
+            </div>
+        </div>
+
+        <!-- ADMIN PROFILE -->
+        <div class="form-section">
+            <h3><i class="fas fa-user-shield"></i> Admin Profile</h3>
+            <p class="hint">Administrative details and certificate signature</p>
+
+            <div class="grid-2">
+                <div class="field">
+                    <label>Department</label>
+                    {{ form.department }}
+                    {{ form.department.errors }}
+                </div>
+                <div class="field">
+                    <label>Access Level</label>
+                    {{ form.access_level }}
+                    <span class="helptext">{{ form.access_level.help_text }}</span>
+                    {{ form.access_level.errors }}
+                </div>
+            </div>
+
+            <!-- ============ SIGNATURE ============ -->
+            <div class="field" style="margin-top:20px;">
+                <label style="font-size:0.9rem;">Certificate Signature</label>
+                <span class="helptext" style="margin-bottom:8px;">
+                    This signature appears as the Program Director signature on all certificates. PNG with transparent background works best.
+                </span>
+
+                {% if profile.signature %}
+                    <div class="sig-current">
+                        <div class="sig-current-label">
+                            <i class="fas fa-check-circle" style="color:#10b981;"></i>
+                            Current signature on file
+                        </div>
+                        <div class="sig-current-preview">
+                            <img src="{{ profile.signature.url }}"
+                                 alt="Current signature"
+                                 onclick="openSigLightbox('{{ profile.signature.url }}')">
+                            <div class="sig-current-meta">
+                                <a href="{{ profile.signature.url }}" target="_blank" class="sig-view-link">
+                                    <i class="fas fa-expand"></i> View full size
+                                </a>
+                                <span class="sig-hint">Click the image to enlarge</span>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="sig-empty">
+                        <i class="fas fa-signature"></i>
+                        <span>No signature uploaded yet. Certificates will use the fallback signature.</span>
+                    </div>
+                {% endif %}
+
+                <div class="sig-upload-box">
+                    <label for="{{ form.signature.id_for_label }}" class="sig-upload-label">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span>{% if profile.signature %}Replace signature{% else %}Upload signature{% endif %}</span>
+                    </label>
+                    {{ form.signature }}
+                    {{ form.signature.errors }}
+                </div>
+
+                <div id="newSigPreview" class="sig-new-preview" style="display:none;">
+                    <div class="sig-current-label">
+                        <i class="fas fa-eye" style="color:#3b82f6;"></i>
+                        New signature preview (not saved yet)
+                    </div>
+                    <div class="sig-current-preview">
+                        <img id="newSigImg" src="" alt="New signature preview">
+                    </div>
+                    <p class="sig-hint" style="margin-top:6px;">
+                        Click <strong>Save Changes</strong> to apply.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Save Changes
+            </button>
+            <a href="{% url 'dashboard:manage_courses' %}" class="btn btn-secondary">
+                Cancel
+            </a>
+        </div>
+    </div>
+</form>
+
+<!-- Signature lightbox -->
+<div class="sig-lightbox" id="sigLightbox" onclick="if(event.target===this)closeSigLightbox()">
+    <div class="sig-lightbox-inner">
+        <button type="button" class="sig-lightbox-close" onclick="closeSigLightbox()">
+            <i class="fas fa-times"></i>
+        </button>
+        <img id="sigLightboxImg" src="" alt="Signature">
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var sigInput = document.querySelector('input[name="signature"]');
+        var preview = document.getElementById('newSigPreview');
+        var img = document.getElementById('newSigImg');
+
+        if (sigInput && preview && img) {
+            sigInput.addEventListener('change', function(e) {
+                var file = e.target.files && e.target.files[0];
+                if (!file) {
+                    preview.style.display = 'none';
+                    img.src = '';
+                    return;
+                }
+                if (!file.type.startsWith('image/')) {
+                    alert('Please select an image file (PNG recommended).');
+                    sigInput.value = '';
+                    preview.style.display = 'none';
+                    return;
+                }
+                if (file.size > 2 * 1024 * 1024) {
+                    alert('Signature image is too large. Please use an image under 2 MB.');
+                    sigInput.value = '';
+                    preview.style.display = 'none';
+                    return;
+                }
+                var url = URL.createObjectURL(file);
+                img.src = url;
+                preview.style.display = 'block';
+                preview.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+            });
+        }
+    });
+
+    function openSigLightbox(url) {
+        var lb = document.getElementById('sigLightbox');
+        var li = document.getElementById('sigLightboxImg');
+        if (!lb || !li) return;
+        li.src = url;
+        lb.classList.add('show');
+    }
+    function closeSigLightbox() {
+        var lb = document.getElementById('sigLightbox');
+        if (lb) lb.classList.remove('show');
+    }
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeSigLightbox();
+    });
+</script>
+{% endblock %}

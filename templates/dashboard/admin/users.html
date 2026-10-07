@@ -159,7 +159,7 @@
     .users-table {
         width: 100%;
         border-collapse: collapse;
-        min-width: 850px;
+        min-width: 900px;
     }
 
     .users-table thead th {
@@ -249,28 +249,92 @@
     .status-badge.inactive { background: rgba(239, 68, 68, 0.1); color: var(--accent-red); }
     .status-badge.pending { background: rgba(245, 158, 11, 0.1); color: var(--accent-orange); }
 
-    /* Action buttons */
-    .action-btns { display: flex; gap: 4px; }
-
-    .action-btn {
-        width: 32px; height: 32px;
-        border-radius: var(--radius-sm);
-        border: none;
-        background: transparent;
-        cursor: pointer;
+    /* ============================================================
+       NICE ACTION BUTTONS
+       ============================================================ */
+    .action-btns {
         display: flex;
+        gap: 6px;
         align-items: center;
-        justify-content: center;
-        font-size: 0.85rem;
-        transition: all 0.2s;
+        flex-wrap: nowrap;
     }
 
-    .action-btn.view { color: var(--accent-blue); }
-    .action-btn.view:hover { background: rgba(59, 130, 246, 0.1); }
-    .action-btn.toggle { color: var(--accent-orange); }
-    .action-btn.toggle:hover { background: rgba(245, 158, 11, 0.1); }
-    .action-btn.delete { color: var(--accent-red); }
-    .action-btn.delete:hover { background: rgba(239, 68, 68, 0.1); }
+    .btn-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        font-family: inherit;
+        text-decoration: none;
+        border: 1px solid transparent;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        white-space: nowrap;
+        line-height: 1;
+        height: 32px;
+    }
+
+    .btn-action i { font-size: 0.72rem; }
+
+    .btn-action-view {
+        background: #eff6ff;
+        color: #1d4ed8;
+        border-color: #dbeafe;
+    }
+    .btn-action-view:hover {
+        background: #dbeafe;
+        color: #1e40af;
+        border-color: #bfdbfe;
+        transform: translateY(-1px);
+        text-decoration: none;
+    }
+
+    .btn-action-edit {
+        background: #f5f3ff;
+        color: #6d28d9;
+        border-color: #ede9fe;
+    }
+    .btn-action-edit:hover {
+        background: #ede9fe;
+        color: #5b21b6;
+        border-color: #ddd6fe;
+        transform: translateY(-1px);
+        text-decoration: none;
+    }
+
+    .btn-action-deactivate {
+        background: #fef2f2;
+        color: #b91c1c;
+        border-color: #fee2e2;
+    }
+    .btn-action-deactivate:hover {
+        background: #fee2e2;
+        color: #991b1b;
+        border-color: #fecaca;
+        transform: translateY(-1px);
+    }
+
+    .btn-action-activate {
+        background: #ecfdf5;
+        color: #047857;
+        border-color: #d1fae5;
+    }
+    .btn-action-activate:hover {
+        background: #d1fae5;
+        color: #065f46;
+        border-color: #a7f3d0;
+        transform: translateY(-1px);
+    }
+
+    .btn-action:disabled,
+    .btn-action[disabled] {
+        opacity: 0.35;
+        cursor: not-allowed;
+        transform: none !important;
+    }
 
     /* ===== PAGINATION ===== */
     .pagination-wrapper {
@@ -360,7 +424,7 @@
 {% endblock %}
 
 {% block content %}
-<!-- Stats Row - Clickable to filter by role -->
+<!-- Stats Row -->
 <div class="stats-row">
     <div class="stat-card blue active-card" data-role="all" id="statAll">
         <div class="stat-icon blue"><i class="fas fa-users"></i></div>
@@ -426,7 +490,7 @@
                     <th>Phone</th>
                     <th>Role</th>
                     <th>Status</th>
-                    <th>Joined On</th>
+                    <th>Joined</th>
                     <th>Last Active</th>
                     <th>Actions</th>
                 </tr>
@@ -465,35 +529,61 @@
                             <span class="status-badge inactive">Inactive</span>
                             {% endif %}
                         </td>
-                        <td data-label="Joined On">{{ u.date_joined|date:"M d, Y" }}</td>
+                        <td data-label="Joined">{{ u.date_joined|date:"M d, Y" }}</td>
                         <td data-label="Last Active">{% if u.last_login %}{{ u.last_login|date:"M d, Y" }}{% else %}Never{% endif %}</td>
                         <td data-label="Actions">
                             <div class="action-btns">
                                 {% if u.user_type == 'STUDENT' %}
-                                <a class="action-btn view text-decoration-none" href="{% url 'dashboard:student_detail' u.id %}" title="View Profile">
-                                    <i class="fas fa-eye"></i>
-                                </a>
+                                    <a class="btn-action btn-action-view"
+                                       href="{% url 'dashboard:student_detail' u.id %}"
+                                       title="View student profile">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
                                 {% elif u.user_type == 'INSTRUCTOR' %}
-                                <a class="action-btn view text-decoration-none" href="{% url 'dashboard:instructor_detail' u.id %}" title="View Profile">
-                                    <i class="fas fa-eye"></i>
-                                </a>
+                                    <a class="btn-action btn-action-view"
+                                       href="{% url 'dashboard:instructor_detail' u.id %}"
+                                       title="View instructor profile">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                    <a class="btn-action btn-action-edit"
+                                       href="{% url 'dashboard:edit_instructor' instructor_id=u.id %}"
+                                       title="Edit instructor">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
                                 {% elif u.user_type == 'ADMIN' %}
-                                <button class="action-btn view" title="View Profile" disabled style="opacity:0.3;">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                {% endif %}
-                                <form method="POST" action="{% url 'dashboard:toggle_user_status' u.id %}" style="display: inline;" onsubmit="return confirm('{% if u.is_active %}Deactivate{% else %}Activate{% endif %} this user?');">
-                                    {% csrf_token %}
-                                    <button type="submit" class="action-btn toggle" title="{% if u.is_active %}Deactivate{% else %}Activate{% endif %}">
-                                        <i class="fas {% if u.is_active %}fa-user-slash{% else %}fa-user-check{% endif %}"></i>
+                                    <button class="btn-action btn-action-view" disabled
+                                            title="Admin profile view not available">
+                                        <i class="fas fa-eye"></i> View
                                     </button>
+                                    <a class="btn-action btn-action-edit"
+                                       href="{% url 'dashboard:edit_admin' admin_id=u.id %}"
+                                       title="Edit admin">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                {% endif %}
+
+                                <form method="POST"
+                                      action="{% url 'dashboard:toggle_user_status' u.id %}"
+                                      style="display: inline; margin: 0;"
+                                      onsubmit="return confirm('{% if u.is_active %}Deactivate{% else %}Activate{% endif %} {{ u.get_full_name|escapejs }}?');">
+                                    {% csrf_token %}
+                                    {% if u.is_active %}
+                                        <button type="submit" class="btn-action btn-action-deactivate"
+                                                title="Deactivate this user">
+                                            <i class="fas fa-user-slash"></i> Deactivate
+                                        </button>
+                                    {% else %}
+                                        <button type="submit" class="btn-action btn-action-activate"
+                                                title="Activate this user">
+                                            <i class="fas fa-user-check"></i> Activate
+                                        </button>
+                                    {% endif %}
                                 </form>
                             </div>
                         </td>
                     </tr>
                     {% endfor %}
                 {% else %}
-                    <!-- Empty state -->
                     <tr>
                         <td colspan="8" class="text-center text-muted py-5">
                             <i class="fas fa-users" style="font-size: 2rem; opacity: 0.3; display: block; margin-bottom: 10px;"></i>
@@ -529,7 +619,7 @@
         const tableRows = document.querySelectorAll('#usersTableBody tr');
         const addUserBtn = document.querySelector('.btn-add-user');
         
-        let currentRole = 'STUDENT'; // Default to students
+        let currentRole = 'STUDENT';
 
         function updateAddButton(role) {
             if (role === 'STUDENT' || role === 'all') {
@@ -569,7 +659,6 @@
             document.getElementById('showingTotal').textContent = visibleCount;
         }
 
-        // Role tabs click
         roleTabs.forEach(tab => {
             tab.addEventListener('click', function() {
                 roleTabs.forEach(t => t.classList.remove('active'));
@@ -580,7 +669,6 @@
             });
         });
 
-        // Stat cards click
         statCards.forEach(card => {
             card.addEventListener('click', function() {
                 const role = this.getAttribute('data-role');
@@ -588,7 +676,6 @@
                 this.classList.add('active-card');
                 currentRole = role;
                 
-                // Update tabs
                 roleTabs.forEach(t => t.classList.remove('active'));
                 const matchingTab = document.querySelector(`.role-tab[data-role="${role}"]`);
                 if (matchingTab) matchingTab.classList.add('active');
@@ -598,14 +685,11 @@
             });
         });
 
-        // Status filter
         statusFilter.addEventListener('change', filterTable);
 
-        // Initial filter
         updateAddButton('STUDENT');
         filterTable();
 
-        // Pagination
         const paginationBtns = document.querySelectorAll('.pagination-btn:not(.ellipsis):not([disabled])');
         paginationBtns.forEach(btn => {
             btn.addEventListener('click', function() {

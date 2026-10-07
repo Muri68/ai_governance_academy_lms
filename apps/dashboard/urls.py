@@ -1,4 +1,6 @@
 from django.urls import path, include
+
+from apps.accounts import views
 from .views import student_views, instructor_views, admin_views
 from . import viewss
 
@@ -41,6 +43,9 @@ urlpatterns = [
     path('admin/add-user/', admin_views.add_user, name='add_user'),
     path('admin/instructors/', admin_views.manage_instructors, name='manage_instructors'),
     path('admin/toggle-user/<uuid:user_id>/', admin_views.toggle_user_status, name='toggle_user_status'),
+
+    path('instructors/<uuid:instructor_id>/edit/', admin_views.edit_instructor, name='edit_instructor'),
+    path('admins/<uuid:admin_id>/edit/', admin_views.edit_admin, name='edit_admin'),
     
     # Admin Course Management URLs
     path('admin/courses/', admin_views.manage_courses, name='manage_courses'),
