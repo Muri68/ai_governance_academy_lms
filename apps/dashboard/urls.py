@@ -51,6 +51,10 @@ urlpatterns = [
     path('admin/courses/<str:course_id>/delete/', admin_views.delete_course, name='delete_course'),
     
     path('admin/course/<str:course_id>/students/', admin_views.course_students, name='course_students'),
+    path(
+    'courses/<int:course_id>/students/<int:enrollment_id>/resend-certificate/', admin_views.resend_certificate,
+        name='resend_certificate',
+    ),
     path('admin/instructor/<uuid:user_id>/', admin_views.instructor_detail, name='instructor_detail'),
     path('admin/student/<uuid:user_id>/', admin_views.student_detail, name='student_detail'),
     

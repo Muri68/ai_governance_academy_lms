@@ -1350,20 +1350,20 @@ def delete_course(request, course_id):
 def course_students(request, course_id):
     """View all students enrolled in a specific course"""
     from apps.courses.models import Course, Enrollment
-    
+
     course = _get_course(course_id)
-    
+
     enrollments = Enrollment.objects.filter(
         course=course
     ).select_related(
         'student', 'student__student_profile'
     ).order_by('-enrolled_at')
-    
+
     total_enrolled = enrollments.count()
     active_students = enrollments.filter(status='active').count()
     completed_students = enrollments.filter(status='completed').count()
     dropped_students = enrollments.filter(status='dropped').count()
-    
+
     context = {
         'course': course,
         'enrollments': enrollments,
@@ -1373,6 +1373,221 @@ def course_students(request, course_id):
         'dropped_students': dropped_students,
     }
     return render(request, 'dashboard/admin/course_students.html', context)
+
+
+@login_required
+@admin_required
+def resend_certificate(request, course_id, enrollment_id):
+    """Resend the completion / certificate email to a student.
+
+    Reuses the same certificate generator used by the student-facing
+    view_certificate endpoint so the PDF is identical.
+    """
+    from apps.courses.models import (
+        Enrollment, FinalExam, FinalExamAttempt,
+    )
+    from apps.courses.views import view_certificate
+    from django.core.mail import EmailMultiAlternatives
+    from django.template.loader import render_to_string
+    from django.conf import settings
+
+    if request.method != 'POST':
+        messages.error(request, 'Invalid request method.')
+        return redirect('dashboard:course_students', course_id=course_id)
+
+    enrollment = get_object_or_404(
+        Enrollment.objects.select_related('student', 'course'),
+        id=enrollment_id,
+        course_id=course_id,
+        status='completed',
+    )
+
+    if not enrollment.certificate_issued:
+        messages.error(
+            request,
+            f'{enrollment.student.get_full_name() or enrollment.student.username} '
+            f'has not been issued a certificate yet.'
+        )
+        return redirect('dashboard:course_students', course_id=course_id)
+
+    student = enrollment.student
+    course = enrollment.course
+
+    # Find final exam attempt (for email content)
+    exam_title = ''
+    score = 0
+    passing_score = 0
+    final_exam = FinalExam.objects.filter(course=course, is_active=True).first()
+    if final_exam:
+        attempt = FinalExamAttempt.objects.filter(
+            exam=final_exam, student=student, passed=True
+        ).order_by('-completed_at').first()
+        if attempt:
+            exam_title = final_exam.title
+            score = int(round(attempt.score)) if attempt.score else 0
+            passing_score = final_exam.passing_score
+
+    # --- Generate certificate PDF by calling the same view as the student endpoint ---
+    cert_pdf_bytes = None
+    try:
+        # Build a synthetic request context so view_certificate can run
+        # (it needs request.build_absolute_uri for the verify URL).
+        cert_response = view_certificate(request, enrollment.id)
+        if cert_response.status_code == 200:
+            cert_pdf_bytes = cert_response.content
+    except Exception as e:
+        print(f'[RESEND CERT] Certificate build failed: {e}')
+        import traceback
+        traceback.print_exc()
+
+    # --- Render email ---
+    completion_date = enrollment.completed_at or enrollment.enrolled_at
+    try:
+        completion_date_str = completion_date.strftime('%B %d, %Y')
+    except Exception:
+        completion_date_str = ''
+
+    certificate_url = ''
+    if enrollment.certificate_issued:
+        try:
+            certificate_url = request.build_absolute_uri(
+                reverse('courses:view_certificate', kwargs={'enrollment_id': enrollment.id})
+            )
+        except Exception:
+            certificate_url = ''
+
+    try:
+        courses_url = request.build_absolute_uri(reverse('frontend:courses'))
+    except Exception:
+        try:
+            courses_url = request.build_absolute_uri('/')
+        except Exception:
+            courses_url = ''
+
+    html_content = render_to_string('emails/congratulations.html', {
+        'student_name': student.get_full_name() or student.username,
+        'course_title': course.title,
+        'exam_title': exam_title or course.title,
+        'score': score,
+        'passing_score': passing_score,
+        'completion_date': completion_date_str,
+        'certificate_url': certificate_url,
+        'courses_url': courses_url,
+    })
+
+    subject = f'🎉 Your Certificate for {course.title}'
+    from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@example.com')
+    reply_to = getattr(settings, 'CONTACT_EMAIL', None)
+
+    try:
+        msg = EmailMultiAlternatives(
+            subject=subject,
+            body=(
+                f'Congratulations {student.get_full_name() or student.username}! '
+                f'You have completed {course.title}.'
+            ),
+            from_email=from_email,
+            to=[student.email],
+        )
+        if reply_to:
+            msg.reply_to = [reply_to]
+
+        msg.attach_alternative(html_content, 'text/html')
+
+        if cert_pdf_bytes:
+            filename = (
+                f'Certificate_{course.slug}_'
+                f'{(student.get_full_name() or student.username).replace(" ", "_")}.pdf'
+            )
+            msg.attach(filename, cert_pdf_bytes, 'application/pdf')
+
+        msg.send(fail_silently=False)
+
+        messages.success(request, f'Certificate email resent to {student.email}.')
+
+    except Exception as e:
+        messages.error(request, f'Failed to send email: {e}')
+
+    return redirect('dashboard:course_students', course_id=course_id)
+
+
+def _build_certificate_pdf(enrollment):
+    """
+    Helper: build a certificate PDF for the given enrollment and return bytes.
+    Reuses the same helper used by the student-facing certificate view if one
+    exists; otherwise generates a basic PDF with reportlab.
+    """
+    from io import BytesIO
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import landscape, letter
+    from reportlab.lib.colors import HexColor
+
+    student = enrollment.student
+    course = enrollment.course
+
+    buf = BytesIO()
+    width, height = landscape(letter)
+
+    c = canvas.Canvas(buf, pagesize=(width, height))
+
+    # Background
+    c.setFillColor(HexColor('#fbfaf7'))
+    c.rect(0, 0, width, height, fill=1, stroke=0)
+
+    # Outer border
+    c.setStrokeColor(HexColor('#ad7a49'))
+    c.setLineWidth(4)
+    c.rect(30, 30, width - 60, height - 60)
+
+    # Inner border
+    c.setStrokeColor(HexColor('#0c1e2e'))
+    c.setLineWidth(1)
+    c.rect(45, 45, width - 90, height - 90)
+
+    # Title
+    c.setFillColor(HexColor('#0c1e2e'))
+    c.setFont('Helvetica-Bold', 38)
+    c.drawCentredString(width / 2, height - 130, 'CERTIFICATE OF COMPLETION')
+
+    c.setFillColor(HexColor('#ad7a49'))
+    c.setFont('Helvetica', 16)
+    c.drawCentredString(width / 2, height - 165, 'This certificate is proudly presented to')
+
+    # Student name
+    c.setFillColor(HexColor('#0c1e2e'))
+    c.setFont('Helvetica-Bold', 32)
+    student_name = student.get_full_name or student.username
+    c.drawCentredString(width / 2, height - 220, student_name)
+
+    # Course line
+    c.setFillColor(HexColor('#333333'))
+    c.setFont('Helvetica', 14)
+    c.drawCentredString(width / 2, height - 260, 'for successfully completing the course')
+
+    c.setFillColor(HexColor('#0c1e2e'))
+    c.setFont('Helvetica-Bold', 20)
+    c.drawCentredString(width / 2, height - 295, course.title)
+
+    # Date
+    c.setFillColor(HexColor('#666666'))
+    c.setFont('Helvetica', 12)
+    completion_date = enrollment.completed_at or enrollment.enrolled_at
+    try:
+        date_str = completion_date.strftime('%B %d, %Y')
+    except Exception:
+        date_str = ''
+    c.drawCentredString(width / 2, height - 340, f'Completed on {date_str}')
+
+    # Footer
+    c.setFillColor(HexColor('#ad7a49'))
+    c.setFont('Helvetica-Bold', 14)
+    c.drawCentredString(width / 2, 90, 'AI Governance Academy')
+
+    c.showPage()
+    c.save()
+
+    buf.seek(0)
+    return buf.read()
 
 
 @login_required

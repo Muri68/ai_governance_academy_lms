@@ -1012,6 +1012,7 @@ function submitModernQuiz(event, quizId, passingScore) {
     var submitBtn = form.querySelector('button[type="submit"]');
     submitBtn.innerHTML = 'Submitting...';
     submitBtn.disabled = true;
+
     fetch('/courses/quiz/' + quizId + '/submit/', {
         method: 'POST',
         headers: {'X-CSRFToken': csrfToken, 'Content-Type': 'application/json'},
@@ -1020,15 +1021,64 @@ function submitModernQuiz(event, quizId, passingScore) {
     .then(function(r) { return r.json(); })
     .then(function(data) {
         var resultDiv = document.getElementById('quizResult-' + quizId);
-        if (resultDiv) {
-            resultDiv.style.display = 'block';
-            if (data.passed) {
-                resultDiv.style.background = '#d1fae5';
-                resultDiv.innerHTML = '<h4 style="color:#065f46;">✅ Passed! Score: ' + data.score + '%</h4>';
-            } else {
-                resultDiv.style.background = '#fee2e2';
-                resultDiv.innerHTML = '<h4 style="color:#991b1b;">❌ Not passed. Score: ' + data.score + '% (Need ' + data.passing_score + '%)</h4>';
+        if (!resultDiv) return;
+        resultDiv.style.display = 'block';
+
+        if (data.passed) {
+            resultDiv.style.background = '#d1fae5';
+            resultDiv.innerHTML =
+                '<h4 style="color:#065f46;margin-bottom:6px;">✅ Passed! Score: ' +
+                data.score + '%</h4>' +
+                '<p style="color:#065f46;font-size:13px;margin:0;">' +
+                'This lesson has been marked as completed.</p>';
+
+            // ---- Reflect completion in the UI immediately ----
+            var lessonId = currentLessonId;
+
+            // 1. Update the "Mark Complete" button
+            var btn = document.getElementById('completeBtn');
+            if (btn) {
+                btn.innerHTML = '<i class="fas fa-check-circle"></i> Completed';
+                btn.classList.add('completed');
+                btn.disabled = true;
+                btn.removeAttribute('onclick');
             }
+
+            // 2. Update the sidebar lesson link
+            var ll = document.querySelector('.lesson-link[data-lesson-id="' + lessonId + '"]');
+            if (ll) {
+                ll.classList.add('completed');
+                if (!ll.querySelector('.lesson-check')) {
+                    ll.insertAdjacentHTML('beforeend',
+                        '<i class="fas fa-check lesson-check"></i>');
+                }
+            }
+
+            // 3. Refresh progress bar (confirm-only, does not toggle)
+            fetch('/courses/learn/' + courseSlug + '/lesson/' + lessonId + '/complete/', {
+                method: 'POST',
+                headers: {'X-CSRFToken': csrfToken, 'Content-Type': 'application/json'},
+                body: JSON.stringify({confirm_only: true})
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(res) {
+                if (res && res.status === 'success') {
+                    var pBar = document.getElementById('progressFillBar');
+                    if (pBar) pBar.style.width = res.progress + '%';
+                    var cCount = document.getElementById('completedCount');
+                    if (cCount) cCount.textContent = res.total_completed;
+                    updateButtons();
+                }
+            })
+            .catch(function() { /* silent — UI already updated */ });
+
+        } else {
+            resultDiv.style.background = '#fee2e2';
+            resultDiv.innerHTML =
+                '<h4 style="color:#991b1b;margin-bottom:6px;">❌ Not passed. Score: ' +
+                data.score + '%</h4>' +
+                '<p style="color:#991b1b;font-size:13px;margin:0;">You need ' +
+                data.passing_score + '% to pass. Please try again.</p>';
         }
     })
     .finally(function() {

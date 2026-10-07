@@ -818,10 +818,10 @@ def mark_lesson_complete(request, course_slug, lesson_id):
     """AJAX endpoint to toggle lesson completion"""
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=400)
-    
+
     course = get_object_or_404(Course, slug=course_slug)
     lesson = get_object_or_404(Lesson, id=lesson_id, course=course)
-    
+
     # Get or create enrollment
     enrollment = Enrollment.objects.filter(student=request.user, course=course).first()
     if not enrollment:
@@ -829,54 +829,74 @@ def mark_lesson_complete(request, course_slug, lesson_id):
     elif enrollment.status not in ['active', 'completed']:
         enrollment.status = 'active'
         enrollment.save()
-    
-    # =====================================================
-    # QUIZ CHECK - Must pass lesson quiz before completing
-    # =====================================================
-    quiz = lesson.quizzes.filter(is_active=True).first()
-    
-    if quiz:
-        progress_check = LessonProgress.objects.filter(
-            student=request.user, lesson=lesson, enrollment=enrollment
-        ).first()
-        
-        is_uncompleting = progress_check and progress_check.completed
-        
-        if not is_uncompleting:
-            passed_attempt = QuizAttempt.objects.filter(
-                quiz=quiz,
-                student=request.user,
-                passed=True
-            ).first()
-            
-            if not passed_attempt:
-                return JsonResponse({
-                    'status': 'error',
-                    'message': f'You must pass the quiz "{quiz.title or "Quiz"}" before completing this lesson.',
-                    'code': 'QUIZ_REQUIRED',
-                    'quiz_id': quiz.id,
-                }, status=400)
-    
-    # Check sequential order
+
+    # Get all lessons for this course
     all_lessons = list(course.lessons.filter(is_published=True).order_by('order'))
     current_lesson_index = None
-    
+
     for i, les in enumerate(all_lessons):
         if les.id == lesson.id:
             current_lesson_index = i
             break
-    
+
+    # ---------------------------------------------------------
+    # CONFIRM-ONLY MODE
+    # Used by the frontend right after a quiz pass. It doesn't
+    # toggle anything — it just returns current progress numbers.
+    # ---------------------------------------------------------
+    try:
+        payload = json.loads(request.body) if request.body else {}
+    except Exception:
+        payload = {}
+
+    if payload.get('confirm_only'):
+        total_lessons = len(all_lessons)
+        completed_lessons = LessonProgress.objects.filter(
+            student=request.user, enrollment=enrollment, completed=True
+        ).count()
+        if total_lessons > 0:
+            enrollment.progress_percentage = int((completed_lessons / total_lessons) * 100)
+            enrollment.save(update_fields=['progress_percentage'])
+        return JsonResponse({
+            'status': 'success',
+            'completed': True,
+            'progress': enrollment.progress_percentage,
+            'total_completed': completed_lessons,
+            'total_lessons': total_lessons,
+            'confirm_only': True,
+        })
+
+    # =====================================================
+    # QUIZ CHECK — Must pass lesson quiz before completing
+    # =====================================================
+    quiz = lesson.quizzes.filter(is_active=True).first()
+
     progress = LessonProgress.objects.filter(
         student=request.user, lesson=lesson, enrollment=enrollment
     ).first()
-    
+
     is_uncompleting = progress and progress.completed
-    
-    # ONLY check sequential order if user is trying to COMPLETE (not uncomplete)
+
+    if quiz and not is_uncompleting:
+        passed_attempt = QuizAttempt.objects.filter(
+            quiz=quiz,
+            student=request.user,
+            passed=True
+        ).first()
+
+        if not passed_attempt:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'You must pass the quiz "{quiz.title or "Quiz"}" before completing this lesson.',
+                'code': 'QUIZ_REQUIRED',
+                'quiz_id': quiz.id,
+            }, status=400)
+
+    # Check sequential order (only when completing, not uncompleting)
     if not is_uncompleting and current_lesson_index is not None and current_lesson_index > 0:
         previous_lessons = all_lessons[:current_lesson_index]
         incomplete_previous = []
-        
+
         for prev_lesson in previous_lessons:
             prev_progress = LessonProgress.objects.filter(
                 student=request.user, lesson=prev_lesson, enrollment=enrollment, completed=True
@@ -887,57 +907,73 @@ def mark_lesson_complete(request, course_slug, lesson_id):
                     'title': prev_lesson.title,
                     'order': prev_lesson.order
                 })
-        
+
         if incomplete_previous:
             lesson_names = [f'"{l["title"]}"' for l in incomplete_previous[:3]]
             if len(incomplete_previous) > 3:
                 lesson_names.append(f'and {len(incomplete_previous) - 3} more')
-            
+
             return JsonResponse({
                 'status': 'error',
                 'message': f'You must complete these lessons first: {", ".join(lesson_names)}.',
                 'incomplete_lessons': incomplete_previous,
                 'code': 'SEQUENTIAL_REQUIRED'
             }, status=400)
-    
-    # Toggle completion
+
+    # Create progress row if missing
     if not progress:
         progress = LessonProgress.objects.create(
             student=request.user, lesson=lesson, enrollment=enrollment
         )
-    
-    if progress.completed:
+
+    # =====================================================
+    # TOGGLE COMPLETION
+    # If the lesson has a quiz and the user passed it, the
+    # lesson is locked as completed. Clicking "Mark Complete"
+    # cannot un-complete it — the button only completes.
+    # =====================================================
+    quiz_locked = False
+    if quiz:
+        quiz_locked = QuizAttempt.objects.filter(
+            quiz=quiz, student=request.user, passed=True
+        ).exists()
+
+    if progress.completed and quiz_locked:
+        # Already completed + quiz passed → do not toggle off
+        progress.completed = True
+        if not progress.completed_at:
+            progress.completed_at = timezone.now()
+    elif progress.completed:
         progress.completed = False
         progress.completed_at = None
     else:
         progress.completed = True
         progress.completed_at = timezone.now()
-    
+
     progress.save()
-    
+
     # Recalculate progress
     total_lessons = len(all_lessons)
     completed_lessons = LessonProgress.objects.filter(
         student=request.user, enrollment=enrollment, completed=True
     ).count()
-    
+
     if total_lessons > 0:
         enrollment.progress_percentage = int((completed_lessons / total_lessons) * 100)
-    
+
     # =====================================================
-    # FINAL EXAM CHECK - Do NOT complete course if exam exists
+    # FINAL EXAM CHECK — Do NOT complete course if exam exists
     # =====================================================
     final_exam = FinalExam.objects.filter(course=course, is_active=True).first()
-    
+
     course_completed = False
     certificate_url = None
-    
+
     if completed_lessons >= total_lessons and total_lessons > 0:
         if final_exam:
-            # Course has final exam - DO NOT complete course
-            # Just update progress and show exam available
+            # Course has final exam — do not complete course yet
             enrollment.save()
-            
+
             return JsonResponse({
                 'status': 'success',
                 'completed': progress.completed,
@@ -952,12 +988,12 @@ def mark_lesson_complete(request, course_slug, lesson_id):
                 'message': f'You have completed all lessons! You must now pass the Final Exam "{final_exam.title}" to complete the course and earn your certificate.',
             })
         else:
-            # No final exam - complete course normally
+            # No final exam — complete course normally
             if enrollment.status == 'active':
                 enrollment.status = 'completed'
                 enrollment.completed_at = timezone.now()
                 course_completed = True
-                
+
                 if course.has_certificate:
                     cert_string = f"{request.user.id}-{course.id}-{timezone.now().timestamp()}"
                     cert_hash = hashlib.md5(cert_string.encode()).hexdigest()[:12].upper()
@@ -972,16 +1008,16 @@ def mark_lesson_complete(request, course_slug, lesson_id):
                 course_completed = True
                 if enrollment.certificate_issued and enrollment.certificate_url:
                     certificate_url = reverse('courses:view_certificate', kwargs={'enrollment_id': enrollment.id})
-    
+
     enrollment.save()
-    
+
     # Update student profile
     if hasattr(request.user, 'student_profile'):
         p = request.user.student_profile
         p.courses_enrolled = Enrollment.objects.filter(student=request.user, status='active').count()
         p.completed_courses = Enrollment.objects.filter(student=request.user, status='completed').count()
         p.save()
-    
+
     # Find next unlocked lesson
     next_lesson = None
     if progress.completed and current_lesson_index is not None:
@@ -993,7 +1029,7 @@ def mark_lesson_complete(request, course_slug, lesson_id):
             if not next_progress:
                 next_lesson = {'id': next_les.id, 'title': next_les.title, 'order': next_les.order}
                 break
-    
+
     response_data = {
         'status': 'success',
         'completed': progress.completed,
@@ -1003,10 +1039,10 @@ def mark_lesson_complete(request, course_slug, lesson_id):
         'total_completed': completed_lessons,
         'total_lessons': total_lessons,
     }
-    
+
     if next_lesson:
         response_data['next_lesson'] = next_lesson
-    
+
     if course_completed:
         if certificate_url:
             response_data['message'] = f'Congratulations! You have completed "{course.title}"! Your certificate is ready.'
@@ -1014,7 +1050,7 @@ def mark_lesson_complete(request, course_slug, lesson_id):
         else:
             response_data['message'] = f'Congratulations! You have completed "{course.title}"!'
             response_data['certificate_url'] = None
-    
+
     return JsonResponse(response_data)
 
 
@@ -1162,13 +1198,42 @@ def convert_signature_to_white(signature_path, output_path):
 
 @login_required
 def view_certificate(request, enrollment_id):
-    """Generate and download PDF certificate with QR code and signatures"""
-    enrollment = get_object_or_404(
-        Enrollment.objects.select_related('course', 'student', 'course__instructor__instructor_profile'),
-        id=enrollment_id, student=request.user, status='completed'
+    """Generate and download PDF certificate with QR code and signatures.
+
+    Students can only view their own certificate.
+    Staff/admins can view any certificate by passing ?as_user=<user_id>
+    (or by being an admin — then ownership is not enforced).
+    """
+    enrollment_qs = Enrollment.objects.select_related(
+        'course', 'student',
+        'course__instructor__instructor_profile',
     )
-    
-    # Get cert_id
+
+    # Determine whether this request is from an admin viewing someone else's cert
+    is_admin_viewer = (
+        request.user.is_staff or
+        request.user.is_superuser or
+        getattr(request.user, 'role', '') in ('admin', 'superadmin')
+    )
+
+    if is_admin_viewer:
+        enrollment = get_object_or_404(
+            enrollment_qs, id=enrollment_id, status='completed'
+        )
+        # For admins, allow viewing; the certificate is generated for the
+        # enrollment's student regardless of who's requesting.
+        student_user = enrollment.student
+    else:
+        # Student view — must be their own enrollment
+        enrollment = get_object_or_404(
+            enrollment_qs,
+            id=enrollment_id,
+            student=request.user,
+            status='completed'
+        )
+        student_user = request.user
+
+    # Get cert_id (existing logic)
     cert_id = None
     if enrollment.certificate_url:
         parts = enrollment.certificate_url.rstrip('/').split('/')
@@ -1176,49 +1241,54 @@ def view_certificate(request, enrollment_id):
             if part.startswith('CERT-'):
                 cert_id = part
                 break
-    
+
     if not cert_id:
-        cert_string = f"{request.user.id}-{enrollment.course.id}-{timezone.now().timestamp()}"
+        cert_string = f"{enrollment.student.id}-{enrollment.course.id}-{timezone.now().timestamp()}"
         cert_hash = hashlib.md5(cert_string.encode()).hexdigest()[:12].upper()
         cert_id = f"CERT-{cert_hash}"
-        enrollment.certificate_url = reverse('courses:verify_certificate', kwargs={'cert_id': cert_id})
+        enrollment.certificate_url = reverse(
+            'courses:verify_certificate', kwargs={'cert_id': cert_id}
+        )
         enrollment.save()
-    
+
     verification_url = request.build_absolute_uri(
         reverse('courses:verify_certificate', kwargs={'cert_id': cert_id})
     )
-    
-    # Generate QR code
-    qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_M, box_size=4, border=2)
+
+    # ---- QR code ----
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=4,
+        border=2,
+    )
     qr.add_data(verification_url)
     qr.make(fit=True)
     qr_img = qr.make_image(fill_color="white", back_color="#0c1e2e")
-    
+
     qr_temp = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
     qr_img.save(qr_temp.name)
     qr_temp.close()
-    
-        # ===== HANDLE SIGNATURES =====
+
+    # ===== HANDLE SIGNATURES =====
     instructor_sig_temp = None
     director_sig_temp = None
-    
+
     # ===== INSTRUCTOR SIGNATURE =====
     instructor = enrollment.course.instructor
     print(f"Instructor: {instructor.email}, ID: {instructor.id}")
-    
-    # Check if instructor has a profile
+
     try:
         instructor_profile = InstructorProfile.objects.get(user=instructor)
         print(f"Instructor profile found: {instructor_profile.instructor_id}")
         print(f"Has signature: {bool(instructor_profile.signature)}")
-        
         if instructor_profile.signature:
             print(f"Signature path: {instructor_profile.signature.path}")
             print(f"Signature exists: {os.path.exists(instructor_profile.signature.path)}")
     except InstructorProfile.DoesNotExist:
         instructor_profile = None
         print("No InstructorProfile found for this instructor!")
-    
+
     if instructor_profile and instructor_profile.signature:
         try:
             sig_path = instructor_profile.signature.path
@@ -1227,7 +1297,6 @@ def view_certificate(request, enrollment_id):
                 instructor_sig_temp.close()
                 result = convert_signature_to_white(sig_path, instructor_sig_temp.name)
                 print(f"Instructor signature converted. Result: {result}")
-                # Verify the output file exists and has content
                 if os.path.exists(instructor_sig_temp.name):
                     file_size = os.path.getsize(instructor_sig_temp.name)
                     print(f"Instructor temp file size: {file_size} bytes")
@@ -1241,20 +1310,15 @@ def view_certificate(request, enrollment_id):
             instructor_sig_temp = None
     else:
         print("No instructor signature available")
-        if not instructor_profile:
-            print("  - No instructor profile exists")
-        elif not instructor_profile.signature:
-            print("  - Instructor profile exists but no signature uploaded")
-    
-    # ===== DIRECTOR SIGNATURE (Admin Profile or Static Default) =====
+
+    # ===== DIRECTOR SIGNATURE =====
     admin_profile = None
     director_name = None
-    
-    # Find any admin/superadmin with a signature
+
     admin_profile = AdminProfile.objects.filter(
         signature__isnull=False
     ).exclude(signature='').order_by('-access_level').first()
-    
+
     if admin_profile and admin_profile.signature:
         try:
             sig_path = admin_profile.signature.path
@@ -1266,8 +1330,7 @@ def view_certificate(request, enrollment_id):
         except Exception as e:
             print(f"Error processing admin signature: {e}")
             director_sig_temp = None
-    
-    # If no admin signature, fall back to default static file
+
     if not director_sig_temp:
         print("No admin signature found, trying static file...")
         static_dirs = []
@@ -1275,7 +1338,7 @@ def view_certificate(request, enrollment_id):
             static_dirs.append(settings.STATIC_ROOT)
         if hasattr(settings, 'STATICFILES_DIRS'):
             static_dirs.extend(settings.STATICFILES_DIRS)
-        
+
         for static_dir in static_dirs:
             if static_dir:
                 test_path = os.path.join(static_dir, 'images', 'director-signature.png')
@@ -1290,156 +1353,176 @@ def view_certificate(request, enrollment_id):
                     except Exception as e:
                         print(f"Error processing static signature: {e}")
                         director_sig_temp = None
-    
+
     # ===== DIRECTOR NAME =====
     if admin_profile:
         director_name = admin_profile.user.get_full_name() or admin_profile.user.email
     else:
         director_name = getattr(settings, 'CERTIFICATE_DIRECTOR_NAME', 'Dr. James Anderson')
-    
+
     director_title = getattr(settings, 'CERTIFICATE_DIRECTOR_TITLE', 'Program Director')
-    
-    print(f"Director name: {director_name}, Instructor sig: {instructor_sig_temp is not None}, Director sig: {director_sig_temp is not None}")
-    
+
+    print(f"Director name: {director_name}")
+
     # ===== BUILD PDF =====
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=landscape(letter))
     width, height = landscape(letter)
-    
+
     # Background
     c.setFillColor(HexColor('#0c1e2e'))
     c.rect(0, 0, width, height, fill=True, stroke=False)
-    
+
     # Borders
     c.setStrokeColor(HexColor('#ad7a49'))
     c.setLineWidth(3)
     c.rect(25, 25, width - 50, height - 50, fill=False, stroke=True)
     c.setLineWidth(1)
     c.rect(38, 38, width - 76, height - 76, fill=False, stroke=True)
-    
+
     # Text
     c.setFillColor(HexColor('#94a3b8'))
     c.setFont("Helvetica", 9)
-    c.drawCentredString(width/2, height - 65, getattr(settings, 'CERTIFICATE_ORGANIZATION', 'AI GOVERNANCE AUTHORITY'))
-    
+    c.drawCentredString(
+        width / 2, height - 65,
+        getattr(settings, 'CERTIFICATE_ORGANIZATION', 'AI GOVERNANCE AUTHORITY')
+    )
+
     c.setFillColor(HexColor('#ad7a49'))
     c.setFont("Helvetica-Bold", 28)
-    c.drawCentredString(width/2, height - 115, "CERTIFICATE OF COMPLETION")
-    
+    c.drawCentredString(width / 2, height - 115, "CERTIFICATE OF COMPLETION")
+
     c.setStrokeColor(HexColor('#ad7a49'))
     c.setLineWidth(2)
-    c.line(width/2 - 180, height - 130, width/2 + 180, height - 130)
-    
+    c.line(width / 2 - 180, height - 130, width / 2 + 180, height - 130)
+
     c.setFillColor(HexColor('#cbd5e1'))
     c.setFont("Helvetica", 13)
-    c.drawCentredString(width/2, height - 165, "This is to certify that")
-    
+    c.drawCentredString(width / 2, height - 165, "This is to certify that")
+
     c.setFillColor(HexColor('#ad7a49'))
     c.setFont("Helvetica-Bold", 24)
-    student_name = enrollment.student.get_full_name()
-    c.drawCentredString(width/2, height - 205, student_name)
-    
+    student_name = enrollment.student.get_full_name() or enrollment.student.username
+    c.drawCentredString(width / 2, height - 205, student_name)
+
     c.setFillColor(HexColor('#cbd5e1'))
     c.setFont("Helvetica", 13)
-    c.drawCentredString(width/2, height - 240, "has successfully completed the course")
-    
+    c.drawCentredString(width / 2, height - 240, "has successfully completed the course")
+
     c.setFillColor(HexColor('#ad7a49'))
     c.setFont("Helvetica-Bold", 20)
-    c.drawCentredString(width/2, height - 275, enrollment.course.title)
-    
+    c.drawCentredString(width / 2, height - 275, enrollment.course.title)
+
     c.setFillColor(HexColor('#94a3b8'))
     c.setFont("Helvetica", 11)
     completed_date = enrollment.completed_at.strftime("%B %d, %Y") if enrollment.completed_at else ""
-    c.drawCentredString(width/2, height - 310, f"Completed on: {completed_date}")
-    
+    c.drawCentredString(width / 2, height - 310, f"Completed on: {completed_date}")
+
     # ===== SIGNATURES SECTION =====
     sig_y_line = height - 390
     sig_y_text = height - 410
     sig_y_title = height - 425
     sig_y_image = height - 395
-    
+
     c.setStrokeColor(HexColor('#ad7a49'))
     c.setLineWidth(1)
-    
-    # ===== INSTRUCTOR SIGNATURE (Left) =====
+
+    # Instructor
     instructor_sig_box_x = 100
     instructor_sig_box_width = 180
-    
-    # Draw instructor signature image
+
     if instructor_sig_temp and os.path.exists(instructor_sig_temp.name):
         try:
-            c.drawImage(instructor_sig_temp.name, instructor_sig_box_x + 20, sig_y_image, 
-                       width=140, height=55, preserveAspectRatio=True, mask='auto')
-            print("Instructor signature drawn on PDF")
+            c.drawImage(
+                instructor_sig_temp.name,
+                instructor_sig_box_x + 20, sig_y_image,
+                width=140, height=55,
+                preserveAspectRatio=True, mask='auto'
+            )
         except Exception as e:
             print(f"Error drawing instructor signature: {e}")
-    else:
-        print("No instructor signature to draw")
-    
-    # Instructor line and name
-    c.line(instructor_sig_box_x, sig_y_line, instructor_sig_box_x + instructor_sig_box_width, sig_y_line)
+
+    c.line(
+        instructor_sig_box_x, sig_y_line,
+        instructor_sig_box_x + instructor_sig_box_width, sig_y_line
+    )
     c.setFont("Helvetica", 9)
     c.setFillColor(HexColor('#ffffff'))
-    c.drawCentredString(instructor_sig_box_x + instructor_sig_box_width/2, sig_y_text, instructor.get_full_name())
+    c.drawCentredString(
+        instructor_sig_box_x + instructor_sig_box_width / 2, sig_y_text,
+        instructor.get_full_name() or instructor.email
+    )
     c.setFont("Helvetica", 8)
     c.setFillColor(HexColor('#94a3b8'))
-    c.drawCentredString(instructor_sig_box_x + instructor_sig_box_width/2, sig_y_title, "Instructor")
-    
-    # ===== DIRECTOR SIGNATURE (Right) =====
+    c.drawCentredString(
+        instructor_sig_box_x + instructor_sig_box_width / 2, sig_y_title,
+        "Instructor"
+    )
+
+    # Director
     director_sig_box_x = width - 280
     director_sig_box_width = 180
-    
-    # Draw director signature image
+
     if director_sig_temp and os.path.exists(director_sig_temp.name):
         try:
-            c.drawImage(director_sig_temp.name, director_sig_box_x + 20, sig_y_image, 
-                       width=140, height=55, preserveAspectRatio=True, mask='auto')
-            print("Director signature drawn on PDF")
+            c.drawImage(
+                director_sig_temp.name,
+                director_sig_box_x + 20, sig_y_image,
+                width=140, height=55,
+                preserveAspectRatio=True, mask='auto'
+            )
         except Exception as e:
             print(f"Error drawing director signature: {e}")
-    else:
-        print("No director signature to draw")
-    
-    # Director line and name
-    c.line(director_sig_box_x, sig_y_line, director_sig_box_x + director_sig_box_width, sig_y_line)
+
+    c.line(
+        director_sig_box_x, sig_y_line,
+        director_sig_box_x + director_sig_box_width, sig_y_line
+    )
     c.setFont("Helvetica", 9)
     c.setFillColor(HexColor('#ffffff'))
-    c.drawCentredString(director_sig_box_x + director_sig_box_width/2, sig_y_text, director_name)
+    c.drawCentredString(
+        director_sig_box_x + director_sig_box_width / 2, sig_y_text,
+        director_name
+    )
     c.setFont("Helvetica", 8)
     c.setFillColor(HexColor('#94a3b8'))
-    c.drawCentredString(director_sig_box_x + director_sig_box_width/2, sig_y_title, director_title)
-    
-    # ===== QR CODE =====
+    c.drawCentredString(
+        director_sig_box_x + director_sig_box_width / 2, sig_y_title,
+        director_title
+    )
+
+    # QR code
     qr_size = 80
     qr_x = width - qr_size - 55
     qr_y = 55
-    
+
     try:
-        c.drawImage(qr_temp.name, qr_x, qr_y, width=qr_size, height=qr_size, preserveAspectRatio=True)
+        c.drawImage(qr_temp.name, qr_x, qr_y, width=qr_size, height=qr_size,
+                    preserveAspectRatio=True)
         c.setFont("Helvetica", 7)
         c.setFillColor(HexColor('#64748b'))
-        c.drawCentredString(qr_x + qr_size/2, qr_y - 12, "Scan to verify")
+        c.drawCentredString(qr_x + qr_size / 2, qr_y - 12, "Scan to verify")
     except Exception as e:
         print(f"Error drawing QR code: {e}")
-    
+
     # Bottom text
     c.setFont("Helvetica", 7)
     c.setFillColor(HexColor('#64748b'))
-    c.drawCentredString(width/2, 55, f"Certificate ID: {cert_id}")
-    c.drawCentredString(width/2, 42, f"Verify online: {verification_url}")
-    
+    c.drawCentredString(width / 2, 55, f"Certificate ID: {cert_id}")
+    c.drawCentredString(width / 2, 42, f"Verify online: {verification_url}")
+
     c.save()
     pdf = buffer.getvalue()
     buffer.close()
-    
-    # Clean up temp files
+
+    # Clean up
     for temp_file in [qr_temp, instructor_sig_temp, director_sig_temp]:
         if temp_file:
             try:
                 os.unlink(temp_file.name)
             except Exception as e:
                 print(f"Error cleaning up temp file: {e}")
-    
+
     response = HttpResponse(pdf, content_type='application/pdf')
     filename = f"Certificate_{enrollment.course.slug}_{student_name.replace(' ', '_')}.pdf"
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
